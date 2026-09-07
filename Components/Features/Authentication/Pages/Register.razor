@@ -20,17 +20,6 @@
 <PageTitle>Student Registration – Shah Abdul Latif University Khairpur</PageTitle>
 
 <div class="salu-auth-wrapper salu-auth-board salu-auth-board-register">
-    <svg class="salu-wave-backdrop" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-            <radialGradient id="saluBlueGrad" cx="25%" cy="50%" r="75%">
-                <stop offset="0%" stop-color="#1b2e7e" stop-opacity="0.97" />
-                <stop offset="60%" stop-color="#101d58" stop-opacity="0.98" />
-                <stop offset="100%" stop-color="#091032" stop-opacity="0.99" />
-            </radialGradient>
-        </defs>
-        <path d="M 0,0 L 760,0 C 720,380 700,600 950,900 L 0,900 Z" fill="url(#saluBlueGrad)" />
-    </svg>
-
     <div class="salu-card-container salu-reg-container">
         <div class="salu-login-card salu-auth-card salu-auth-card-register">
             
@@ -251,26 +240,14 @@
         min-height: 100vh;
         width: 100%;
         position: relative;
-        background: linear-gradient(135deg, rgba(8, 18, 48, 0.95) 0%, rgba(13, 27, 76, 0.92) 50%, rgba(6, 12, 32, 0.97) 100%),
-                    url('images/salu-gate-bg.jpg') no-repeat center / cover;
+        background: url('images/salu-login-bg.jpg') no-repeat center center / cover;
         background-attachment: fixed;
         display: flex;
         align-items: center;
-        justify-content: center;
-        padding: 16px;
+        justify-content: flex-end;
+        padding: 24px clamp(2rem, 7vw, 7.5rem) 24px 24px;
         overflow-x: hidden;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    }
-
-    .salu-wave-backdrop {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
-        pointer-events: none;
-        opacity: 0.7;
     }
 
     .salu-card-container {
@@ -278,19 +255,19 @@
         z-index: 2;
         max-width: 440px;
         width: 100%;
-        margin: 0 auto;
+        margin: 0;
         padding: 8px 0;
-        animation: cardPopIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: cardSlideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @@keyframes cardPopIn {
+    @@keyframes cardSlideRight {
         from {
             opacity: 0;
-            transform: scale(0.96) translateY(12px);
+            transform: translateX(25px);
         }
         to {
             opacity: 1;
-            transform: scale(1) translateY(0);
+            transform: translateX(0);
         }
     }
 
