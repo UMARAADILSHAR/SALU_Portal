@@ -15,6 +15,10 @@ CopilotIndices/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+publish/
+publish_output/
+*.PublishSettings
+
 
 ## AI tool traces & scratchpads
 .gemini/
