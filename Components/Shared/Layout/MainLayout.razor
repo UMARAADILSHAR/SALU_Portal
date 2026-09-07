@@ -10,21 +10,34 @@
 <Toast />
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
+    <div class="sidebar @(isMobileNavOpen ? "mobile-open" : "")">
+        <NavMenu OnNavigate="CloseMobileNav" />
     </div>
 
+    @if (isMobileNavOpen)
+    {
+        <div class="mobile-nav-backdrop" @onclick="CloseMobileNav" aria-label="Close navigation menu"></div>
+    }
+
     <main>
-        <div class="top-row px-4 salu-top-row-gradient">
-            <span class="salu-header-title">SHAH ABDUL LATIF UNIVERSITY EXAMINATION PORTAL</span>
-            <button class="dark-mode-toggle" @onclick="ToggleDarkMode"
-                    title="@(isDark ? "Switch to Light Mode" : "Switch to Dark Mode")"
-                    aria-label="@(isDark ? "Switch to Light Mode" : "Switch to Dark Mode")">
-                <i class="bi @(isDark ? "bi-sun-fill" : "bi-moon-fill")"></i>
-            </button>
+        <div class="top-row px-3 px-md-4 salu-top-row-gradient">
+            <div class="salu-top-left">
+                <button class="mobile-menu-toggle d-md-none" @onclick="ToggleMobileNav" aria-label="Toggle navigation drawer">
+                    <i class="bi @(isMobileNavOpen ? "bi-x-lg" : "bi-list")"></i>
+                </button>
+                <span class="salu-header-title d-none d-sm-inline">SHAH ABDUL LATIF UNIVERSITY EXAMINATION PORTAL</span>
+                <span class="salu-header-title d-inline d-sm-none">SALU EXAM PORTAL</span>
+            </div>
+            <div class="salu-top-right">
+                <button class="dark-mode-toggle" @onclick="ToggleDarkMode"
+                        title="@(isDark ? "Switch to Light Mode" : "Switch to Dark Mode")"
+                        aria-label="@(isDark ? "Switch to Light Mode" : "Switch to Dark Mode")">
+                    <i class="bi @(isDark ? "bi-sun-fill" : "bi-moon-fill")"></i>
+                </button>
+            </div>
         </div>
 
-        <article class="content px-4 page-body">
+        <article class="content px-3 px-md-4 page-body">
             @Body
         </article>
     </main>
@@ -38,6 +51,17 @@
 
 @code {
     private bool isDark = false;
+    private bool isMobileNavOpen = false;
+
+    private void ToggleMobileNav()
+    {
+        isMobileNavOpen = !isMobileNavOpen;
+    }
+
+    private void CloseMobileNav()
+    {
+        isMobileNavOpen = false;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

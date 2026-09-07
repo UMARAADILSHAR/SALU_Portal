@@ -2609,18 +2609,45 @@
         .salu-photo-studio-wrap { max-width: 300px; margin: 0 auto; }
         .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
         .salu-fee-summary-grid { grid-template-columns: 1fr; }
-        .salu-stepper-track { grid-template-columns: repeat(4, 1fr); }
     }
 
-    @@media (max-width: 640px) {
-        .salu-hero-header { padding: 18px 16px; }
-        .salu-main-content { padding: 0 12px; margin-top: 16px; }
+    @@media (max-width: 768px) {
+        .salu-hero-header { padding: 16px 14px; }
+        .salu-hero-inner { flex-direction: column; align-items: flex-start; gap: 14px; }
+        .salu-session-card { width: 100%; text-align: left; }
+        .salu-portal-title { font-size: 1.15rem; }
+        .salu-main-content { padding: 0 10px; margin-top: 14px; }
+        .salu-stepper-card { padding: 12px 14px; margin-bottom: 16px; }
+        .salu-stepper-track {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            gap: 8px;
+            padding-bottom: 4px;
+        }
+        .salu-step-node {
+            flex: 0 0 auto;
+            min-width: 74px;
+            padding: 4px;
+        }
+        .salu-node-circle {
+            width: 28px;
+            height: 28px;
+            font-size: 0.78rem;
+            margin-bottom: 3px;
+        }
+        .node-title { font-size: 0.65rem; }
+        .node-sub { display: none; }
         .salu-card-header { padding: 14px 16px; }
-        .salu-card-body { padding: 16px; }
-        .salu-card-footer { padding: 14px 16px; flex-direction: column; width: 100%; }
-        .salu-card-footer button { width: 100%; }
-        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-        .salu-stepper-track { grid-template-columns: repeat(2, 1fr); }
+        .salu-card-body { padding: 16px 14px; }
+        .salu-card-footer { padding: 14px 16px; flex-direction: column; gap: 10px; width: 100%; }
+        .salu-card-footer button, .salu-card-footer a { width: 100%; justify-content: center; }
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; gap: 12px; }
+        .salu-academic-table-wrap, .salu-mudtable-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .salu-official-cert-preview { padding: 18px; }
         .cert-footer { flex-direction: column; gap: 20px; align-items: center; }
         .salu-success-celebration-card { padding: 32px 16px; }

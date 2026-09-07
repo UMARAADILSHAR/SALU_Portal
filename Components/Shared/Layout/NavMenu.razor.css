@@ -15,7 +15,7 @@
     position: relative;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    width: 250px;
+    width: 100%;
 }
 
 .salu-side-brand {
@@ -222,24 +222,16 @@
 }
 
 .nav-scrollable {
-    display: none;
+    display: block;
     flex: 1;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
     padding-bottom: 20px;
 }
 
-.navbar-toggler:checked ~ .nav-scrollable {
-    display: block;
-}
-
-@media (min-width: 641px) {
-    .navbar-toggler {
-        display: none;
-    }
-
-    .nav-scrollable {
-        display: block;
-        height: calc(100vh - 4.5rem);
-        overflow-y: auto;
+@media (max-width: 767.98px) {
+    .sidebar-collapse-btn {
+        display: none !important;
     }
 }
 
