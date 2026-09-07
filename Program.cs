@@ -17,6 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(); // Add controller support for API endpoints
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.Configure<Microsoft.AspNetCore.SignalR.HubOptions>(options =>
+{
+    options.MaximumReceiveMessageSize = 15 * 1024 * 1024; // 15MB for photo and document uploads
+});
+
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
@@ -225,6 +230,17 @@ if (!Directory.Exists(docsPath))
 }
 
 app.UseStaticFiles(); // Serves wwwroot
+
+// Serve student photos and document previews from uploads directory
+var fileExtensionProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+fileExtensionProvider.Mappings[".webp"] = "image/webp";
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+    ContentTypeProvider = fileExtensionProvider
+});
+
 
 app.UseAntiforgery();
 
