@@ -53,4 +53,7 @@ backups/
 
 ## Local configurations
 *.local
+appsettings.Production.json
+appsettings.*.local.json
+
 
