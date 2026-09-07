@@ -60,17 +60,28 @@ jobs:
     - name: Ensure logs folder exists
       shell: pwsh
       run: |
-        New-Item -ItemType Directory -Force -Path ./publish/logs | Out-Null
+    - name: Verify FTP Credentials Presence
+      shell: pwsh
+      env:
+        FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+        DB_CONN: ${{ secrets.DB_CONNECTION_STRING }}
+      run: |
+        if ([string]::IsNullOrWhiteSpace($env:FTP_PASS)) {
+          Write-Error "CRITICAL: Secret 'FTP_PASSWORD' is EMPTY! Make sure it was added under 'Repository secrets' (at the bottom of the page), NOT 'Environment secrets'."
+          exit 1
+        }
+        Write-Host "FTP_PASSWORD detected. Length is $($env:FTP_PASS.Length) characters."
 
     - name: Deploy via FTPS
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: site86997.siteasp.net
-        username: ${{ secrets.FTP_USERNAME || 'site86997' }}
+        username: site86997
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish/
         server-dir: wwwroot/
         dangerous-clean-slate: false
+
 
 
 
