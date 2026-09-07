@@ -26,10 +26,18 @@ jobs:
 
     - name: Inject Production Settings
       shell: pwsh
+      env:
+        DB_CONN: ${{ secrets.DB_CONNECTION_STRING }}
+        SEED_PASS: ${{ secrets.SEED_ADMIN_PASSWORD }}
+        HMAC_SECRET: ${{ secrets.ADMIT_CARD_SECRET }}
       run: |
+        $dbConn = $env:DB_CONN
+        $seedPass = if ([string]::IsNullOrWhiteSpace($env:SEED_PASS)) { "AdminPassword123!" } else { $env:SEED_PASS }
+        $hmacSec = if ([string]::IsNullOrWhiteSpace($env:HMAC_SECRET)) { "ProductionSecretKey_SaluExamPortal_2026_Secure" } else { $env:HMAC_SECRET }
+
         $config = @{
           "ConnectionStrings" = @{
-            "DefaultConnection" = "${{ secrets.DB_CONNECTION_STRING }}"
+            "DefaultConnection" = $dbConn
           }
           "Logging" = @{
             "LogLevel" = @{
@@ -40,13 +48,14 @@ jobs:
           "AllowedHosts" = "*"
           "SeedAdmin" = @{
             "Email" = "admin@salu.edu.pk"
-            "Password" = "${{ secrets.SEED_ADMIN_PASSWORD || 'AdminPassword123!' }}"
+            "Password" = $seedPass
           }
           "Security" = @{
-            "AdmitCardHmacSecret" = "${{ secrets.ADMIT_CARD_SECRET || 'ProductionSecretKey_SaluExamPortal_2026_Secure' }}"
+            "AdmitCardHmacSecret" = $hmacSec
           }
         } | ConvertTo-Json -Depth 5
         Set-Content -Path ./publish/appsettings.Production.json -Value $config
+
 
     - name: Ensure logs folder exists
       shell: pwsh
