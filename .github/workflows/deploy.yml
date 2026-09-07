@@ -62,28 +62,15 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force -Path ./publish/logs | Out-Null
 
-    - name: Verify FTP Server Target
-      shell: pwsh
-      env:
-        FTP_HOST: ${{ secrets.FTP_SERVER }}
-      run: |
-        if ([string]::IsNullOrWhiteSpace($env:FTP_HOST)) {
-          Write-Error "ERROR: FTP_SERVER secret is empty! Please configure FTP_SERVER in GitHub Settings -> Secrets and variables -> Actions."
-          exit 1
-        }
-        if ($env:FTP_HOST -match "databaseasp\.net" -or $env:FTP_HOST -match "10\.0\.0\.") {
-          Write-Error "ERROR: FTP_SERVER is still set to '$env:FTP_HOST'. That is your database address! Please change FTP_SERVER to 'site86997.siteasp.net' in GitHub Settings -> Secrets and variables -> Actions."
-          exit 1
-        }
-        Write-Host "FTP Server verified. Connecting to $env:FTP_HOST..."
-
     - name: Deploy via FTPS
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
+        server: site86997.siteasp.net
+        username: ${{ secrets.FTP_USERNAME || 'site86997' }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish/
-        server-dir: ${{ secrets.FTP_REMOTE_DIR || 'site/wwwroot/' }}
+        server-dir: wwwroot/
         dangerous-clean-slate: false
+
+
 
