@@ -60,6 +60,8 @@ jobs:
     - name: Ensure logs folder exists
       shell: pwsh
       run: |
+        New-Item -ItemType Directory -Force -Path ./publish/logs | Out-Null
+
     - name: Verify FTP Credentials Presence
       shell: pwsh
       env:
@@ -72,6 +74,27 @@ jobs:
         }
         Write-Host "FTP_PASSWORD detected. Length is $($env:FTP_PASS.Length) characters."
 
+    - name: Release IIS File Locks (App Offline)
+      shell: pwsh
+      env:
+        FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+      run: |
+        try {
+          $ftp = [System.Net.FtpWebRequest]::Create("ftp://site86997.siteasp.net/wwwroot/app_offline.htm")
+          $ftp.Credentials = New-Object System.Net.NetworkCredential("site86997", $env:FTP_PASS)
+          $ftp.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
+          $ftp.UsePassive = $true
+          $ftp.KeepAlive = $false
+          $bytes = [System.Text.Encoding]::UTF8.GetBytes("<!DOCTYPE html><html><body>Deploying update...</body></html>")
+          $stream = $ftp.GetRequestStream()
+          $stream.Write($bytes, 0, $bytes.Length)
+          $stream.Close()
+          Write-Host "app_offline.htm uploaded. IIS unlocked all files."
+          Start-Sleep -Seconds 3
+        } catch {
+          Write-Warning "Notice: $($_.Exception.Message)"
+        }
+
     - name: Deploy via FTPS
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
@@ -81,6 +104,26 @@ jobs:
         local-dir: ./publish/
         server-dir: wwwroot/
         dangerous-clean-slate: false
+
+    - name: Bring Application Online
+      if: always()
+      shell: pwsh
+      env:
+        FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+      run: |
+        try {
+          $ftp = [System.Net.FtpWebRequest]::Create("ftp://site86997.siteasp.net/wwwroot/app_offline.htm")
+          $ftp.Credentials = New-Object System.Net.NetworkCredential("site86997", $env:FTP_PASS)
+          $ftp.Method = [System.Net.WebRequestMethods+Ftp]::DeleteFile
+          $ftp.UsePassive = $true
+          $ftp.KeepAlive = $false
+          $res = $ftp.GetResponse()
+          $res.Close()
+          Write-Host "app_offline.htm removed. Website is now online!"
+        } catch {
+          Write-Host "app_offline.htm already removed or not present."
+        }
+
 
 
 

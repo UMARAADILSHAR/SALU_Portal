@@ -18,6 +18,22 @@ public static class DbInitializer
         var db = services.GetRequiredService<ApplicationDbContext>();
         await db.Database.MigrateAsync();
 
+        // Ensure columns exist on AspNetUsers defensively in case of schema discrepancy
+        await db.Database.ExecuteSqlRawAsync(@"
+            IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'TotpEnabled')
+            BEGIN
+                ALTER TABLE AspNetUsers ADD TotpEnabled bit NOT NULL CONSTRAINT DF_AspNetUsers_TotpEnabled DEFAULT 0;
+            END;
+            IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'TotpEnabledAt')
+            BEGIN
+                ALTER TABLE AspNetUsers ADD TotpEnabledAt datetime2 NULL;
+            END;
+            IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'TotpSecretEncrypted')
+            BEGIN
+                ALTER TABLE AspNetUsers ADD TotpSecretEncrypted nvarchar(500) NULL;
+            END;
+        ");
+
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in Enum.GetNames<PortalRole>())
         {
