@@ -1,0 +1,270 @@
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IServiceScopeFactory ScopeFactory
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Enums
+
+<div class="salu-sidebar-wrap @(isCollapsed ? "sidebar-collapsed" : "")">
+    <!-- BRAND HEADER -->
+    <div class="salu-side-brand">
+        <div class="salu-brand-crest-box">
+            <img src="images/salu-logo.png" alt="SALU Crest" class="salu-mini-crest" />
+        </div>
+        @if (!isCollapsed)
+        {
+            <div class="salu-brand-text">
+                <span class="salu-brand-main">SALU PORTAL</span>
+                <span class="salu-brand-sub">EXAMINATIONS &amp; ENROLLMENT</span>
+            </div>
+        }
+        <button class="sidebar-collapse-btn" @onclick="ToggleCollapse"
+                aria-label="@(isCollapsed ? "Expand sidebar" : "Collapse sidebar")"
+                title="@(isCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+            <i class="bi @(isCollapsed ? "bi-layout-sidebar-reverse" : "bi-layout-sidebar")"></i>
+        </button>
+    </div>
+
+    <!-- Mobile toggle (shown only on small screens) -->
+    <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+    <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+        <nav class="nav flex-column">
+            
+            @if (!isCollapsed)
+            {
+                <div class="nav-section-label">MAIN NAVIGATION</div>
+            }
+
+            <div class="nav-item px-3" data-label="Home">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <i class="bi bi-house-door-fill nav-icon"></i>
+                    @if (!isCollapsed) { <span>Home</span> }
+                </NavLink>
+            </div>
+
+            <AuthorizeView>
+                <Authorized Context="authContext">
+                    <AuthorizeView Roles="Student">
+                        @if (!isCollapsed)
+                        {
+                            <div class="nav-section-label">STUDENT</div>
+                        }
+                        <div class="nav-item px-3" data-label="Dashboard">
+                            <NavLink class="nav-link" href="Student" Match="NavLinkMatch.All">
+                                <i class="bi bi-speedometer2 nav-icon"></i>
+                                @if (!isCollapsed) { <span>Dashboard</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3 @(isEnrollmentClosed && !isEnrollmentSubmitted ? "nav-item-disabled" : "")" 
+                             data-label="@(isEnrollmentClosed && !isEnrollmentSubmitted ? "Enrollment Form (Closed)" : "Enrollment Form")">
+                            <NavLink class="nav-link" href="Student/Enrollment">
+                                <i class="bi bi-pencil-square nav-icon"></i>
+                                @if (!isCollapsed) 
+                                { 
+                                    <span>Enrollment Form</span>
+                                    @if (isEnrollmentSubmitted)
+                                    {
+                                        <span class="salu-nav-badge badge-submitted">SUBMITTED</span>
+                                    }
+                                    else if (isEnrollmentClosed)
+                                    {
+                                        <span class="salu-nav-badge badge-closed">CLOSED</span>
+                                    }
+                                }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="View Form">
+                            <NavLink class="nav-link" href="Student/Form">
+                                <i class="bi bi-file-earmark-text nav-icon"></i>
+                                @if (!isCollapsed) { <span>View Form</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Fee Challan">
+                            <NavLink class="nav-link" href="Student/Challan">
+                                <i class="bi bi-bank nav-icon"></i>
+                                @if (!isCollapsed) { <span>Fee Challan</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Admit Card">
+                            <NavLink class="nav-link" href="Student/AdmitCard">
+                                <i class="bi bi-credit-card-2-front nav-icon"></i>
+                                @if (!isCollapsed) { <span>Admit Card</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Exam Slip">
+                            <NavLink class="nav-link" href="Student/ExamSlip">
+                                <i class="bi bi-calendar-check nav-icon"></i>
+                                @if (!isCollapsed) { <span>Exam Slip</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Examination & Results">
+                            <NavLink class="nav-link" href="Student/Examination">
+                                <i class="bi bi-mortarboard nav-icon"></i>
+                                @if (!isCollapsed) { <span>Examination &amp; Results</span> }
+                            </NavLink>
+                        </div>
+                    </AuthorizeView>
+                    <AuthorizeView Roles="SuperAdmin,Admin">
+                        @if (!isCollapsed)
+                        {
+                            <div class="nav-section-label">EXECUTIVE COMMAND</div>
+                        }
+                        <div class="nav-item px-3" data-label="Overview">
+                            <NavLink class="nav-link" href="Administration" Match="NavLinkMatch.All">
+                                <i class="bi bi-bar-chart-line nav-icon"></i>
+                                @if (!isCollapsed) { <span>Overview</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Enrollment Hub">
+                            <NavLink class="nav-link" href="Administration/Enrollment">
+                                <i class="bi bi-clock-history nav-icon"></i>
+                                @if (!isCollapsed) { <span>Enrollment Hub</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Students Hub">
+                            <NavLink class="nav-link" href="Administration/Students">
+                                <i class="bi bi-people nav-icon"></i>
+                                @if (!isCollapsed) { <span>Students Hub</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Exam Hub">
+                            <NavLink class="nav-link" href="Administration/Exams">
+                                <i class="bi bi-journal-check nav-icon"></i>
+                                @if (!isCollapsed) { <span>Exam Hub</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Fees Hub">
+                            <NavLink class="nav-link" href="Administration/Fees">
+                                <i class="bi bi-cash-coin nav-icon"></i>
+                                @if (!isCollapsed) { <span>Fees Hub</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Colleges Hub">
+                            <NavLink class="nav-link" href="Administration/Colleges">
+                                <i class="bi bi-building nav-icon"></i>
+                                @if (!isCollapsed) { <span>Colleges Hub</span> }
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3" data-label="Settings Hub">
+                            <NavLink class="nav-link" href="Administration/Settings">
+                                <i class="bi bi-gear nav-icon"></i>
+                                @if (!isCollapsed) { <span>Settings Hub</span> }
+                            </NavLink>
+                        </div>
+                    </AuthorizeView>
+
+                    @if (!isCollapsed)
+                    {
+                        <div class="nav-section-label">ACCOUNT</div>
+                    }
+                    <div class="nav-item px-3" data-label="@(authContext.User.Identity?.Name ?? "Account")">
+                        <NavLink class="nav-link" href="Account/Manage">
+                            <i class="bi bi-person-circle nav-icon"></i>
+                            @if (!isCollapsed)
+                            {
+                                <span class="text-truncate" title="@authContext.User.Identity?.Name">
+                                    @authContext.User.Identity?.Name
+                                </span>
+                            }
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3" data-label="Sign Out">
+                        <form action="Account/Logout" method="post">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                            <button type="submit" class="nav-link logout-btn" aria-label="Sign out of portal">
+                                <i class="bi bi-box-arrow-left nav-icon"></i>
+                                @if (!isCollapsed) { <span>Sign Out</span> }
+                            </button>
+                        </form>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    @if (!isCollapsed)
+                    {
+                        <div class="nav-section-label">PORTAL ACCESS</div>
+                    }
+                    <div class="nav-item px-3" data-label="Create Account">
+                        <NavLink class="nav-link" href="Account/Register">
+                            <i class="bi bi-person-plus nav-icon"></i>
+                            @if (!isCollapsed) { <span>Create Account</span> }
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3" data-label="Student Login">
+                        <NavLink class="nav-link" href="Account/Login">
+                            <i class="bi bi-shield-lock nav-icon"></i>
+                            @if (!isCollapsed) { <span>Student Login</span> }
+                        </NavLink>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+        </nav>
+    </div>
+</div>
+
+@code {
+    private string? currentUrl;
+    private bool isCollapsed = false;
+    private bool isEnrollmentClosed = false;
+    private bool isEnrollmentSubmitted = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+
+        try
+        {
+            using var scope = ScopeFactory.CreateScope();
+            var configService = scope.ServiceProvider.GetRequiredService<SaluExamPortal.Application.Services.ISystemConfigurationService>();
+            var db = scope.ServiceProvider.GetRequiredService<SaluExamPortal.Application.Common.Interfaces.IApplicationDbContext>();
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<SaluExamPortal.Infrastructure.Persistence.ApplicationUser>>();
+
+            var windowStatus = await configService.GetEnrollmentWindowStatusAsync();
+            isEnrollmentClosed = windowStatus != null && !windowStatus.IsActive;
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var user = await userManager.GetUserAsync(authState.User);
+                if (user != null)
+                {
+                    isEnrollmentSubmitted = await db.Enrollments
+                        .AsNoTracking()
+                        .AnyAsync(e => e.UserId == user.Id && e.Status != EnrollmentStatus.Draft && e.Status != EnrollmentStatus.Rejected);
+                }
+            }
+        }
+        catch { }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", "salu-sidebar-collapsed");
+            isCollapsed = saved == "true";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleCollapse()
+    {
+        isCollapsed = !isCollapsed;
+        await JS.InvokeVoidAsync("localStorage.setItem", "salu-sidebar-collapsed", isCollapsed.ToString().ToLower());
+        StateHasChanged();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

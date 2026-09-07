@@ -1,0 +1,15 @@
+@using SaluExamPortal.Components.Features.Authentication.Shared
+@using SaluExamPortal.Components.Shared
+
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Features.Home.NotFound)">
+    <Found Context="routeData">
+        <SaluErrorBoundary>
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Shared.Layout.MainLayout)">
+                <NotAuthorized>
+                    <RedirectToLogin />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </SaluErrorBoundary>
+    </Found>
+</Router>

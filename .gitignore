@@ -1,0 +1,52 @@
+## Visual Studio / IDE cache & AI agent traces
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosct
+*.sln.docstates
+.vsidx
+copilot-chat/
+CopilotSnapshots/
+CopilotIndices/
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## AI tool traces & scratchpads
+.gemini/
+.agents/
+.cursor/
+.claude/
+.aider*
+.continue/
+
+## OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+## IDE & editor directories
+.idea/
+*.sln.iml
+
+## Logs
+*.log
+startup.log
+
+## Test results
+TestResults/
+[Tt]est[Rr]esult*/
+
+## User uploads & temporary storage
+uploads/
+backups/
+
+## Local configurations
+*.local
+

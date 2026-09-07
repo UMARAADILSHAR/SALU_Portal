@@ -1,0 +1,17 @@
+@* Reusable skeleton shimmer placeholder *@
+<div class="skeleton-card skeleton" style="@Style">
+    <div style="padding: 20px;">
+        <div class="skeleton skeleton-title"></div>
+        @for (int i = 0; i < Lines; i++)
+        {
+            <div class="skeleton skeleton-text" style="width: @(90 - i * 12)%"></div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Number of skeleton text lines to show.</summary>
+    [Parameter] public int Lines { get; set; } = 3;
+    /// <summary>Inline style overrides (e.g. height).</summary>
+    [Parameter] public string Style { get; set; } = "min-height: 200px;";
+}

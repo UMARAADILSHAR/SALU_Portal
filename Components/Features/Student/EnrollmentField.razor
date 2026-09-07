@@ -1,0 +1,10 @@
+<div class="enrollment-field @(Wide ? "wide" : "")">
+    <label>@Label <b>*</b></label>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public bool Wide { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

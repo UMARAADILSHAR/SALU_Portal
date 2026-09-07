@@ -1,0 +1,331 @@
+@page "/Administration/Settings"
+@attribute [Authorize(Policy = "UniversityAdministration")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Models
+@using SaluExamPortal.Application.Services
+@using MudBlazor
+@inject ISystemConfigurationService ConfigService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Settings Hub – SALU System Configuration Center</PageTitle>
+
+<div class="salu-admin-wrapper">
+    <!-- HERO HEADER -->
+    <div class="salu-hero-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="salu-hero-crest-holder">
+                    <img src="images/salu-logo.png" alt="SALU Crest" class="salu-hero-crest" />
+                </div>
+                <div>
+                    <div class="salu-hero-pill">
+                        <span class="salu-pulse-dot"></span>
+                        <span>CONTROLLER &amp; IT DIRECTIVE SYSTEM SETTINGS</span>
+                    </div>
+                    <h2 class="salu-hero-heading">SETTINGS HUB</h2>
+                    <p class="salu-hero-subheading">Centralized Runtime Configuration • Dynamic Tariffs • Tesseract OCR Tolerances • Security Toggles</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABBED CONFIGURATION PANELS -->
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Color="Color.Surface" SliderColor="Color.Primary" Class="mb-4">
+        
+        <!-- 1. GENERAL UNIVERSITY PROFILE -->
+        <MudTabPanel Text="General &amp; Portal" Icon="@Icons.Material.Filled.School">
+            <div class="p-4">
+                <MudCard Elevation="0">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="fw-bold text-navy">General Institutional Profile</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">Branding, contact endpoints, and official controller titles.</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="generalSettings.UniversityName" Label="University Full Title" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="generalSettings.SystemName" Label="Portal Display Title" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="generalSettings.ControllerOffice" Label="Controller Directorate Title" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="generalSettings.ContactEmail" Label="Official Contact Email" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="generalSettings.ContactPhone" Label="Official Helpline Phone" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="generalSettings.LogoUrl" Label="Institutional Logo Path" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="generalSettings.SupportAddress" Label="Campus Physical Address" Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex justify-content-end mt-4">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveGeneralSettingsAsync" Class="fw-bold">
+                                Save General Settings
+                            </MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </MudTabPanel>
+
+        <!-- 2. ENROLLMENT & FEES SETTINGS -->
+        <MudTabPanel Text="Enrollment &amp; Fees" Icon="@Icons.Material.Filled.RateReview">
+            <div class="p-4">
+                <MudCard Elevation="0">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="fw-bold text-navy">Enrollment Lifecycle &amp; Dynamic Fee Schedules</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">Configure access gates, registration dates, and bank challan tariffs.</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudSwitch @bind-Value="enrollmentSettings.IsEnrollmentOpen" Label="Enrollment Portal Open" Color="Color.Success" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudSwitch @bind-Value="enrollmentSettings.IsLateEnrollmentAllowed" Label="Allow Late Submissions" Color="Color.Warning" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudDatePicker @bind-Date="enrollmentSettings.EnrollmentStartDate" Label="Session Opening Date" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudDatePicker @bind-Date="enrollmentSettings.EnrollmentEndDate" Label="Session Closing Date" Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField @bind-Value="enrollmentSettings.BaseEnrollmentFee" Label="Base Enrollment Fee (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField @bind-Value="enrollmentSettings.LateEnrollmentFee" Label="Late Surcharge Fee (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField @bind-Value="enrollmentSettings.MigrationNocFee" Label="Migration / NOC Fee (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField @bind-Value="enrollmentSettings.ChallanValidityDays" Label="Challan Expiry Window (Days)" Variant="Variant.Outlined" Min="1" Max="30" />
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex justify-content-end mt-4">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveEnrollmentSettingsAsync" Class="fw-bold">
+                                Save Enrollment Settings
+                            </MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </MudTabPanel>
+
+        <!-- 3. EXAMINATION SETTINGS -->
+        <MudTabPanel Text="Examination" Icon="@Icons.Material.Filled.EventNote">
+            <div class="p-4">
+                <MudCard Elevation="0">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="fw-bold text-navy">Examination Lifecycle &amp; Admit Card Rules</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">Control registration dates, Anti-Skip Gatekeeper, and result publication.</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="examinationSettings.IsExamRegistrationOpen" Label="Exam Registration Open" Color="Color.Success" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="examinationSettings.AntiSkipGatekeeperEnforced" Label="Anti-Skip Ledger Enforced" Color="Color.Primary" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="examinationSettings.IsResultPublicationActive" Label="Results Published Live" Color="Color.Warning" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudDatePicker @bind-Date="examinationSettings.ExamStartDate" Label="Exam Session Start Date" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudDatePicker @bind-Date="examinationSettings.ExamEndDate" Label="Exam Session End Date" Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="examinationSettings.BaseExamFee" Label="Base Exam Fee (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="examinationSettings.LateExamFee" Label="Late Exam Surcharge (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" />
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex justify-content-end mt-4">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveExaminationSettingsAsync" Class="fw-bold">
+                                Save Examination Settings
+                            </MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </MudTabPanel>
+
+        <!-- 4. DOCUMENT & OCR RULES -->
+        <MudTabPanel Text="Documents &amp; OCR" Icon="@Icons.Material.Filled.DocumentScanner">
+            <div class="p-4">
+                <MudCard Elevation="0">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="fw-bold text-navy">Document Checklists &amp; Tesseract 5.2 OCR Engine</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">Configure candidate attachments and OCR authenticity score thresholds.</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="documentSettings.PhotoRequired" Label="Photograph Required" Color="Color.Primary" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="documentSettings.CnicRequired" Label="CNIC / B-Form Required" Color="Color.Primary" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="documentSettings.IntermediateMarksheetRequired" Label="Intermediate Marksheet Required" Color="Color.Primary" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="documentSettings.MatricCertificateRequired" Label="Matric Certificate Required" Color="Color.Primary" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="documentSettings.DomicilePrcRequired" Label="Domicile / PRC Required" Color="Color.Primary" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSwitch @bind-Value="documentSettings.OcrEnabled" Label="Tesseract 5.2 OCR Active" Color="Color.Info" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="documentSettings.MinimumAuthenticityConfidenceScore" Label="Minimum OCR Authenticity Match Score (%)" Variant="Variant.Outlined" Min="10" Max="100" />
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex justify-content-end mt-4">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveDocumentRequirementsAsync" Class="fw-bold">
+                                Save Document &amp; OCR Settings
+                            </MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </MudTabPanel>
+
+        <!-- 5. SECURITY & FEATURE TOGGLES -->
+        <MudTabPanel Text="Security &amp; Toggles" Icon="@Icons.Material.Filled.Security">
+            <div class="p-4">
+                <MudCard Elevation="0">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="fw-bold text-navy">Security Controls &amp; Feature Flags</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">Emergency maintenance mode, authentication limits, and communication switches.</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="6">
+                                <MudSwitch @bind-Value="securitySettings.MaintenanceMode" Label="Global Maintenance Mode" Color="Color.Error" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudSwitch @bind-Value="securitySettings.RequireTwoFactorForAdmin" Label="Require 2FA for Administrators" Color="Color.Primary" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="securitySettings.MaintenanceNotice" Label="Maintenance Notice Displayed to Users" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudSwitch @bind-Value="securitySettings.SendEmailNotifications" Label="Email Notifications Active" Color="Color.Success" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudSwitch @bind-Value="securitySettings.SendSmsNotifications" Label="SMS Gateway Active" Color="Color.Default" />
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex justify-content-end mt-4">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveSecuritySettingsAsync" Class="fw-bold">
+                                Save Security Settings
+                            </MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </MudTabPanel>
+
+    </MudTabs>
+</div>
+
+<style>
+    .salu-admin-wrapper { padding: 24px; background-color: #f1f5f9; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+    .salu-hero-header { background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%); color: white; padding: 24px 32px; border-radius: 12px; }
+    .salu-hero-crest-holder { width: 56px; height: 56px; background: white; border-radius: 8px; padding: 3px; display: flex; align-items: center; justify-content: center; }
+    .salu-hero-crest { width: 100%; height: 100%; object-fit: contain; }
+    .salu-hero-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
+    .salu-pulse-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; }
+    .salu-hero-heading { font-size: 1.4rem; font-weight: 800; margin: 0; }
+    .salu-hero-subheading { font-size: 0.8rem; color: #cbd5e1; margin: 2px 0 0 0; }
+</style>
+
+@code {
+    private GeneralSettings generalSettings = new();
+    private EnrollmentSettings enrollmentSettings = new();
+    private ExaminationSettings examinationSettings = new();
+    private DocumentRequirementsSettings documentSettings = new();
+    private SecurityAndFeatureSettings securitySettings = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadDataAsync();
+    }
+
+    private async Task ReloadDataAsync()
+    {
+        generalSettings = await ConfigService.GetGeneralSettingsAsync();
+        enrollmentSettings = await ConfigService.GetEnrollmentSettingsAsync();
+        examinationSettings = await ConfigService.GetExaminationSettingsAsync();
+        documentSettings = await ConfigService.GetDocumentRequirementsAsync();
+        securitySettings = await ConfigService.GetSecuritySettingsAsync();
+    }
+
+    private async Task SaveGeneralSettingsAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        await ConfigService.SaveGeneralSettingsAsync(generalSettings, auth.User);
+        Snackbar.Add("General Institutional Settings saved.", Severity.Success);
+        await ReloadDataAsync();
+    }
+
+    private async Task SaveEnrollmentSettingsAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        await ConfigService.SaveEnrollmentSettingsAsync(enrollmentSettings, auth.User);
+        Snackbar.Add("Enrollment Settings saved.", Severity.Success);
+        await ReloadDataAsync();
+    }
+
+    private async Task SaveExaminationSettingsAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        await ConfigService.SaveExaminationSettingsAsync(examinationSettings, auth.User);
+        Snackbar.Add("Examination Settings saved.", Severity.Success);
+        await ReloadDataAsync();
+    }
+
+    private async Task SaveDocumentRequirementsAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        await ConfigService.SaveDocumentRequirementsAsync(documentSettings, auth.User);
+        Snackbar.Add("Document & OCR Settings saved.", Severity.Success);
+        await ReloadDataAsync();
+    }
+
+    private async Task SaveSecuritySettingsAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        await ConfigService.SaveSecuritySettingsAsync(securitySettings, auth.User);
+        Snackbar.Add("Security & Feature Toggles saved.", Severity.Success);
+        await ReloadDataAsync();
+    }
+}

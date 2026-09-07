@@ -1,0 +1,61 @@
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
+@using SaluExamPortal.Components.Shared
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<Toast />
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 salu-top-row-gradient">
+            <span class="salu-header-title">SHAH ABDUL LATIF UNIVERSITY EXAMINATION PORTAL</span>
+            <button class="dark-mode-toggle" @onclick="ToggleDarkMode"
+                    title="@(isDark ? "Switch to Light Mode" : "Switch to Dark Mode")"
+                    aria-label="@(isDark ? "Switch to Light Mode" : "Switch to Dark Mode")">
+                <i class="bi @(isDark ? "bi-sun-fill" : "bi-moon-fill")"></i>
+            </button>
+        </div>
+
+        <article class="content px-4 page-body">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private bool isDark = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Restore saved theme preference
+            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", "salu-theme");
+            isDark = saved == "dark";
+            await JS.InvokeVoidAsync("saluTheme.set", isDark ? "dark" : "light");
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        isDark = !isDark;
+        var theme = isDark ? "dark" : "light";
+        await JS.InvokeVoidAsync("saluTheme.set", theme);
+        await JS.InvokeVoidAsync("localStorage.setItem", "salu-theme", theme);
+    }
+}

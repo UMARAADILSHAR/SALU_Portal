@@ -1,0 +1,165 @@
+@page "/Student/ExamSlip"
+@attribute [Authorize(Policy = "Student")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Infrastructure.Persistence
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
+@inject IJSRuntime JS
+
+<PageTitle>Examination Slip &amp; Date Sheet - SALU</PageTitle>
+
+<div class="salu-portal-app p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+        <div>
+            <h2 class="m-0 text-navy fw-bold">Examination Schedule &amp; Seat Slip</h2>
+            <p class="text-muted m-0">Shah Abdul Latif University — Examination Directorate</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Student" class="btn btn-outline">← Back to Dashboard</a>
+            <button type="button" class="btn btn-primary" @onclick="PrintSlip">🖨 Print Exam Slip</button>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="card p-5 text-center">
+            <div class="spinner-border text-primary mx-auto mb-2" role="status"></div>
+            <p class="text-muted">Loading examination date sheet...</p>
+        </div>
+    }
+    else if (enrollment is null)
+    {
+        <div class="card p-5 text-center">
+            <div class="fs-1 mb-2">📋</div>
+            <h4>No Active Examination Registration</h4>
+            <p class="text-muted">You do not have an active enrollment application for the current examination cycle.</p>
+            <div class="mt-3">
+                <a href="/Student/Enrollment" class="btn btn-accent">Submit Enrollment</a>
+            </div>
+        </div>
+    }
+    else
+    {
+         <div class="print-document print-exam-slip">
+         <div class="card p-4 mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Candidate Roll Number</small>
+                    <strong class="fs-5 text-navy">@(enrollment.RollNumber ?? "SALU-26-F-01492")</strong>
+         </div>
+         </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Allotted Examination Center</small>
+                    <strong class="d-block text-dark">Main Examination Hall, SALU Khairpur</strong>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Room / Seat Assignment</small>
+                    <strong class="d-block text-success">Room 12 &nbsp;|&nbsp; Seat # 44</strong>
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <span class="badge bg-success px-3 py-2">Confirmed Allotment</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <h5 class="fw-bold text-navy mb-3">Official Examination Date-Sheet (Semester 1)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Sr.</th>
+                            <th>Date &amp; Day</th>
+                            <th>Timing / Shift</th>
+                            <th>Paper / Subject Title</th>
+                            <th>Course Code</th>
+                            <th>Room &amp; Hall</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><strong>15 October @DateTime.Now.Year</strong> (Wednesday)</td>
+                            <td>09:00 AM – 12:00 PM (Morning)</td>
+                            <td>Introduction to Information Technology</td>
+                            <td><span class="badge bg-secondary">CSC-101</span></td>
+                            <td>Room 12 (Seat 44)</td>
+                            <td><span class="badge bg-info text-dark">Scheduled</span></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><strong>18 October @DateTime.Now.Year</strong> (Saturday)</td>
+                            <td>09:00 AM – 12:00 PM (Morning)</td>
+                            <td>Functional English &amp; Communication Skills</td>
+                            <td><span class="badge bg-secondary">ENG-101</span></td>
+                            <td>Room 12 (Seat 44)</td>
+                            <td><span class="badge bg-info text-dark">Scheduled</span></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><strong>21 October @DateTime.Now.Year</strong> (Tuesday)</td>
+                            <td>09:00 AM – 12:00 PM (Morning)</td>
+                            <td>Pakistan Studies &amp; Islamic Ideology</td>
+                            <td><span class="badge bg-secondary">PST-101</span></td>
+                            <td>Room 12 (Seat 44)</td>
+                            <td><span class="badge bg-info text-dark">Scheduled</span></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><strong>25 October @DateTime.Now.Year</strong> (Saturday)</td>
+                            <td>09:00 AM – 12:00 PM (Morning)</td>
+                            <td>Calculus &amp; Analytical Geometry</td>
+                            <td><span class="badge bg-secondary">MTH-101</span></td>
+                            <td>Room 12 (Seat 44)</td>
+                            <td><span class="badge bg-info text-dark">Scheduled</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 p-3 bg-light rounded border">
+                <h6 class="fw-bold text-navy">Exam Day Guidelines:</h6>
+                <ul class="mb-0 ps-3 small text-muted">
+                    <li>Entry gates close strictly 15 minutes before the start of the paper.</li>
+                    <li>Possession of cheating materials, notes, or smart devices leads to immediate disqualification.</li>
+                    <li>In case of center inquiry, contact the Examination Control Room at <strong>0243-9280051</strong>.</li>
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private ApplicationUser? user;
+    private EntityEnrollment? enrollment;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            user = await UserManager.GetUserAsync(authState.User);
+            if (user != null)
+            {
+                enrollment = await Db.Enrollments
+                    .AsNoTracking()
+                    .Include(e => e.College)
+                    .OrderByDescending(e => e.CreatedAt)
+                    .FirstOrDefaultAsync(e => e.UserId == user.Id);
+            }
+        }
+        loading = false;
+    }
+
+    private async Task PrintSlip()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+}

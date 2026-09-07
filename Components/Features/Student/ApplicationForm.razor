@@ -1,0 +1,294 @@
+@page "/Student/Form"
+@attribute [Authorize(Policy = "Student")]
+@rendermode InteractiveServer
+@using System.Text.Json
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Application.Services
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
+@inject IJSRuntime JS
+
+<PageTitle>Enrollment Application Form - SALU</PageTitle>
+
+<div class="salu-portal-app p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+        <div>
+            <h2 class="m-0 text-navy fw-bold">Enrollment Application Form</h2>
+            <p class="text-muted m-0">Shah Abdul Latif University — Official IOC Enrollment Record</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Student" class="btn btn-outline">← Back to Dashboard</a>
+            <button type="button" class="btn btn-primary" @onclick="PrintForm">🖨 Print Official Form</button>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="card p-5 text-center">
+            <div class="spinner-border text-primary mx-auto mb-2" role="status"></div>
+            <p class="text-muted">Loading your application form...</p>
+        </div>
+    }
+    else if (enrollment is null)
+    {
+        <div class="card p-5 text-center">
+            <div class="fs-1 mb-2">📝</div>
+            <h4>No Application Submitted Yet</h4>
+            <p class="text-muted">You have not submitted an enrollment application yet.</p>
+            <div class="mt-3">
+                <a href="/Student/Enrollment" class="btn btn-accent">Submit Application Now</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card p-4 admit-card-paper print-document print-enrollment-form">
+            <!-- OFFICIAL HEADER -->
+            <div class="d-flex align-items-center justify-content-between pb-3 border-bottom border-2 border-navy">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="images/salu-logo.png" alt="SALU Crest" style="width:65px;height:65px;object-fit:contain;" />
+                    <div>
+                        <h4 class="m-0 fw-bold text-navy" style="font-family:'Merriweather',serif;">SHAH ABDUL LATIF UNIVERSITY</h4>
+                        <div class="small fw-semibold text-muted">DIRECTORATE OF ADMISSIONS &amp; EXAMINATIONS · KHAIRPUR</div>
+                        <div class="badge bg-navy text-white mt-1 px-3 py-1" style="font-size:0.75rem;">
+                            ONLINE ENROLLMENT APPLICATION FORM
+                        </div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold text-navy">Ref: @enrollment.ReferenceNumber</div>
+                    <small class="text-muted d-block">Dated: @enrollment.CreatedAt.ToString("dd MMMM yyyy")</small>
+                    <span class="badge @(enrollment.Status == EnrollmentStatus.Approved ? "bg-success" : "bg-warning text-dark") mt-1">
+                        Status: @enrollment.Status
+                    </span>
+                </div>
+            </div>
+
+            <!-- APPLICANT & COLLEGE DETAILS -->
+            <div class="row g-3 my-3">
+                <div class="col-9">
+                    <table class="table table-bordered table-sm m-0 admit-table" style="font-size:0.8rem;">
+                        <tbody>
+                            <tr>
+                                <th style="width:28%;">Admitted College</th>
+                                <td colspan="3"><strong>@(enrollment.College?.Name ?? "Govt. Superior Science College Khairpur")</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Admitted Program</th>
+                                <td><strong>@enrollment.Program</strong></td>
+                                <th style="width:20%;">Academic Year</th>
+                                <td>@(enrollment.Session ?? $"{DateTime.Now.Year}-{DateTime.Now.Year+1}")</td>
+                            </tr>
+                            <tr>
+                                <th>Full Name</th>
+                                <td><strong>@(user?.FullName ?? "Candidate")</strong></td>
+                                <th>S/o, D/o, W/o</th>
+                                <td>@(enrollment.SoDoWo ?? "S/O") @enrollment.FatherName</td>
+                            </tr>
+                            <tr>
+                                <th>CNIC / B-Form</th>
+                                <td>@(user?.Cnic ?? enrollment.ReferenceNumber)</td>
+                                <th>Contact No</th>
+                                <td>@(enrollment.ContactNumber ?? user?.PhoneNumber ?? "—")</td>
+                            </tr>
+                            <tr>
+                                <th>Date of Birth</th>
+                                <td>@enrollment.DateOfBirth.ToString("dd/MM/yyyy")</td>
+                                <th>Gender</th>
+                                <td>@enrollment.Gender</td>
+                            </tr>
+                            <tr>
+                                <th>Domicile District</th>
+                                <td>@enrollment.DomicileDistrict (@enrollment.DomicileProvince)</td>
+                                <th>Religion / Nation</th>
+                                <td>@enrollment.Religion / @enrollment.Nationality</td>
+                            </tr>
+                            <tr>
+                                <th>Postal Address</th>
+                                <td colspan="3">@enrollment.Address</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-3 text-center border rounded p-2 bg-light d-flex flex-column align-items-center justify-content-center">
+                    @if (!string.IsNullOrWhiteSpace(enrollment.PhotoUrl))
+                    {
+                        <img src="@enrollment.PhotoUrl" alt="Applicant Photo" class="img-fluid rounded border" style="max-height:150px;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div class="text-center p-3 border rounded bg-white w-100" style="height:140px;display:flex;align-items:center;justify-content:center;">
+                            <span class="text-muted small">Passport Photo</span>
+                        </div>
+                    }
+                    <small class="text-muted mt-2 fw-bold" style="font-size:0.7rem;">Official Photograph</small>
+                </div>
+            </div>
+
+            <!-- ACADEMIC QUALIFICATIONS -->
+            <h6 class="fw-bold text-navy border-bottom pb-1 mb-2 mt-3" style="font-size:0.88rem;">Academic Qualifications</h6>
+            <table class="table table-bordered table-sm text-center align-middle" style="font-size:0.75rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Sr.</th>
+                        <th>Examination / Qualification</th>
+                        <th>Seat / Roll No</th>
+                        <th>Passing Year</th>
+                        <th>Marks Obtained</th>
+                        <th>Total Marks</th>
+                        <th>Grade</th>
+                        <th>Board / University</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (parsedAcademics.Count > 0)
+                    {
+                        @foreach (var rec in parsedAcademics.Select((r, i) => (r, i)))
+                        {
+                            <tr>
+                                <td>@(rec.i + 1)</td>
+                                <td><strong>@rec.r.Qualification</strong></td>
+                                <td>@rec.r.SeatNo</td>
+                                <td>@rec.r.PassingYear</td>
+                                <td>@rec.r.MarksObtained</td>
+                                <td>@rec.r.TotalMarks</td>
+                                <td><span class="badge bg-secondary">@rec.r.GradeDivision</span></td>
+                                <td>@rec.r.BoardUniversity</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>1</td>
+                            <td><strong>Intermediate / HSSC</strong></td>
+                            <td>73174</td>
+                            <td>2025</td>
+                            <td>799</td>
+                            <td>1100</td>
+                            <td>Grade A</td>
+                            <td>BISE Sukkur</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><strong>Matric / SSC</strong></td>
+                            <td>179175</td>
+                            <td>2023</td>
+                            <td>759</td>
+                            <td>850</td>
+                            <td>Grade A</td>
+                            <td>BISE Sukkur</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- UPLOADED DOCUMENTS CHECKLIST -->
+            <h6 class="fw-bold text-navy border-bottom pb-1 mb-2 mt-3" style="font-size:0.88rem;">Verified Documents Attached</h6>
+            <div class="row g-2 mb-3" style="font-size:0.75rem;">
+                @if (parsedDocs.Count > 0)
+                {
+                    @foreach (var d in parsedDocs)
+                    {
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded bg-light d-flex align-items-center gap-2">
+                                <span>📄</span>
+                                <div class="text-truncate">
+                                    <strong>@d.DocumentType</strong><br />
+                                    <small class="text-muted">@d.FileName</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-md-4"><div class="p-2 border rounded bg-light">✓ Copy of CNIC / B-Form Verified</div></div>
+                    <div class="col-md-4"><div class="p-2 border rounded bg-light">✓ Intermediate Marks Certificate Attached</div></div>
+                    <div class="col-md-4"><div class="p-2 border rounded bg-light">✓ Matriculation Marks Certificate Attached</div></div>
+                }
+            </div>
+
+            <!-- DECLARATION & SIGNATURES -->
+            <div class="mt-4 pt-3 border-top">
+                <p class="small text-muted mb-4" style="line-height:1.6;">
+                    I hereby declare that the particulars provided above are correct to the best of my knowledge and belief. I agree to abide by all the rules and regulations of Shah Abdul Latif University (SALU), Khairpur.
+                </p>
+                <div class="row pt-3 text-center" style="font-size:0.75rem;">
+                    <div class="col-4">
+                        <div class="border-top border-dark pt-1">
+                            Applicant Signature
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-top border-dark pt-1">
+                            Principal / Head of College
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-top border-dark pt-1">
+                            Director of Admissions, SALU
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private ApplicationUser? user;
+    private EntityEnrollment? enrollment;
+    private List<AcademicRecordItem> parsedAcademics = [];
+    private List<UploadedDocumentItem> parsedDocs = [];
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            user = await UserManager.GetUserAsync(authState.User);
+            if (user != null)
+            {
+                enrollment = await Db.Enrollments
+                    .Include(e => e.College)
+                    .OrderByDescending(e => e.CreatedAt)
+                    .FirstOrDefaultAsync(e => e.UserId == user.Id);
+
+                if (enrollment != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(enrollment.AcademicRecordsJson))
+                    {
+                        try
+                        {
+                            parsedAcademics = JsonSerializer.Deserialize<List<AcademicRecordItem>>(enrollment.AcademicRecordsJson) ?? [];
+                        }
+                        catch { }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(enrollment.DocumentsJson))
+                    {
+                        try
+                        {
+                            parsedDocs = JsonSerializer.Deserialize<List<UploadedDocumentItem>>(enrollment.DocumentsJson) ?? [];
+                        }
+                        catch { }
+                    }
+                }
+            }
+        }
+        loading = false;
+    }
+
+    private async Task PrintForm()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+}

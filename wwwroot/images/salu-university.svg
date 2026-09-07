@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" role="img" aria-labelledby="title desc">
+  <title id="title">Shah Abdul Latif University</title>
+  <desc id="desc">A stylized university building illustration in SALU colors.</desc>
+  <defs>
+	<linearGradient id="sky" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#071f3d"/><stop offset="1" stop-color="#0d705f"/></linearGradient>
+	<linearGradient id="building" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f9f2df"/><stop offset="1" stop-color="#d9bd83"/></linearGradient>
+  </defs>
+  <rect width="900" height="900" fill="url(#sky)"/>
+  <circle cx="710" cy="160" r="92" fill="#f5d58c" opacity=".85"/>
+  <path d="M0 650 Q180 560 350 650 T700 630 T900 650 V900 H0Z" fill="#062d38" opacity=".8"/>
+  <path d="M110 650 V430 L450 250 790 430 V650Z" fill="url(#building)" stroke="#fff8e9" stroke-width="8"/>
+  <path d="M80 430 L450 220 820 430" fill="none" stroke="#e5c06f" stroke-width="22"/>
+  <path d="M450 220 V120" stroke="#e5c06f" stroke-width="14"/><path d="M450 120 L515 155 450 180Z" fill="#e5c06f"/>
+  <path d="M180 500 H720 M180 580 H720" stroke="#b69252" stroke-width="9"/>
+  <g fill="#123e4c" stroke="#f5dfad" stroke-width="5"><path d="M220 490 H300 V650 H220Z"/><path d="M350 490 H430 V650 H350Z"/><path d="M470 490 H550 V650 H470Z"/><path d="M600 490 H680 V650 H600Z"/></g>
+  <path d="M390 650 V545 Q450 470 510 545 V650Z" fill="#0b5260" stroke="#f5dfad" stroke-width="8"/>
+  <text x="450" y="755" text-anchor="middle" fill="#fff8e9" font-family="Georgia,serif" font-size="34" font-weight="bold">SHAH ABDUL LATIF UNIVERSITY</text>
+  <text x="450" y="800" text-anchor="middle" fill="#f5d58c" font-family="Arial,sans-serif" font-size="22" letter-spacing="5">KHAIRPUR • SINDH</text>
+</svg>

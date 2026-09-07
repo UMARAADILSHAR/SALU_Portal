@@ -1,0 +1,3751 @@
+@page "/Student/Enrollment"
+@attribute [Authorize(Policy = "Student")]
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Application.Services
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@inject ApplicationDbContext Db
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IEnrollmentService EnrollmentService
+@inject IEnrollmentCorrectionService EnrollmentCorrectionService
+@inject IFeeCalculationService FeeCalculationService
+@inject ISystemConfigurationService ConfigService
+@inject IFileStorageService FileStorageService
+@inject IDocumentOcrService DocumentOcrService
+@inject IDocumentAuthenticityService DocumentAuthenticityService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@inject IToastService Toast
+
+<PageTitle>SALU – Student Enrollment Portal</PageTitle>
+
+<div class="salu-enrollment-container salu-gradient-surface">
+    <!-- INSTITUTIONAL HERO HEADER -->
+    <EnrollmentHeader ActiveAcademicYear="activeAcademicYear" />
+
+    <!-- MAIN FORM CONTAINER -->
+    <main class="salu-main-content">
+        
+        <!-- CLOSED WINDOW ALERT BANNER -->
+        @if (isWindowClosed && !isSubmitted)
+        {
+            <div class="salu-closed-card">
+                <div class="closed-icon"><i class="bi bi-calendar-x-fill"></i></div>
+                <div>
+                    <h4 class="closed-title">ENROLLMENT PORTAL CLOSED</h4>
+                    <p class="closed-desc">@(windowStatus?.StatusDetailMessage ?? "Enrollment submissions are currently disabled by the Controller of Examinations. All submission tabs are locked.")</p>
+                </div>
+            </div>
+        }
+
+        <!-- ALREADY SUBMITTED BANNER -->
+        @if (isSubmitted)
+        {
+            <div class="salu-submitted-card">
+                <div class="salu-submitted-left">
+                    <div class="salu-sub-icon">✓</div>
+                    <div>
+                        <h4 class="salu-sub-title">APPLICATION SUCCESSFULLY SUBMITTED</h4>
+                        <div class="salu-sub-meta">
+                            Reference Number: <strong class="salu-ref-highlight">@existingEnrollment!.ReferenceNumber</strong> &nbsp;·&nbsp;
+                            Status: <span class="salu-status-pill @(existingEnrollment.Status == EnrollmentStatus.Approved ? "pill-approved" : "pill-pending")">@existingEnrollment.Status.ToString().ToUpperInvariant()</span> &nbsp;·&nbsp;
+                            Submitted: @existingEnrollment.CreatedAt.ToString("dd MMM yyyy, hh:mm tt").ToUpperInvariant()
+                        </div>
+                    </div>
+                </div>
+                <div class="salu-sub-actions">
+                    <a href="/Student/Form" class="btn btn-salu-outline">📄 VIEW FORM</a>
+                    <a href="/Student/Challan" class="btn btn-salu-gold">🏦 FEE CHALLAN</a>
+                    <a href="/Student/AdmitCard" class="btn btn-salu-outline">🎫 ADMIT CARD</a>
+                    <a href="/Student" class="btn btn-salu-primary">🏠 DASHBOARD</a>
+                </div>
+            </div>
+        }
+        else if (isDraftResumed)
+        {
+            <div class="salu-draft-banner">
+                <span class="draft-badge">💾 DRAFT RESUMED</span>
+                <span class="draft-text">Your progress has been auto-saved. You can continue filling your application or edit any section.</span>
+            </div>
+        }
+
+        <!-- GLOBAL ERROR ALERT -->
+        @if (!string.IsNullOrWhiteSpace(generalErrorMessage))
+        {
+            <div class="salu-alert-banner alert-danger-custom" role="alert">
+                <div class="alert-icon">⚠️</div>
+                <div class="alert-body">
+                    <strong>VALIDATION NOTICE:</strong>
+                    <span>@generalErrorMessage</span>
+                </div>
+                <button type="button" class="alert-close" @onclick="ClearGeneralError">×</button>
+            </div>
+        }
+
+        <!-- 7-STEP INTERACTIVE PROGRESS STEPPER -->
+        @if (currentStep <= TOTAL_STEPS)
+        {
+            <div class="salu-stepper-card @(isSubmitted ? "salu-stepper-locked" : isWindowClosed ? "salu-stepper-closed" : "")">
+                @if (isSubmitted)
+                {
+                    <div class="salu-stepper-status-ribbon ribbon-locked">
+                        <i class="bi bi-lock-fill"></i>
+                        <span>APPLICATION SUBMITTED — TABS ARE AUTO-DISABLED &amp; LOCKED IN READ-ONLY MODE</span>
+                    </div>
+                }
+                else if (isWindowClosed)
+                {
+                    <div class="salu-stepper-status-ribbon ribbon-closed">
+                        <i class="bi bi-calendar-x-fill"></i>
+                        <span>ENROLLMENT WINDOW CLOSED — REGISTRATION TABS ARE GREYED OUT AND DISABLED</span>
+                    </div>
+                }
+
+                <div class="salu-stepper-track">
+                    @for (int i = 1; i <= TOTAL_STEPS; i++)
+                    {
+                        var stepIndex = i;
+                        var isCurrent = currentStep == stepIndex;
+                        var isDone = isSubmitted || completedSteps.Contains(stepIndex);
+                        var isAccessible = isSubmitted || stepIndex <= currentStep || completedSteps.Contains(stepIndex - 1);
+                        var isDisabled = isSubmitted || isWindowClosed;
+                        
+                        <div class="salu-step-node @(isCurrent ? "node-active" : isDone ? "node-done" : "node-pending") @(isDisabled || (!isAccessible && !isDone) ? "node-locked" : "")" 
+                             @onclick="() => NavigateToStepAsync(stepIndex)">
+                            <div class="salu-node-circle">
+                                @if (isSubmitted)
+                                {
+                                    <i class="bi bi-lock-fill" style="font-size: 0.8rem;"></i>
+                                }
+                                else if (isDone)
+                                {
+                                    <span class="check-mark">✓</span>
+                                }
+                                else if (!isAccessible)
+                                {
+                                    <i class="bi bi-lock-fill" style="font-size: 0.72rem;"></i>
+                                }
+                                else
+                                {
+                                    <span>@stepIndex</span>
+                                }
+                            </div>
+                            <div class="salu-node-info">
+                                <span class="node-title">@GetStepShortTitle(stepIndex)</span>
+                                <span class="node-sub">@GetStepSubTitle(stepIndex)</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- PROGRESS BAR FILL -->
+                <div class="salu-progress-bar-wrap">
+                    <div class="salu-progress-fill" style="width: @(isSubmitted ? 100 : GetStepProgressPercent())%"></div>
+                </div>
+            </div>
+        }
+
+        <!-- ========================================================================= -->
+        <!-- STEP 1: PERSONAL & INSTITUTIONAL DEMOGRAPHIC PROFILE -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 1)
+        {
+            <div class="salu-step-section animate-fade-in">
+                
+                <!-- SECTION 1: CASCADING DISTRICT -> COLLEGE -> PROGRAM -->
+                <div class="salu-card mb-4">
+                    <div class="salu-card-header">
+                        <div class="card-header-icon">🏫</div>
+                        <div>
+                            <h3 class="card-header-title">1. ADMITTED DISTRICT, COLLEGE &amp; DEGREE PROGRAM</h3>
+                            <p class="card-header-desc">Select your admitted District first, then choose the College and Degree Program.</p>
+                        </div>
+                    </div>
+                    <div class="salu-card-body">
+                        <div class="salu-form-grid grid-3">
+                            
+                            <!-- 1. DISTRICT DROPDOWN -->
+                            <div class="salu-input-group">
+                                <label class="salu-label">1. Admitted District <span class="req">*</span></label>
+                                <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.AdmittedDistrict) ? "is-invalid" : "")"
+                                        @bind="Input.AdmittedDistrict" @bind:after="OnDistrictChanged">
+                                    <option value="">-- SELECT ADMITTED DISTRICT --</option>
+                                    @foreach (var d in districtOptions)
+                                    {
+                                        <option value="@d">@d</option>
+                                    }
+                                </select>
+                                @if (showErrors && string.IsNullOrWhiteSpace(Input.AdmittedDistrict))
+                                {
+                                    <div class="salu-field-error">Admitted District is mandatory.</div>
+                                }
+                            </div>
+
+                            <!-- 2. COLLEGE DROPDOWN (FILTERED BY DISTRICT) -->
+                            <div class="salu-input-group">
+                                <label class="salu-label">2. Admitted College <span class="req">*</span></label>
+                                <select class="salu-select @(showErrors && !Input.CollegeId.HasValue ? "is-invalid" : "")"
+                                        @bind="Input.CollegeId" @bind:after="OnCollegeChanged"
+                                        disabled="@(string.IsNullOrWhiteSpace(Input.AdmittedDistrict))">
+                                    @if (string.IsNullOrWhiteSpace(Input.AdmittedDistrict))
+                                    {
+                                        <option value="">-- FIRST SELECT DISTRICT ABOVE --</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="">-- SELECT COLLEGE (@filteredColleges.Count AVAILABLE) --</option>
+                                        @foreach (var c in filteredColleges)
+                                        {
+                                            <option value="@c.Id">@c.Name.ToUpperInvariant() (@c.Code)</option>
+                                        }
+                                    }
+                                </select>
+                                @if (showErrors && !Input.CollegeId.HasValue)
+                                {
+                                    <div class="salu-field-error">College selection is required.</div>
+                                }
+                            </div>
+
+                            <!-- 3. PROGRAM DROPDOWN (FILTERED BY COLLEGE) -->
+                            <div class="salu-input-group">
+                                <label class="salu-label">3. Admitted Program <span class="req">*</span></label>
+                                <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.Program) ? "is-invalid" : "")"
+                                        @bind="Input.Program" @bind:after="OnProgramChanged"
+                                        disabled="@(!Input.CollegeId.HasValue)">
+                                    @if (!Input.CollegeId.HasValue)
+                                    {
+                                        <option value="">-- FIRST SELECT COLLEGE ABOVE --</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="">-- SELECT DEGREE PROGRAM (@availablePrograms.Count AVAILABLE) --</option>
+                                        @foreach (var p in availablePrograms)
+                                        {
+                                            <option value="@p.Code">@p.Name.ToUpperInvariant() (@p.Code)</option>
+                                        }
+                                    }
+                                </select>
+                                @if (showErrors && string.IsNullOrWhiteSpace(Input.Program))
+                                {
+                                    <div class="salu-field-error">Degree program is required.</div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- LIVE FEE ADVISORY BADGE -->
+                        <div class="salu-fee-advisory-bar mt-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fee-icon">💳</span>
+                                <div>
+                                    <span class="fee-text">ESTIMATED ENROLLMENT FEE: <strong>PKR @feeBreakdown.TotalFee.ToString("N2")</strong></span>
+                                    @if (feeBreakdown.IsNonAffiliatedDistrict)
+                                    {
+                                        <span class="badge-surcharge ms-2">NON-AFFILIATED DISTRICT SURCHARGE APPLICABLE</span>
+                                    }
+                                </div>
+                            </div>
+                            <span class="fee-note">Official Bank Challan generated on final step.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: CANDIDATE BIO-DATA & PASSPORT PHOTO -->
+                <div class="salu-card">
+                    <div class="salu-card-header">
+                        <div class="card-header-icon">👤</div>
+                        <div>
+                            <h3 class="card-header-title">2. CANDIDATE BIODATA &amp; PASSPORT PHOTO</h3>
+                            <p class="card-header-desc">Account registration details are locked to prevent tampering. Fill remaining demographics in UPPERCASE.</p>
+                        </div>
+                    </div>
+                    <div class="salu-card-body">
+                        <div class="salu-bio-layout">
+                            
+                            <!-- LEFT: FORM CONTROLS -->
+                            <div class="salu-bio-fields">
+                                
+                                <!-- ROW 1: ACADEMIC YEAR + FULL NAME (LOCKED) + RELATION -->
+                                <div class="salu-form-grid grid-3 mb-3">
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Academic Year <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.AcademicYearName) ? "is-invalid" : "")" @bind="Input.AcademicYearName">
+                                            @foreach (var y in academicYearsList)
+                                             {
+                                                <option value="@y.Name">@y.Name</option>
+                                            }
+                                        </select>
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.AcademicYearName))
+                                        {
+                                            <div class="salu-field-error">Academic year is required.</div>
+                                        }
+                                    </div>
+
+                                    <!-- FULL NAME: LOCKED FROM SIGNUP -->
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">
+                                            Candidate Full Name <span class="lock-indicator">🔒 Locked from Sign-Up</span>
+                                        </label>
+                                        <input type="text" class="salu-input salu-locked-input" value="@Input.FullName" readonly disabled />
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Relation <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.SoDoWo) ? "is-invalid" : "")" @bind="Input.SoDoWo" @bind:after="OnFieldChanged">
+                                            <option value="">-- SELECT RELATION --</option>
+                                            <option value="S/O">S/O (SON OF)</option>
+                                            <option value="D/O">D/O (DAUGHTER OF)</option>
+                                            <option value="W/O">W/O (WIFE OF)</option>
+                                        </select>
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.SoDoWo))
+                                        {
+                                            <div class="salu-field-error">Relation is mandatory.</div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- ROW 2: FATHER NAME + SURNAME + CNIC (LOCKED) -->
+                                <div class="salu-form-grid grid-3 mb-3">
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Father's Name (F/Name) <span class="req">*</span></label>
+                                        <input type="text" class="salu-input @(showErrors && string.IsNullOrWhiteSpace(Input.FatherName) ? "is-invalid" : "")"
+                                               @bind="Input.FatherName" @bind:event="oninput" @bind:after="OnFieldChanged"
+                                               placeholder="E.G. MUHAMMAD ALI" />
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.FatherName))
+                                        {
+                                            <div class="salu-field-error">Father's name is required.</div>
+                                        }
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Surname / Caste</label>
+                                        <input type="text" class="salu-input" @bind="Input.Surname" @bind:event="oninput" @bind:after="OnFieldChanged" placeholder="E.G. SOOMRO / ABRO" />
+                                    </div>
+
+                                    <!-- CNIC: LOCKED FROM SIGNUP -->
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">
+                                            CNIC / B-Form Number <span class="lock-indicator">🔒 Locked</span>
+                                        </label>
+                                        <input type="text" class="salu-input salu-locked-input" value="@Input.Cnic" readonly disabled />
+                                    </div>
+                                </div>
+
+                                <!-- ROW 3: DOB + GENDER + DIVISION + PASSING YEAR -->
+                                <div class="salu-form-grid grid-4 mb-3">
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Date of Birth <span class="req">*</span></label>
+                                        <input type="date" class="salu-input @(showErrors && (Input.DateOfBirth == default || Input.DateOfBirth >= DateTime.Today.AddYears(-12) || Input.DateOfBirth <= DateTime.Today.AddYears(-90)) ? "is-invalid" : "")" @bind="Input.DateOfBirth" @bind:after="OnFieldChanged" />
+                                        @if (showErrors && (Input.DateOfBirth == default || Input.DateOfBirth >= DateTime.Today.AddYears(-12) || Input.DateOfBirth <= DateTime.Today.AddYears(-90)))
+                                        {
+                                            <div class="salu-field-error">Valid Date of Birth is required (Age 12-80).</div>
+                                        }
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Gender <span class="req">*</span></label>
+                                        <select class="salu-select" @bind="Input.Gender" @bind:after="OnFieldChanged">
+                                            <option value="@Gender.Male">MALE</option>
+                                            <option value="@Gender.Female">FEMALE</option>
+                                            <option value="@Gender.Other">OTHER</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Division / Grade <span class="req">*</span></label>
+                                        <input type="text" class="salu-input @(showErrors && string.IsNullOrWhiteSpace(Input.DivisionObtained) ? "is-invalid" : "")" @bind="Input.DivisionObtained" @bind:event="oninput" @bind:after="OnFieldChanged" placeholder="E.G. A-ONE / 1ST" />
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.DivisionObtained))
+                                        {
+                                            <div class="salu-field-error">Division / Grade is mandatory.</div>
+                                        }
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Passing Year <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && Input.PassingYear <= 0 ? "is-invalid" : "")" @bind="Input.PassingYear" @bind:after="OnFieldChanged">
+                                            <option value="0">-- SELECT PASSING YEAR --</option>
+                                            @for (int yr = DateTime.Now.Year; yr >= DateTime.Now.Year - 15; yr--)
+                                            {
+                                                <option value="@yr">@yr</option>
+                                            }
+                                        </select>
+                                        @if (showErrors && Input.PassingYear <= 0)
+                                        {
+                                            <div class="salu-field-error">Passing year is mandatory.</div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- ROW 4: MOBILE (LOCKED) + BOARD -->
+                                <div class="salu-form-grid grid-2 mb-3">
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">
+                                            Mobile Contact <span class="lock-indicator">🔒 Locked from Sign-Up</span>
+                                        </label>
+                                        <input type="text" class="salu-input salu-locked-input" value="@Input.ContactNumber" readonly disabled />
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Board of Examination <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.BoardName) ? "is-invalid" : "")" @bind="Input.Board" @bind:after="OnFieldChanged">
+                                            <option value="">-- SELECT BOARD OF EXAMINATION --</option>
+                                            @foreach (var b in boardOptions)
+                                            {
+                                                <option value="@b">@b</option>
+                                            }
+                                        </select>
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.BoardName))
+                                        {
+                                            <div class="salu-field-error">Board of examination is mandatory.</div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- POSTAL ADDRESS -->
+                                <div class="salu-input-group mb-3">
+                                    <label class="salu-label">Permanent Postal Address <span class="req">*</span></label>
+                                    <input type="text" class="salu-input @(showErrors && string.IsNullOrWhiteSpace(Input.Address) ? "is-invalid" : "")"
+                                           @bind="Input.Address" @bind:event="oninput" @bind:after="OnFieldChanged"
+                                           placeholder="ENTER COMPLETE POSTAL ADDRESS IN UPPERCASE" />
+                                    @if (showErrors && string.IsNullOrWhiteSpace(Input.Address))
+                                    {
+                                        <div class="salu-field-error">Postal address is mandatory.</div>
+                                    }
+                                </div>
+
+                                <!-- ROW 5: NATIONALITY + RELIGION + DOMICILE PROVINCE + DOMICILE DISTRICT -->
+                                <div class="salu-form-grid grid-4 mb-3">
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Nationality <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.Nationality) ? "is-invalid" : "")" @bind="Input.Nationality" @bind:after="OnFieldChanged">
+                                            <option value="">-- SELECT NATIONALITY --</option>
+                                            <option value="PAKISTANI">PAKISTANI</option>
+                                            <option value="FOREIGN NATIONAL">FOREIGN NATIONAL</option>
+                                        </select>
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.Nationality))
+                                        {
+                                            <div class="salu-field-error">Nationality is mandatory.</div>
+                                        }
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Religion <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.Religion) ? "is-invalid" : "")" @bind="Input.Religion" @bind:after="OnFieldChanged">
+                                            <option value="">-- SELECT RELIGION --</option>
+                                            <option value="ISLAM">ISLAM</option>
+                                            <option value="HINDUISM">HINDUISM</option>
+                                            <option value="CHRISTIANITY">CHRISTIANITY</option>
+                                            <option value="OTHER">OTHER</option>
+                                        </select>
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.Religion))
+                                        {
+                                            <div class="salu-field-error">Religion is mandatory.</div>
+                                        }
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Domicile Province <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.DomicileProvince) ? "is-invalid" : "")" @bind="Input.DomicileProvince" @bind:after="OnFieldChanged">
+                                            <option value="">-- SELECT PROVINCE --</option>
+                                            <option value="SINDH">SINDH</option>
+                                            <option value="PUNJAB">PUNJAB</option>
+                                            <option value="BALOCHISTAN">BALOCHISTAN</option>
+                                            <option value="KPK">KPK</option>
+                                            <option value="ISLAMABAD">ISLAMABAD</option>
+                                            <option value="GILGIT-BALTISTAN">GILGIT-BALTISTAN</option>
+                                            <option value="AJK">AJK</option>
+                                        </select>
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.DomicileProvince))
+                                        {
+                                            <div class="salu-field-error">Domicile province is mandatory.</div>
+                                        }
+                                    </div>
+
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Domicile District <span class="req">*</span></label>
+                                        <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(Input.DomicileDistrict) ? "is-invalid" : "")"
+                                                @bind="Input.DomicileDistrict" @bind:after="OnDomicileDistrictChanged">
+                                            <option value="">-- SELECT DOMICILE --</option>
+                                            @foreach (var d in districtOptions)
+                                            {
+                                                <option value="@d">@d</option>
+                                            }
+                                        </select>
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.DomicileDistrict))
+                                        {
+                                            <div class="salu-field-error">Domicile district is required.</div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- CONDITIONAL PREVIOUS SALU EXAM (YES/NO & 3 AUTO-LOCKED FIELDS) -->
+                                <div class="salu-form-grid grid-4 salu-salu-exam-block">
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">Exam from SALU? <span class="req">*</span></label>
+                                        <select class="salu-select salu-highlight-select" @bind="Input.ExamFromSalu" @bind:after="OnExamFromSaluChanged">
+                                            <option value="NO">NO</option>
+                                            <option value="YES">YES</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- FIELD 1: SALU SEAT NO -->
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">
+                                            SALU Seat No. @(Input.ExamFromSalu != "YES" ? "(Locked)" : "*")
+                                        </label>
+                                        <input type="text" class="salu-input @(Input.ExamFromSalu != "YES" ? "salu-locked-input" : (showErrors && string.IsNullOrWhiteSpace(Input.SaluSeatNo) ? "is-invalid" : ""))" 
+                                               @bind="Input.SaluSeatNo" @bind:event="oninput" @bind:after="OnFieldChanged"
+                                               disabled="@(Input.ExamFromSalu != "YES")" 
+                                               placeholder="@(Input.ExamFromSalu == "YES" ? "ENTER SALU SEAT NO." : "LOCKED (NOT APPLICABLE)")" />
+                                        @if (showErrors && Input.ExamFromSalu == "YES" && string.IsNullOrWhiteSpace(Input.SaluSeatNo))
+                                        {
+                                            <div class="salu-field-error">SALU seat number is required.</div>
+                                        }
+                                    </div>
+
+                                    <!-- FIELD 2: SALU EXAM YEAR -->
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">
+                                            SALU Exam Year @(Input.ExamFromSalu != "YES" ? "(Locked)" : "*")
+                                        </label>
+                                        <select class="salu-select @(Input.ExamFromSalu != "YES" ? "salu-locked-input" : (showErrors && string.IsNullOrWhiteSpace(Input.SaluExamYear) ? "is-invalid" : ""))" 
+                                                @bind="Input.SaluExamYear" @bind:after="OnFieldChanged"
+                                                disabled="@(Input.ExamFromSalu != "YES")">
+                                            <option value="">@(Input.ExamFromSalu == "YES" ? "-- SELECT YEAR --" : "LOCKED")</option>
+                                            @if (Input.ExamFromSalu == "YES")
+                                            {
+                                                @for (int yr = DateTime.Now.Year; yr >= DateTime.Now.Year - 10; yr--)
+                                                {
+                                                    <option value="@yr.ToString()">@yr</option>
+                                                }
+                                            }
+                                        </select>
+                                        @if (showErrors && Input.ExamFromSalu == "YES" && string.IsNullOrWhiteSpace(Input.SaluExamYear))
+                                        {
+                                            <div class="salu-field-error">SALU exam year is required.</div>
+                                        }
+                                    </div>
+
+                                    <!-- FIELD 3: ELIGIBILITY CERTIFICATE NO -->
+                                    <div class="salu-input-group">
+                                        <label class="salu-label">
+                                            Eligibility Cert. No. @(Input.ExamFromSalu != "YES" ? "(Locked)" : "")
+                                        </label>
+                                        <input type="text" class="salu-input @(Input.ExamFromSalu != "YES" ? "salu-locked-input" : "")" 
+                                               @bind="Input.EligibilityCertNo" @bind:event="oninput" @bind:after="OnFieldChanged"
+                                               disabled="@(Input.ExamFromSalu != "YES")" 
+                                               placeholder="@(Input.ExamFromSalu == "YES" ? "EC-2026-XXXX" : "LOCKED (NOT APPLICABLE)")" />
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- RIGHT: PASSPORT PHOTO STUDIO (FIXED DIRECT UPLOAD) -->
+                            <div class="salu-photo-studio-wrap">
+                                <div class="salu-photo-card @(showErrors && string.IsNullOrWhiteSpace(Input.PhotoUrl) && string.IsNullOrWhiteSpace(photoPreviewUrl) ? "is-invalid-photo" : "")">
+                                    <div class="salu-avatar-circle">
+                                        @if (!string.IsNullOrWhiteSpace(photoPreviewUrl))
+                                        {
+                                            <img src="@photoPreviewUrl" alt="Student Photo" class="salu-avatar-img" />
+                                        }
+                                        else
+                                        {
+                                            <div class="salu-avatar-placeholder">
+                                                <span class="avatar-icon">📷</span>
+                                                <span class="avatar-text">PASSPORT PHOTO</span>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="photo-info-box">
+                                        <span class="photo-req-title">PASSPORT SIZE PHOTOGRAPH <span class="req">*</span></span>
+                                        <span class="photo-req-hint">Attested white/blue background (Max 5MB)</span>
+                                    </div>
+                                    <div class="photo-upload-action">
+                                        <InputFile OnChange="OnPhotoSelected" class="salu-file-picker-input" accept="image/jpeg,image/png,image/jpg" />
+                                        @if (uploadingPhoto)
+                                        {
+                                            <div class="photo-uploading-tag">Uploading...</div>
+                                        }
+                                        @if (showErrors && string.IsNullOrWhiteSpace(Input.PhotoUrl) && string.IsNullOrWhiteSpace(photoPreviewUrl))
+                                        {
+                                            <div class="salu-field-error mt-2">Passport photograph is mandatory.</div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- STEP 1 ACTION BAR -->
+                    <div class="salu-card-footer">
+                        <div>
+                            <span class="text-muted small">Step 1 of 7: All fields auto-saved.</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-salu-outline" @onclick="SaveDraftExplicitAsync">💾 Save Draft</button>
+                            <button type="button" class="btn btn-salu-primary" @onclick="() => ValidateAndGoStepAsync(2)">
+                                Save &amp; Proceed to Academics (Step 2) →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- ========================================================================= -->
+        <!-- STEP 2: ACADEMIC QUALIFICATIONS MATRIX (TABLE STYLE: MATRIC & INTERMEDIATE) -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 2)
+        {
+            <div class="salu-step-section animate-fade-in">
+                <div class="salu-card">
+                    <div class="salu-card-header">
+                        <div class="card-header-icon">🎓</div>
+                        <div>
+                            <h3 class="card-header-title">2. ACADEMIC QUALIFICATIONS TABLE (MATRICULATION &amp; INTERMEDIATE)</h3>
+                            <p class="card-header-desc">Enter your Matric and Intermediate credentials. Percentage is auto-calculated with strict validation.</p>
+                        </div>
+                    </div>
+                    <div class="salu-card-body">
+                        
+                        <div class="salu-academic-table-wrap">
+                            <table class="salu-table salu-academic-edit-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 14%;">ACADEMIC LEVEL</th>
+                                        <th style="width: 16%;">DISCIPLINE / GROUP *</th>
+                                        <th style="width: 11%;">PASSING YEAR *</th>
+                                        <th style="width: 11%;">ROLL / SEAT NO *</th>
+                                        <th style="width: 10%;">OBTAINED *</th>
+                                        <th style="width: 10%;">TOTAL MARKS *</th>
+                                        <th style="width: 9%;">PERCENTAGE</th>
+                                        <th style="width: 9%;">GRADE *</th>
+                                        <th style="width: 10%;">BOARD / BODY *</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    
+                                    <!-- ROW 1: MATRICULATION -->
+                                    <tr class="academic-row">
+                                        <td>
+                                            <div class="level-badge-wrap">
+                                                <span class="qual-badge qual-badge-matric">MATRICULATION / SSC</span>
+                                                <small class="text-muted d-block mt-1">Secondary School (10th)</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(matricDiscipline) ? "is-invalid" : "")"
+                                                    @bind="matricDiscipline" @bind:after="OnMatricFieldChanged">
+                                                <option value="">-- SELECT GROUP --</option>
+                                                <option value="SCIENCE">SCIENCE</option>
+                                                <option value="GENERAL / ARTS">GENERAL / ARTS</option>
+                                                <option value="PRIVATE">PRIVATE</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && matricYear <= 0 ? "is-invalid" : "")" @bind="matricYear" @bind:after="OnMatricFieldChanged">
+                                                <option value="0">-- YEAR --</option>
+                                                @for (int yr = DateTime.Now.Year; yr >= DateTime.Now.Year - 15; yr--)
+                                                {
+                                                    <option value="@yr">@yr</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="salu-input @(showErrors && string.IsNullOrWhiteSpace(matricSeat) ? "is-invalid" : "")"
+                                                   @bind="matricSeat" @bind:event="oninput" @bind:after="OnMatricFieldChanged"
+                                                   placeholder="ENTER SEAT NO." />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="salu-input @(showErrors && (!matricObtained.HasValue || matricObtained < 0 || (matricTotal.HasValue && matricObtained > matricTotal)) ? "is-invalid" : "")"
+                                                   @bind="matricObtained" @bind:event="oninput" @bind:after="CalculateMatricPercentage"
+                                                   placeholder="OBTAINED" min="0" max="1200" />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="salu-input @(showErrors && (!matricTotal.HasValue || matricTotal <= 0) ? "is-invalid" : "")"
+                                                   @bind="matricTotal" @bind:event="oninput" @bind:after="CalculateMatricPercentage"
+                                                   placeholder="TOTAL" min="1" max="1200" />
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="salu-percentage-badge">
+                                                @(matricPercentage > 0 ? $"{matricPercentage:F2}%" : "0.00%")
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(matricGrade) ? "is-invalid" : "")" @bind="matricGrade" @bind:after="OnMatricGradeSelected">
+                                                <option value="">-- GRADE --</option>
+                                                <option value="A-ONE">A-ONE</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="C">C</option>
+                                                <option value="D">D</option>
+                                                <option value="E">E</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(matricBoard) ? "is-invalid" : "")" @bind="matricBoard" @bind:after="OnMatricFieldChanged">
+                                                <option value="">-- SELECT BOARD --</option>
+                                                @foreach (var b in boardOptions)
+                                                {
+                                                    <option value="@b">@b</option>
+                                                }
+                                            </select>
+                                        </td>
+                                    </tr>
+
+                                    <!-- ROW 2: INTERMEDIATE -->
+                                    <tr class="academic-row">
+                                        <td>
+                                            <div class="level-badge-wrap">
+                                                <span class="qual-badge qual-badge-inter">INTERMEDIATE / HSSC</span>
+                                                <small class="text-muted d-block mt-1">Higher Secondary (12th)</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(interDiscipline) ? "is-invalid" : "")"
+                                                    @bind="interDiscipline" @bind:after="OnInterFieldChanged">
+                                                <option value="">-- SELECT GROUP --</option>
+                                                <option value="PRE-MEDICAL">PRE-MEDICAL</option>
+                                                <option value="PRE-ENGINEERING">PRE-ENGINEERING</option>
+                                                <option value="COMPUTER SCIENCE (ICS)">COMPUTER SCIENCE (ICS)</option>
+                                                <option value="HUMANITIES / ARTS">HUMANITIES / ARTS</option>
+                                                <option value="COMMERCE (I.COM)">COMMERCE (I.COM)</option>
+                                                <option value="GENERAL SCIENCE">GENERAL SCIENCE</option>
+                                                <option value="DAE (ASSOCIATE ENG.)">DAE (ASSOCIATE ENG.)</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && interYear <= 0 ? "is-invalid" : "")" @bind="interYear" @bind:after="OnInterFieldChanged">
+                                                <option value="0">-- YEAR --</option>
+                                                @for (int yr = DateTime.Now.Year; yr >= DateTime.Now.Year - 15; yr--)
+                                                {
+                                                    <option value="@yr">@yr</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="salu-input @(showErrors && string.IsNullOrWhiteSpace(interSeat) ? "is-invalid" : "")"
+                                                   @bind="interSeat" @bind:event="oninput" @bind:after="OnInterFieldChanged"
+                                                   placeholder="ENTER SEAT NO." />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="salu-input @(showErrors && (!interObtained.HasValue || interObtained < 0 || (interTotal.HasValue && interObtained > interTotal)) ? "is-invalid" : "")"
+                                                   @bind="interObtained" @bind:event="oninput" @bind:after="CalculateInterPercentage"
+                                                   placeholder="OBTAINED" min="0" max="1200" />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="salu-input @(showErrors && (!interTotal.HasValue || interTotal <= 0) ? "is-invalid" : "")"
+                                                   @bind="interTotal" @bind:event="oninput" @bind:after="CalculateInterPercentage"
+                                                   placeholder="TOTAL" min="1" max="1200" />
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="salu-percentage-badge">
+                                                @(interPercentage > 0 ? $"{interPercentage:F2}%" : "0.00%")
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(interGrade) ? "is-invalid" : "")" @bind="interGrade" @bind:after="OnInterGradeSelected">
+                                                <option value="">-- GRADE --</option>
+                                                <option value="A-ONE">A-ONE</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="C">C</option>
+                                                <option value="D">D</option>
+                                                <option value="E">E</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="salu-select @(showErrors && string.IsNullOrWhiteSpace(interBoard) ? "is-invalid" : "")" @bind="interBoard" @bind:after="OnInterFieldChanged">
+                                                <option value="">-- SELECT BOARD --</option>
+                                                @foreach (var b in boardOptions)
+                                                {
+                                                    <option value="@b">@b</option>
+                                                }
+                                            </select>
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- LIVE SCORE AUDIT ADVISORY -->
+                        <div class="salu-academic-advisory mt-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="advisory-icon">📊</span>
+                                <div>
+                                    <span class="advisory-text">
+                                        <strong>Matric:</strong> @(matricObtained ?? 0)/@(matricTotal ?? 850) (@matricPercentage.ToString("F2")% - @matricGrade) &nbsp;|&nbsp;
+                                        <strong>Intermediate:</strong> @(interObtained ?? 0)/@(interTotal ?? 1100) (@interPercentage.ToString("F2")% - @interGrade)
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="advisory-hint">Scores are auto-verified against uploaded marksheets in Step 3.</span>
+                        </div>
+
+                    </div>
+
+                    <!-- STEP 2 ACTION BAR -->
+                    <div class="salu-card-footer">
+                        <button type="button" class="btn btn-salu-outline" @onclick="() => NavigateToStepAsync(1)">← Back to Personal Info</button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-salu-outline" @onclick="SaveDraftExplicitAsync">💾 Save Draft</button>
+                            <button type="button" class="btn btn-salu-primary" @onclick="() => ValidateAndGoStepAsync(3)">
+                                Save &amp; Proceed to Documents (Step 3) →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- =========        <!-- ========================================================================= -->
+        <!-- ========================================================================= -->
+        <!-- STEP 3: REQUIRED DOCUMENT VAULT & VERIFICATION (ENTERPRISE TABLE STYLE) -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 3)
+        {
+            <div class="salu-step-section animate-fade-in">
+                
+                <!-- HEADER & VAULT STATUS DASHBOARD BANNER -->
+                <div class="salu-card mb-4 p-0 overflow-hidden">
+                    <div class="salu-vault-banner-header">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="salu-vault-icon-badge">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div>
+                                    <h3 class="salu-vault-title m-0">Document Attachments &amp; Neural OCR Vault</h3>
+                                    <p class="salu-vault-subtitle m-0">Upload credentials in the document checklist table below. Tesseract 5.2 LSTM Neural OCR automatically validates CNIC &amp; BISE marks certificates in real time.</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <div class="salu-ai-badge">
+                                    <span class="pulse-dot"></span>
+                                    <i class="bi bi-cpu-fill me-1"></i> Tesseract 5.2 Active
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VAULT PROGRESS BAR & STATS -->
+                        <div class="salu-vault-progress-box mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                                <span class="salu-vault-prog-label">
+                                    <strong>@GetUploadedMandatoryCount() of @GetTotalMandatoryCount()</strong> Mandatory Documents Attached
+                                </span>
+                                <span class="salu-vault-prog-percent">@GetDocumentUploadProgressPercent()% Complete</span>
+                            </div>
+                            <MudProgressLinear Color="@(GetUploadedMandatoryCount() >= GetTotalMandatoryCount() ? Color.Success : Color.Primary)" 
+                                               Size="Size.Medium" 
+                                               Value="@GetDocumentUploadProgressPercent()" 
+                                               Rounded="true" 
+                                               Striped="true" 
+                                               Class="my-1" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DOCUMENT CHECKLIST ENTERPRISE TABLE -->
+                <div class="salu-card p-0 overflow-hidden mb-4">
+                    <div class="salu-mudtable-container">
+                        <table class="salu-mudtable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 75px; text-align: center;">PREVIEW</th>
+                                    <th style="width: 25%;">DOCUMENT REQUIREMENT</th>
+                                    <th style="width: 20%;">ATTACHED FILE</th>
+                                    <th style="width: 32%;">TESSERACT 5.2 OCR &amp; AUTHENTICITY STATUS</th>
+                                    <th style="width: 200px; text-align: center;">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var spec in standardDocumentSpecs)
+                                {
+                                    var docItem = GetDocumentByType(spec.DocType);
+                                    var isUploaded = docItem != null;
+                                    var isCurrentlyProcessing = processingDocType == spec.DocType;
+
+                                    <tr class="mud-row @(isUploaded ? "mud-row-uploaded" : "") @(isCurrentlyProcessing ? "mud-row-processing" : "")">
+                                        
+                                        <!-- COLUMN 1: VISUAL PREVIEW THUMBNAIL -->
+                                        <td class="text-center align-middle">
+                                            <div class="doc-preview-box @(isUploaded ? "has-preview" : "empty-preview")"
+                                                 @onclick="() => OpenPreviewModal(docItem)"
+                                                 title="@(isUploaded ? "Click to view full preview" : "No file attached")">
+                                                @if (isUploaded)
+                                                {
+                                                    if (IsImageFile(docItem!.FileName))
+                                                    {
+                                                        <img src="@docItem.RelativePath" alt="@docItem.DocumentType" class="doc-preview-img" />
+                                                        <div class="doc-preview-overlay">
+                                                            <i class="bi bi-zoom-in"></i>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="doc-pdf-badge">
+                                                            <i class="bi bi-file-earmark-pdf-fill pdf-icon"></i>
+                                                            <span class="pdf-text">PDF</span>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <div class="doc-empty-slot">
+                                                        <i class="bi @GetDocIcon(spec.DocType)"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </td>
+
+                                        <!-- COLUMN 2: DOCUMENT REQUIREMENT TITLE & BADGE -->
+                                        <td class="align-middle">
+                                            <div class="doc-req-info">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <i class="bi @GetDocIcon(spec.DocType) text-primary"></i>
+                                                    <strong class="doc-req-title">@spec.DocType</strong>
+                                                    @if (spec.IsMandatory)
+                                                    {
+                                                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled" Class="mud-chip-compact">REQUIRED</MudChip>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined" Class="mud-chip-compact">OPTIONAL</MudChip>
+                                                    }
+                                                </div>
+                                                <div class="doc-req-desc">@spec.Description</div>
+                                            </div>
+                                        </td>
+
+                                        <!-- COLUMN 3: ATTACHED FILE DETAILS -->
+                                        <td class="align-middle">
+                                            @if (isUploaded)
+                                            {
+                                                <div class="doc-file-info">
+                                                    <span class="doc-file-name" title="@docItem!.FileName">
+                                                        <i class="bi bi-file-earmark-check text-success me-1"></i>@docItem.FileName
+                                                    </span>
+                                                    <span class="doc-file-meta">@FormatFileSize(docItem.FileSizeBytes) • @docItem.UploadedAt.ToString("dd MMM, hh:mm tt")</span>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="doc-no-file">
+                                                    <i class="bi bi-hourglass me-1"></i>Awaiting Scanned File
+                                                </span>
+                                            }
+                                        </td>
+
+                                        <!-- COLUMN 4: OCR & AUTHENTICITY STATUS -->
+                                        <td class="align-middle">
+                                            @if (isCurrentlyProcessing)
+                                            {
+                                                <div class="salu-ocr-live-tag ocr-processing">
+                                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                                    <span>TESSERACT LSTM OCR SCANNING...</span>
+                                                </div>
+                                            }
+                                            else if (isUploaded)
+                                            {
+                                                <div class="doc-ocr-docket">
+                                                    @if (docItem!.Authenticity != null && docItem.Authenticity.IsAuthentic)
+                                                    {
+                                                        <div class="salu-ocr-live-tag ocr-verified">
+                                                            <i class="bi bi-patch-check-fill me-1"></i>
+                                                            <span>AUTHENTICITY VERIFIED (@docItem.Authenticity.AuthenticityScore% MATCH)</span>
+                                                        </div>
+                                                    }
+                                                    else if (docItem.Authenticity != null && docItem.Authenticity.Status == "Failed")
+                                                    {
+                                                        <div class="salu-ocr-live-tag ocr-flagged">
+                                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                                            <span>SCRUTINY AUDIT: @docItem.Authenticity.Reason</span>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="salu-ocr-live-tag ocr-attached">
+                                                            <i class="bi bi-check-circle-fill me-1"></i>
+                                                            <span>ATTACHED &amp; SECURELY VAULTED</span>
+                                                        </div>
+                                                    }
+
+                                                    <!-- OCR METADATA PILLS IF EXTRACTED -->
+                                                    @if (docItem.Authenticity != null)
+                                                    {
+                                                        <div class="ocr-meta-pills mt-1">
+                                                            @if (!string.IsNullOrWhiteSpace(docItem.Authenticity.DetectedSeatNo))
+                                                            {
+                                                                <span class="ocr-pill"><i class="bi bi-card-text me-1"></i>SEAT: @docItem.Authenticity.DetectedSeatNo</span>
+                                                            }
+                                                            @if (docItem.Authenticity.DetectedObtainedMarks.HasValue)
+                                                            {
+                                                                <span class="ocr-pill"><i class="bi bi-calculator me-1"></i>MARKS: @docItem.Authenticity.DetectedObtainedMarks/@docItem.Authenticity.DetectedTotalMarks</span>
+                                                            }
+                                                            @if (!string.IsNullOrWhiteSpace(docItem.Authenticity.DetectedBoard))
+                                                            {
+                                                                <span class="ocr-pill"><i class="bi bi-bank me-1"></i>BOARD: @docItem.Authenticity.DetectedBoard</span>
+                                                            }
+                                                            @if (!string.IsNullOrWhiteSpace(docItem.Authenticity.DetectedCnic))
+                                                            {
+                                                                <span class="ocr-pill"><i class="bi bi-person-vcard me-1"></i>CNIC: @docItem.Authenticity.DetectedCnic</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small"><i class="bi bi-shield-check me-1"></i>Attach scan to trigger OCR verification.</span>
+                                            }
+                                        </td>
+
+                                        <!-- COLUMN 5: INLINE UPLOAD & STRICTLY ALIGNED ACTIONS -->
+                                        <td class="text-center align-middle">
+                                            @if (isUploaded)
+                                            {
+                                                <div class="salu-table-act-toolbar">
+                                                    <button type="button" class="btn btn-salu-act-pill" @onclick="() => OpenPreviewModal(docItem)" title="Preview Document">
+                                                        <i class="bi bi-eye-fill"></i>
+                                                        <span>Preview</span>
+                                                    </button>
+                                                    <a href="@docItem!.RelativePath" download="@docItem.FileName" class="btn btn-salu-act-icon" title="Download Document">
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                    <label class="btn btn-salu-act-icon m-0" title="Replace File">
+                                                        <i class="bi bi-arrow-repeat"></i>
+                                                        <InputFile OnChange="(e) => OnRowFileSelected(e, spec.DocType)" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp,application/pdf" />
+                                                    </label>
+                                                    <button type="button" class="btn btn-salu-act-icon btn-act-del" @onclick="() => DelDocRow(docItem)" title="Delete Document">
+                                                        <i class="bi bi-trash3-fill"></i>
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="salu-table-act-toolbar justify-content-center">
+                                                    <label class="btn btn-salu-primary btn-sm salu-upload-main-btn m-0">
+                                                        <i class="bi bi-cloud-arrow-up-fill me-1"></i>
+                                                        <span>Attach Document</span>
+                                                        <InputFile OnChange="(e) => OnRowFileSelected(e, spec.DocType)" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp,application/pdf" />
+                                                    </label>
+                                                </div>
+                                            }
+                                        </td>
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- STEP 3 ACTION CONTROLS -->
+                <div class="salu-card-footer mt-4">
+                    <button type="button" class="btn btn-salu-outline" @onclick="() => NavigateToStepAsync(2)">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Academics (Step 2)
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-salu-outline" @onclick="SaveDraftExplicitAsync">
+                            <i class="bi bi-floppy-fill me-1"></i> Save Draft
+                        </button>
+                        <button type="button" class="btn btn-salu-primary" @onclick="() => ValidateAndGoStepAsync(4)">
+                            Save &amp; Proceed to Admission Certificate (Step 4) <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        }
+
+        <!-- ========================================================================= -->
+        <!-- STEP 4: ADMISSION CERTIFICATE PREVIEW -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 4)
+        {
+            <div class="salu-step-section animate-fade-in">
+                <div class="salu-card">
+                    <div class="salu-card-header">
+                        <div class="card-header-icon">📜</div>
+                        <div>
+                            <h3 class="card-header-title">4. INSTITUTIONAL ADMISSION CERTIFICATE</h3>
+                            <p class="card-header-desc">Official verification docket generated by the Directorate of Admissions.</p>
+                        </div>
+                    </div>
+                    <div class="salu-card-body">
+                        <div class="salu-official-cert-preview">
+                            <div class="cert-watermark">SALU</div>
+                            <div class="cert-header">
+                                <img src="images/salu-logo.png" alt="SALU Crest" class="cert-crest" style="object-fit:contain;background:none;" />
+                                <h4>SHAH ABDUL LATIF UNIVERSITY, KHAIRPUR</h4>
+                                <h5>DIRECTORATE OF ADMISSIONS &amp; ENROLLMENT</h5>
+                            </div>
+                            <div class="cert-body">
+                                It is certified that Mr./Miss
+                                <span class="cert-fill">@(string.IsNullOrWhiteSpace(Input.FullName) ? "________________" : Input.FullName)</span>
+                                @Input.SoDoWo
+                                <span class="cert-fill">@(string.IsNullOrWhiteSpace(Input.FatherName) ? "________________" : Input.FatherName)</span>
+                                has been formally admitted in
+                                <span class="cert-fill cert-long">@(string.IsNullOrWhiteSpace(Input.Program) ? "DEGREE PROGRAM" : Input.Program)</span>
+                                class during the academic session
+                                <span class="cert-fill">@GetSessionString()</span>
+                                under Roll / Seat No.
+                                <span class="cert-fill cert-short">@(string.IsNullOrWhiteSpace(Input.SaluSeatNo) ? "PENDING ALLOCATION" : Input.SaluSeatNo)</span>.
+                                Further it is certified that all institutional particulars provided by the candidate have been verified and found genuine.
+                            </div>
+                            <div class="cert-footer">
+                                <div class="cert-sign-col">
+                                    <div class="sign-line"></div>
+                                    <span>Principal / Head of Department</span>
+                                </div>
+                                <div class="cert-sign-col">
+                                    <div class="sign-seal">OFFICIAL SEAL</div>
+                                </div>
+                                <div class="cert-sign-col">
+                                    <div class="sign-line"></div>
+                                    <span>Director of Admissions, SALU</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4 ACTION BAR -->
+                    <div class="salu-card-footer">
+                        <button type="button" class="btn btn-salu-outline" @onclick="() => NavigateToStepAsync(3)">← Back to Documents</button>
+                        <button type="button" class="btn btn-salu-primary" @onclick="() => NavigateToStepAsync(5)">
+                            Proceed to Office Scrutiny (Step 5) →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- ========================================================================= -->
+        <!-- STEP 5: FOR OFFICE USE ONLY -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 5)
+        {
+            <div class="salu-step-section animate-fade-in">
+                <div class="salu-card">
+                    <div class="salu-card-header">
+                        <div class="card-header-icon">🏢</div>
+                        <div>
+                            <h3 class="card-header-title">5. FOR OFFICE USE ONLY (INSTITUTIONAL SCRUTINY)</h3>
+                            <p class="card-header-desc">Departmental verification ledger and eligibility records.</p>
+                        </div>
+                    </div>
+                    <div class="salu-card-body">
+                        <div class="salu-office-docket">
+                            <p>
+                                Received a sum of <strong>PKR @feeBreakdown.TotalFee.ToString("N2")</strong>
+                                as Enrolment Fee vide Challan / Pay Order No. <span class="docket-fill">AUTO-GENERATED BANK CHALLAN</span>
+                                dated <span class="docket-fill">@DateTime.Now.ToString("dd/MM/yyyy")</span>.
+                            </p>
+                            <hr class="docket-divider" />
+                            <p>
+                                Certified that Mr./Miss <span class="docket-fill"><strong>@(string.IsNullOrWhiteSpace(Input.FullName) ? "CANDIDATE" : Input.FullName)</strong></span>
+                                has applied for issuance of enrolment card. He / She has been admitted to
+                                <span class="docket-fill"><strong>@Input.Program</strong></span> class of the Institute / Department / College of
+                                <span class="docket-fill"><strong>@(selectedCollegeName?.ToUpperInvariant() ?? "AFFILIATED COLLEGE")</strong></span>.
+                                His / Her name has been registered for appearing in the <span class="docket-fill"><strong>ANNUAL @DateTime.Now.Year</strong></span>
+                                Examination as a Regular Candidate.
+                            </p>
+                            <p>
+                                Eligibility Certificate No. <span class="docket-fill"><strong>@(string.IsNullOrWhiteSpace(Input.EligibilityCertNo) ? "PENDING" : Input.EligibilityCertNo)</strong></span>
+                                dated <span class="docket-fill">@DateTime.Now.ToString("dd/MM/yyyy")</span> has been audited in his/her case. Case is complete in all respects.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- STEP 5 ACTION BAR -->
+                    <div class="salu-card-footer">
+                        <button type="button" class="btn btn-salu-outline" @onclick="() => NavigateToStepAsync(4)">← Back to Certificate</button>
+                        <button type="button" class="btn btn-salu-primary" @onclick="() => NavigateToStepAsync(6)">
+                            Proceed to Controller Order (Step 6) →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- ========================================================================= -->
+        <!-- STEP 6: CONTROLLER OF EXAMINATIONS ORDER -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 6)
+        {
+            <div class="salu-step-section animate-fade-in">
+                <div class="salu-card">
+                    <div class="salu-card-header">
+                        <div class="card-header-icon">⚖️</div>
+                        <div>
+                            <h3 class="card-header-title">6. EXECUTIVE ORDER OF CONTROLLER OF EXAMINATIONS</h3>
+                            <p class="card-header-desc">Formal administrative authorization for enrollment card issuance.</p>
+                        </div>
+                    </div>
+                    <div class="salu-card-body">
+                        <div class="salu-order-docket">
+                            <div class="order-seal-badge">EXAMINATION EXECUTIVE ORDER</div>
+                            <h4 class="order-headline">"The student may be enrolled and official university enrolment card be issued."</h4>
+                            <div class="order-sign-box">
+                                <div class="order-title">Controller of Examinations</div>
+                                <div class="order-inst">Shah Abdul Latif University, Khairpur</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 6 ACTION BAR -->
+                    <div class="salu-card-footer">
+                        <button type="button" class="btn btn-salu-outline" @onclick="() => NavigateToStepAsync(5)">← Back to Office Use</button>
+                        <button type="button" class="btn btn-salu-primary" @onclick="() => NavigateToStepAsync(7)">
+                            Proceed to Final Acknowledgement (Step 7) →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- ========================================================================= -->
+        <!-- STEP 7: ACKNOWLEDGEMENT, FEE BREAKDOWN & FINAL SUBMISSION -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 7)
+        {
+            <div class="salu-step-section animate-fade-in">
+                <div class="salu-card">
+                    <div class="salu-card-header">
+                        <div class="card-header-icon">🧾</div>
+                        <div>
+                            <h3 class="card-header-title">7. FEE BREAKDOWN &amp; FINAL SUBMISSION DECLARATION</h3>
+                            <p class="card-header-desc">Review your complete application particulars and confirm the declaration for submission.</p>
+                        </div>
+                    </div>
+                    <div class="salu-card-body">
+                        
+                        <!-- FEE TILES -->
+                        <div class="salu-fee-summary-grid">
+                            <div class="fee-tile">
+                                <span class="tile-label">BASE ENROLLMENT FEE</span>
+                                <strong class="tile-value text-navy">PKR @feeBreakdown.BaseFee.ToString("N2")</strong>
+                                <span class="tile-sub">STANDARD UNIVERSITY FEE</span>
+                            </div>
+
+                            <div class="fee-tile">
+                                <span class="tile-label">MIGRATION / NOC SURCHARGE</span>
+                                <strong class="tile-value @(feeBreakdown.IsNonAffiliatedDistrict ? "text-danger" : "text-muted")">
+                                    PKR @feeBreakdown.MigrationFee.ToString("N2")
+                                </strong>
+                                <span class="tile-sub">@(feeBreakdown.IsNonAffiliatedDistrict ? "NON-AFFILIATED DISTRICT SURCHARGE" : "NO SURCHARGE")</span>
+                            </div>
+
+                            <div class="fee-tile fee-tile-total">
+                                <span class="tile-label">TOTAL PAYABLE AMOUNT</span>
+                                <strong class="tile-value text-success">PKR @feeBreakdown.TotalFee.ToString("N2")</strong>
+                                <span class="tile-sub text-success">BANK CHALLAN READY</span>
+                            </div>
+                        </div>
+
+                        <!-- 1-CLICK APPLICATION REVIEW -->
+                        <div class="salu-review-accordion mt-4">
+                            <div class="accordion-head">
+                                <span class="head-title">📋 SUMMARY REVIEW OF APPLICATION PARTICULARS</span>
+                                <span class="head-badge">@academicRecords.Count Qualifications · @uploadedDocuments.Count Documents</span>
+                            </div>
+                            <div class="accordion-body">
+                                <div class="salu-form-grid grid-3">
+                                    <div><small class="text-muted">CANDIDATE</small><div><strong>@Input.FullName</strong> (@Input.Gender)</div></div>
+                                    <div><small class="text-muted">FATHER'S NAME</small><div><strong>@Input.FatherName</strong></div></div>
+                                    <div><small class="text-muted">CNIC / B-FORM</small><div><strong>@Input.Cnic</strong></div></div>
+                                    <div><small class="text-muted">ADMITTED COLLEGE</small><div><strong>@(selectedCollegeName?.ToUpperInvariant() ?? "AFFILIATED COLLEGE")</strong></div></div>
+                                    <div><small class="text-muted">ENROLLED PROGRAM</small><div><strong>@Input.Program</strong></div></div>
+                                    <div><small class="text-muted">DOMICILE DISTRICT</small><div><strong>@Input.DomicileDistrict, @Input.DomicileProvince</strong></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LEGAL DECLARATION -->
+                        <div class="salu-declaration-card mt-4">
+                            <label class="salu-declaration-label">
+                                <input type="checkbox" @bind="Input.DeclarationAccepted" @bind:after="OnFieldChanged" class="salu-checkbox" />
+                                <span class="declaration-text">
+                                    <strong>SOLEMN DECLARATION:</strong> I hereby solemnly declare that all particulars, academic records, and documents uploaded in this enrollment application are 100% genuine, true, and correct. I understand that any false information will result in immediate cancellation of my admission and legal proceedings under Shah Abdul Latif University (SALU) Examination Regulations.
+                                </span>
+                            </label>
+                        </div>
+                        @if (showErrors && !Input.DeclarationAccepted)
+                        {
+                            <div class="salu-inline-error mt-2">⚠️ You must check and accept the declaration to submit your application.</div>
+                        }
+                    </div>
+
+                    <!-- STEP 7 ACTION BAR -->
+                    <div class="salu-card-footer">
+                        <button type="button" class="btn btn-salu-outline" @onclick="() => NavigateToStepAsync(6)">← Back to Controller Order</button>
+                        <button type="button" class="btn btn-salu-submit" @onclick="SubmitFormAsync" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span>Submitting Application...</span>
+                            }
+                            else
+                            {
+                                <span>✔ Final Submit &amp; Generate Challan</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- ========================================================================= -->
+        <!-- STEP 8: SUBMISSION CELEBRATION & ACTIONS -->
+        <!-- ========================================================================= -->
+        @if (currentStep == 8)
+        {
+            <div class="salu-step-section animate-fade-in">
+                <div class="salu-success-celebration-card">
+                    <div class="success-trophy">🎉</div>
+                    <h2 class="success-title">ENROLLMENT APPLICATION SUCCESSFULLY SUBMITTED!</h2>
+                    <p class="success-desc">
+                        Your application has been registered in the SALU Examination Ledger and queued for official scrutiny.
+                    </p>
+
+                    <div class="salu-ref-box">
+                        <span class="ref-label">YOUR APPLICATION REFERENCE NUMBER</span>
+                        <div class="ref-code">@generatedReferenceNumber</div>
+                        <span class="ref-hint">Please save this reference number for all future university correspondence.</span>
+                    </div>
+
+                    <div class="salu-success-summary-box">
+                        <div class="summary-item">
+                            <span>TOTAL PAYABLE AMOUNT</span>
+                            <strong>PKR @feeBreakdown.TotalFee.ToString("N2")</strong>
+                        </div>
+                        <div class="summary-item">
+                            <span>FEE STATUS</span>
+                            <span class="badge bg-warning text-dark">UNPAID (CHALLAN READY)</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>PAYMENT DEADLINE</span>
+                            <strong>@DateTime.Now.AddDays(14).ToString("dd MMMM yyyy").ToUpperInvariant()</strong>
+                        </div>
+                    </div>
+
+                    <div class="salu-success-action-row">
+                        <a href="/Student/Challan" class="btn btn-salu-gold btn-lg">🏦 DOWNLOAD &amp; PRINT FEE CHALLAN</a>
+                        <a href="/Student/Form" class="btn btn-salu-outline btn-lg">📄 VIEW APPLICATION FORM</a>
+                        <button type="button" class="btn btn-salu-outline btn-lg" @onclick="PrintForm">🖨 PRINT CONFIRMATION</button>
+                        <a href="/Student" class="btn btn-salu-primary btn-lg">🏠 GO TO STUDENT DASHBOARD</a>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </main>
+
+    <!-- LIGHTBOX / ENHANCED DOCUMENT PREVIEW & OCR MODAL -->
+    @if (previewModalDoc != null)
+    {
+        <div class="salu-modal-backdrop" @onclick="ClosePreviewModal">
+            <div class="salu-preview-modal-dialog" @onclick:stopPropagation="true">
+                <div class="salu-preview-modal-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="modal-header-icon-box">
+                            <i class="bi @GetDocIcon(previewModalDoc.DocumentType)"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="modal-badge">DOCUMENT PREVIEW</span>
+                                <strong class="modal-title m-0">@previewModalDoc.DocumentType</strong>
+                            </div>
+                            <span class="text-muted small">@previewModalDoc.FileName • @FormatFileSize(previewModalDoc.FileSizeBytes)</span>
+                        </div>
+                    </div>
+                    <button type="button" class="modal-close-btn" @onclick="ClosePreviewModal" title="Close Preview">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="salu-preview-modal-body">
+                    <div class="modal-split-layout">
+                        <!-- PREVIEW MEDIA CONTAINER -->
+                        <div class="modal-media-wrap">
+                            @if (IsImageFile(previewModalDoc.FileName))
+                            {
+                                <img src="@previewModalDoc.RelativePath" alt="@previewModalDoc.DocumentType" class="salu-modal-preview-img" />
+                            }
+                            else
+                            {
+                                <iframe src="@previewModalDoc.RelativePath" class="salu-modal-preview-iframe" title="PDF Document Preview"></iframe>
+                            }
+                        </div>
+
+                        <!-- OCR AUTHENTICITY INSPECTION REPORT -->
+                        @if (previewModalDoc.Authenticity != null)
+                        {
+                            <div class="modal-ocr-sidebar">
+                                <div class="ocr-sidebar-header">
+                                    <i class="bi bi-cpu-fill text-primary me-2"></i>
+                                    <strong>Tesseract 5.2 OCR Analysis</strong>
+                                </div>
+                                <div class="ocr-sidebar-body">
+                                    <div class="ocr-stat-row">
+                                        <span>Authenticity Score:</span>
+                                        <MudChip T="string" Color="@(previewModalDoc.Authenticity.IsAuthentic ? Color.Success : Color.Warning)" Size="Size.Small" Variant="Variant.Filled">
+                                            @previewModalDoc.Authenticity.AuthenticityScore% Match
+                                        </MudChip>
+                                    </div>
+                                    <div class="ocr-stat-row">
+                                        <span>Status:</span>
+                                        <strong class="@(previewModalDoc.Authenticity.IsAuthentic ? "text-success" : "text-warning")">
+                                            @(previewModalDoc.Authenticity.IsAuthentic ? "✓ Verified Authentic" : "⚠️ Scrutiny Required")
+                                        </strong>
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(previewModalDoc.Authenticity.DetectedSeatNo))
+                                    {
+                                        <div class="ocr-stat-row">
+                                            <span>Detected Seat/Roll #:</span>
+                                            <strong>@previewModalDoc.Authenticity.DetectedSeatNo</strong>
+                                        </div>
+                                    }
+                                    @if (previewModalDoc.Authenticity.DetectedObtainedMarks.HasValue)
+                                    {
+                                        <div class="ocr-stat-row">
+                                            <span>Extracted Marks:</span>
+                                            <strong>@previewModalDoc.Authenticity.DetectedObtainedMarks / @previewModalDoc.Authenticity.DetectedTotalMarks</strong>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(previewModalDoc.Authenticity.DetectedBoard))
+                                    {
+                                        <div class="ocr-stat-row">
+                                            <span>Detected Board:</span>
+                                            <strong>@previewModalDoc.Authenticity.DetectedBoard</strong>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(previewModalDoc.Authenticity.DetectedCnic))
+                                    {
+                                        <div class="ocr-stat-row">
+                                            <span>Detected CNIC:</span>
+                                            <strong>@previewModalDoc.Authenticity.DetectedCnic</strong>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(previewModalDoc.Authenticity.Reason))
+                                    {
+                                        <div class="ocr-audit-note mt-2">
+                                            <small class="text-muted">Audit Note: @previewModalDoc.Authenticity.Reason</small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="salu-preview-modal-footer">
+                    <span class="text-muted small">Uploaded: @previewModalDoc.UploadedAt.ToString("dd MMMM yyyy, hh:mm tt")</span>
+                    <div class="d-flex gap-2">
+                        <a href="@previewModalDoc.RelativePath" download="@previewModalDoc.FileName" class="btn btn-salu-outline btn-sm">
+                            <i class="bi bi-download me-1"></i> Download File
+                        </a>
+                        <button type="button" class="btn btn-salu-primary btn-sm" @onclick="ClosePreviewModal">
+                            Done
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+<style>
+    /* =========================================================================
+       SALU ENROLLMENT DESIGN SYSTEM WITH UPPERCASE ENFORCEMENT & STRICT CONTROLS
+       ========================================================================= */
+    :root {
+        --salu-navy: #0d1e3d;
+        --salu-royal: #1a4cb0;
+        --salu-accent: #ea580c;
+        --salu-gold: #d97706;
+        --salu-gold-hover: #b45309;
+        --salu-emerald: #0d8a4f;
+        --salu-bg: #f8fafc;
+        --salu-surface: #ffffff;
+        --salu-border: #e2e8f0;
+        --salu-border-focus: #3b82f6;
+        --salu-text: #1e293b;
+        --salu-text-muted: #64748b;
+        --salu-radius: 12px;
+        --salu-radius-sm: 8px;
+        --salu-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+        --salu-shadow-hover: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 10px 10px -5px rgba(15, 23, 42, 0.06);
+    }
+
+    /* ALL TEXT INPUTS FORCE UPPERCASE */
+    .salu-input, .salu-select, .salu-text-input, input[type="text"], input[type="search"], textarea {
+        text-transform: uppercase !important;
+    }
+
+    .salu-enrollment-container {
+        min-height: 100vh;
+        background: var(--salu-bg);
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        color: var(--salu-text);
+        padding-bottom: 60px;
+    }
+
+    /* HERO HEADER */
+    .salu-hero-header {
+        background: linear-gradient(135deg, #0d1e3d 0%, #172a5a 50%, #1a4cb0 100%);
+        color: #ffffff;
+        padding: 24px 32px;
+        box-shadow: 0 4px 20px rgba(13, 30, 61, 0.15);
+    }
+
+    .salu-hero-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .salu-brand-block {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .salu-crest-wrap {
+        width: 64px;
+        height: 64px;
+        background: #ffffff;
+        border-radius: 50%;
+        padding: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        flex-shrink: 0;
+    }
+
+    .salu-portal-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    .salu-sub-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+        font-size: 0.8rem;
+        color: #93c5fd;
+    }
+
+    .salu-badge-caps {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 700;
+        color: #fef08a;
+    }
+
+    .salu-session-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        border-radius: var(--salu-radius-sm);
+        padding: 10px 18px;
+        text-align: right;
+    }
+
+    .salu-session-label { font-size: 0.7rem; color: #cbd5e1; font-weight: 600; }
+    .salu-session-val { font-size: 1.1rem; font-weight: 800; color: #ffffff; }
+    .salu-date-tag { font-size: 0.72rem; color: #93c5fd; margin-top: 2px; }
+
+    /* MAIN */
+    .salu-main-content {
+        max-width: 1280px;
+        margin: 28px auto 0;
+        padding: 0 20px;
+    }
+
+    /* DRAFT RESUMED BANNER */
+    .salu-draft-banner {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #2563eb;
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .draft-badge {
+        background: #2563eb;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .draft-text {
+        color: #1e3a8a;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* ALREADY SUBMITTED CARD */
+    .salu-submitted-card {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-radius: var(--salu-radius);
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .salu-submitted-left { display: flex; align-items: center; gap: 16px; }
+    .salu-sub-icon { width: 44px; height: 44px; background: #059669; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; }
+    .salu-sub-title { margin: 0; font-size: 1.15rem; font-weight: 800; color: #065f46; }
+    .salu-sub-meta { font-size: 0.85rem; color: #047857; margin-top: 4px; }
+    .salu-ref-highlight { color: #0f172a; font-family: monospace; }
+    .salu-status-pill { padding: 2px 8px; border-radius: 9999px; font-weight: 700; font-size: 0.75rem; }
+    .pill-approved { background: #10b981; color: #ffffff; }
+    .pill-pending { background: #f59e0b; color: #ffffff; }
+    .salu-sub-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ALERT BANNER */
+    .salu-alert-banner {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-left: 4px solid #ef4444;
+        border-radius: var(--salu-radius-sm);
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .alert-icon { font-size: 20px; }
+    .alert-body { flex: 1; font-size: 0.88rem; color: #991b1b; }
+    .alert-close { background: none; border: none; font-size: 20px; color: #991b1b; cursor: pointer; }
+
+    /* LOCKED & CLOSED STEPPER STYLES */
+    .salu-stepper-locked {
+        background: #f8fafc;
+        border: 1.5px solid #cbd5e1;
+    }
+
+    .salu-stepper-closed {
+        background: #fef2f2;
+        border: 1.5px solid #fecaca;
+        filter: grayscale(0.85);
+    }
+
+    .salu-stepper-status-ribbon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        padding: 8px 14px;
+        border-radius: 6px;
+        margin-bottom: 14px;
+        text-transform: uppercase;
+    }
+
+    .ribbon-locked {
+        background: #ecfdf5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+
+    .ribbon-closed {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    .salu-step-node.node-disabled {
+        cursor: not-allowed !important;
+        opacity: 0.55;
+    }
+
+    .salu-step-node.node-disabled:hover {
+        background: transparent !important;
+    }
+
+    .node-locked .salu-node-circle {
+        background: #e2e8f0;
+        color: #475569;
+        border-color: #94a3b8;
+    }
+
+    /* CLOSED NOTIFICATION CARD */
+    .salu-closed-card {
+        background: #fef2f2;
+        border: 1.5px solid #f87171;
+        border-radius: var(--salu-radius);
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.12);
+    }
+
+    .closed-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #dc2626;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .closed-title {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #991b1b;
+        letter-spacing: -0.01em;
+    }
+
+    .closed-desc {
+        margin: 4px 0 0;
+        font-size: 0.85rem;
+        color: #7f1d1d;
+        font-weight: 600;
+    }
+
+    /* 7-STEP STEPPER */
+    .salu-stepper-card {
+        background: var(--salu-surface);
+        border: 1px solid var(--salu-border);
+        border-radius: var(--salu-radius);
+        padding: 18px 24px;
+        margin-bottom: 24px;
+        box-shadow: var(--salu-shadow);
+    }
+
+    .salu-stepper-track {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+
+    .salu-step-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        cursor: pointer;
+        padding: 8px 4px;
+        border-radius: var(--salu-radius-sm);
+        transition: background 0.15s;
+    }
+    .salu-step-node:hover { background: #f1f5f9; }
+
+    .salu-node-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .node-pending .salu-node-circle { background: #f1f5f9; color: #64748b; border: 2px solid #cbd5e1; }
+    .node-active .salu-node-circle { background: var(--salu-royal); color: #ffffff; box-shadow: 0 0 0 3px rgba(26, 76, 176, 0.25); }
+    .node-done .salu-node-circle { background: #059669; color: #ffffff; }
+
+    .salu-node-info { display: flex; flex-direction: column; }
+    .node-title { font-size: 0.74rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+    .node-sub { font-size: 0.65rem; color: #64748b; margin-top: 2px; }
+    .node-active .node-title { color: var(--salu-royal); font-weight: 800; }
+
+    .salu-progress-bar-wrap {
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 2px;
+        margin-top: 14px;
+        overflow: hidden;
+    }
+    .salu-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #1a4cb0 0%, #059669 100%);
+        transition: width 0.3s ease;
+    }
+
+    /* CARD STRUCTURE */
+    .salu-card {
+        background: var(--salu-surface);
+        border: 1px solid var(--salu-border);
+        border-radius: var(--salu-radius);
+        box-shadow: var(--salu-shadow);
+        overflow: hidden;
+    }
+
+    .salu-card-header {
+        background: #ffffff;
+        border-bottom: 1px solid var(--salu-border);
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .card-header-icon { font-size: 26px; }
+    .card-header-title { margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--salu-navy); letter-spacing: -0.01em; }
+    .card-header-desc { margin: 2px 0 0; font-size: 0.8rem; color: var(--salu-text-muted); }
+
+    .salu-card-body { padding: 24px; }
+    .salu-card-footer {
+        background: #f8fafc;
+        border-top: 1px solid var(--salu-border);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* GRIDS & INPUTS */
+    .salu-form-grid { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .salu-input-group { display: flex; flex-direction: column; }
+    .salu-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .salu-label .req { color: #dc2626; font-weight: 900; }
+    .lock-indicator { font-size: 0.68rem; color: #64748b; font-weight: 600; text-transform: none; }
+
+    .salu-input, .salu-select {
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: var(--salu-radius-sm);
+        padding: 9px 12px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #0f172a;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .salu-input:focus, .salu-select:focus {
+        border-color: var(--salu-border-focus);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .salu-input.is-invalid, .salu-select.is-invalid {
+        border-color: #ef4444 !important;
+        background-color: #fef2f2 !important;
+    }
+
+    .salu-locked-input {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border-color: #cbd5e1 !important;
+        cursor: not-allowed;
+        font-weight: 700 !important;
+    }
+
+    .salu-highlight-select {
+        border: 2px solid #2563eb !important;
+        background-color: #eff6ff !important;
+        font-weight: 800 !important;
+    }
+
+    .salu-salu-exam-block {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 10px;
+    }
+
+    .salu-field-error { font-size: 0.72rem; color: #dc2626; font-weight: 700; margin-top: 4px; }
+    .salu-inline-error { font-size: 0.82rem; color: #b91c1c; font-weight: 700; background: #fef2f2; padding: 6px 12px; border-radius: 6px; }
+
+    /* ACADEMIC FIXED TABLE EDIT STYLING */
+    .salu-academic-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--salu-border);
+        border-radius: var(--salu-radius-sm);
+        background: #ffffff;
+    }
+
+    .salu-academic-edit-table {
+        margin: 0;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .salu-academic-edit-table th {
+        background: #0d1e3d;
+        color: #ffffff;
+        padding: 12px 10px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-align: left;
+        border: 1px solid #1e293b;
+    }
+
+    .salu-academic-edit-table td {
+        padding: 10px 8px;
+        border: 1px solid var(--salu-border);
+        vertical-align: middle;
+        background: #ffffff;
+    }
+
+    .academic-row:hover td {
+        background-color: #f8fafc;
+    }
+
+    .level-badge-wrap {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .qual-badge-matric {
+        background: #e0f2fe !important;
+        color: #0369a1 !important;
+        font-weight: 900 !important;
+        font-size: 0.78rem !important;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .qual-badge-inter {
+        background: #fef3c7 !important;
+        color: #b45309 !important;
+        font-weight: 900 !important;
+        font-size: 0.78rem !important;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .salu-percentage-badge {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+        font-weight: 900;
+        font-size: 0.95rem;
+        padding: 6px 10px;
+        border-radius: 6px;
+        display: inline-block;
+        min-width: 75px;
+    }
+
+    .salu-academic-advisory {
+        background: #f8fafc;
+        border: 1px solid var(--salu-border);
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .advisory-icon { font-size: 20px; }
+    .advisory-text { font-size: 0.88rem; color: #1e293b; }
+    .advisory-hint { font-size: 0.75rem; color: #64748b; }
+
+    /* =========================================================================
+       STEP 3: MODERN MUDGRID DOCUMENT VAULT & OCR SYSTEM
+       ========================================================================= */
+    .salu-vault-banner-header {
+        background: linear-gradient(135deg, #0d1e3d 0%, #172a5a 60%, #1a4cb0 100%);
+        padding: 22px 28px;
+        color: #ffffff;
+        border-radius: var(--salu-radius) var(--salu-radius) 0 0;
+    }
+
+    .salu-vault-icon-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #fef08a;
+        flex-shrink: 0;
+    }
+
+    .salu-vault-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+    }
+
+    .salu-vault-subtitle {
+        font-size: 0.82rem;
+        color: #93c5fd;
+        margin-top: 2px;
+    }
+
+    .salu-ai-badge {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid #10b981;
+        color: #6ee7b7;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: pulseAnimation 1.6s infinite;
+    }
+
+    @@keyframes pulseAnimation {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .salu-vault-progress-box {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        padding: 12px 18px;
+    }
+
+    .salu-vault-prog-label { font-size: 0.84rem; color: #e2e8f0; font-weight: 600; }
+    .salu-vault-prog-percent { font-size: 0.84rem; color: #fef08a; font-weight: 800; }
+
+    /* =========================================================================
+       STEP 3: MODERN ENTERPRISE DOCUMENT CHECKLIST TABLE
+       ========================================================================= */
+    .salu-mudtable-container {
+        overflow-x: auto;
+        border: 2px solid #64748b !important;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .salu-mudtable {
+        margin: 0;
+        width: 100%;
+        border-collapse: collapse !important;
+        border-spacing: 0;
+    }
+
+    .salu-mudtable th {
+        background: linear-gradient(135deg, #0d1e3d 0%, #172a5a 100%);
+        color: #ffffff;
+        padding: 14px 16px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: 1px solid #334155 !important;
+        border-bottom: 3px solid #ea580c !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    .salu-mudtable td {
+        padding: 12px 16px;
+        border: 1px solid #cbd5e1 !important;
+        vertical-align: middle;
+        background: #ffffff;
+        transition: background-color 0.15s ease;
+    }
+
+    .mud-row:hover td {
+        background-color: #f1f5f9 !important;
+    }
+
+    .mud-row-uploaded td {
+        background-color: #ffffff;
+    }
+
+    .mud-row-processing td {
+        background-color: #eff6ff !important;
+    }
+
+    /* PREVIEW THUMBNAIL BOX IN TABLE */
+    .doc-preview-box {
+        width: 58px;
+        height: 58px;
+        border-radius: 8px;
+        border: 2px solid #cbd5e1;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .doc-preview-box.has-preview {
+        cursor: pointer;
+        border-color: #93c5fd;
+    }
+
+    .doc-preview-box.has-preview:hover {
+        transform: translateY(-2px) scale(1.08);
+        border-color: #2563eb;
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+    }
+
+    .doc-preview-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .doc-preview-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(13, 30, 61, 0.65);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        font-size: 16px;
+        transition: opacity 0.15s ease;
+    }
+
+    .doc-preview-box:hover .doc-preview-overlay {
+        opacity: 1;
+    }
+
+    .doc-pdf-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        color: #b91c1c;
+        width: 100%;
+        height: 100%;
+        background: #fef2f2;
+    }
+    .pdf-icon { font-size: 22px; }
+    .pdf-text { font-size: 0.6rem; font-weight: 900; background: #fee2e2; padding: 1px 5px; border-radius: 3px; }
+
+    .doc-empty-slot {
+        color: #94a3b8;
+        font-size: 22px;
+    }
+
+    /* REQUIREMENT DETAILS */
+    .doc-req-info { display: flex; flex-direction: column; gap: 4px; }
+    .doc-req-title { font-size: 0.88rem; color: var(--salu-navy); font-weight: 800; }
+    .doc-req-desc { font-size: 0.74rem; color: #64748b; }
+    .mud-chip-compact { font-size: 0.64rem !important; font-weight: 800 !important; padding: 2px 6px !important; }
+
+    /* FILE DETAILS */
+    .doc-file-info { display: flex; flex-direction: column; gap: 2px; }
+    .doc-file-name { font-size: 0.82rem; font-weight: 700; color: #0f172a; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .doc-file-meta { font-size: 0.72rem; color: #64748b; }
+    .doc-no-file { font-size: 0.78rem; color: #94a3b8; font-style: italic; }
+
+    /* OCR STATUS TAGS IN TABLE */
+    .doc-ocr-docket { display: flex; flex-direction: column; gap: 4px; }
+    .salu-ocr-live-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.73rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 6px;
+        width: fit-content;
+    }
+
+    .ocr-processing { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .ocr-verified { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .ocr-flagged { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .ocr-attached { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+
+    .ocr-meta-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ocr-pill {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    .ocr-pill strong { color: #0f172a; }
+
+    /* STRICTLY ALIGNED ACTION TOOLBAR */
+    .salu-table-act-toolbar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .btn-salu-act-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1.5px solid #bfdbfe;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        line-height: 1.2;
+    }
+
+    .btn-salu-act-pill:hover {
+        background: #1d4ed8;
+        color: #ffffff;
+        border-color: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
+    }
+
+    .btn-salu-act-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: #ffffff;
+        color: #334155;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s ease;
+        padding: 0;
+    }
+
+    .btn-salu-act-icon:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+    }
+
+    .btn-salu-act-icon.btn-act-del:hover {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fca5a5;
+    }
+
+    .salu-upload-main-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 16px !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        border-radius: 6px !important;
+        cursor: pointer;
+        background: #1a4cb0 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(26, 76, 176, 0.2);
+    }
+
+    .salu-upload-main-btn:hover {
+        background: #0d1e3d !important;
+        transform: translateY(-1px);
+    }
+
+    /* MODAL SPLIT LAYOUT */
+    .salu-preview-modal-dialog {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        width: 100%;
+        max-width: 960px;
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .modal-header-icon-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: #eff6ff;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .modal-split-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 16px;
+        width: 100%;
+        height: 100%;
+    }
+
+    @@media (max-width: 860px) {
+        .modal-split-layout { grid-template-columns: 1fr; }
+    }
+
+    .modal-media-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f172a;
+        border-radius: 10px;
+        padding: 12px;
+        min-height: 360px;
+        overflow: auto;
+    }
+
+    .modal-ocr-sidebar {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .ocr-sidebar-header {
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: var(--salu-navy);
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+
+    .ocr-sidebar-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ocr-stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.78rem;
+        color: #475569;
+        padding: 4px 0;
+        border-bottom: 1px dashed #f1f5f9;
+    }
+
+    .ocr-stat-row strong { color: #0f172a; }
+
+    /* PREVIEW MODAL LIGHTBOX STYLES */
+    .salu-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(13, 30, 61, 0.82);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 20px;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .salu-modal-preview-img {
+        max-width: 100%;
+        max-height: 60vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+        background: #ffffff;
+    }
+
+    .salu-modal-preview-iframe {
+        width: 100%;
+        height: 60vh;
+        border: none;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    /* BIO LAYOUT & PASSPORT STUDIO */
+    .salu-bio-layout {
+        display: grid;
+        grid-template-columns: 1fr 240px;
+        gap: 24px;
+    }
+
+    .salu-photo-studio-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .salu-photo-card {
+        background: #f8fafc;
+        border: 2px dashed #cbd5e1;
+        border-radius: var(--salu-radius);
+        padding: 20px 16px;
+        text-align: center;
+        width: 100%;
+    }
+
+    .salu-avatar-circle {
+        width: 130px;
+        height: 145px;
+        margin: 0 auto 12px;
+        border-radius: 8px;
+        border: 2px solid #94a3b8;
+        overflow: hidden;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .salu-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .salu-avatar-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: #94a3b8;
+    }
+    .avatar-icon { font-size: 28px; }
+    .avatar-text { font-size: 0.68rem; font-weight: 800; }
+
+    .photo-info-box { margin-bottom: 12px; }
+    .photo-req-title { font-size: 0.74rem; font-weight: 800; color: #1e293b; display: block; }
+    .photo-req-hint { font-size: 0.66rem; color: #64748b; display: block; margin-top: 2px; }
+
+    .salu-file-picker-input {
+        width: 100%;
+        font-size: 0.75rem;
+    }
+
+    .photo-uploading-tag { font-size: 0.75rem; color: #2563eb; font-weight: 700; margin-top: 4px; }
+
+    /* FEE ADVISORY */
+    .salu-fee-advisory-bar {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .fee-text { font-size: 0.85rem; color: #1e3a8a; }
+    .badge-surcharge { background: #fee2e2; color: #991b1b; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; }
+    .fee-note { font-size: 0.75rem; color: #64748b; }
+
+    /* CERTIFICATE PREVIEW */
+    .salu-official-cert-preview {
+        background: #fffbeb;
+        border: 2px double #d97706;
+        border-radius: 12px;
+        padding: 36px 40px;
+        position: relative;
+        overflow: hidden;
+    }
+    .cert-watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-25deg);
+        font-size: 120px;
+        font-weight: 900;
+        color: rgba(217, 119, 6, 0.04);
+        pointer-events: none;
+    }
+    .cert-header { text-align: center; margin-bottom: 24px; }
+    .cert-crest { width: 70px; height: 70px; margin-bottom: 8px; }
+    .cert-header h4 { margin: 0; font-size: 1.25rem; font-weight: 900; color: #78350f; }
+    .cert-header h5 { margin: 4px 0 0; font-size: 0.9rem; font-weight: 700; color: #92400e; }
+    .cert-body { font-size: 1rem; line-height: 2; color: #451a03; text-align: justify; }
+    .cert-fill { border-bottom: 1.5px solid #78350f; font-weight: 800; color: #0f172a; padding: 0 6px; }
+    .cert-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 48px; }
+    .cert-sign-col { text-align: center; font-size: 0.8rem; font-weight: 700; color: #78350f; }
+    .sign-line { width: 180px; border-bottom: 1.5px solid #78350f; margin-bottom: 6px; }
+    .sign-seal { width: 85px; height: 85px; border: 2px dashed #78350f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 900; color: #78350f; }
+
+    /* OFFICE SCRUTINY & ORDER */
+    .salu-office-docket, .salu-order-docket {
+        background: #f8fafc;
+        border: 1px solid var(--salu-border);
+        border-radius: var(--salu-radius-sm);
+        padding: 24px;
+        font-size: 0.95rem;
+        line-height: 1.8;
+    }
+    .docket-fill { font-weight: 800; color: var(--salu-navy); border-bottom: 1px dashed #94a3b8; padding: 0 4px; }
+    .docket-divider { margin: 16px 0; border: none; border-top: 1px solid var(--salu-border); }
+    .salu-order-docket { text-align: center; border-left: 4px solid var(--salu-royal); }
+    .order-seal-badge { display: inline-block; background: #e0e7ff; color: #3730a3; font-weight: 800; font-size: 0.75rem; padding: 3px 12px; border-radius: 9999px; margin-bottom: 12px; }
+    .order-headline { font-size: 1.25rem; font-weight: 800; color: var(--salu-navy); margin: 0 0 20px; font-style: italic; }
+    .order-sign-box { border-top: 1px solid #cbd5e1; display: inline-block; padding-top: 8px; margin-top: 16px; }
+    .order-title { font-weight: 800; color: #0f172a; font-size: 0.9rem; }
+    .order-inst { font-size: 0.78rem; color: #64748b; }
+
+    /* SUMMARY TILES & DECLARATION */
+    .salu-fee-summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .fee-tile { background: #f8fafc; border: 1px solid var(--salu-border); border-radius: var(--salu-radius-sm); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+    .fee-tile-total { background: #ecfdf5; border-color: #a7f3d0; }
+    .tile-label { font-size: 0.72rem; font-weight: 700; color: #64748b; }
+    .tile-value { font-size: 1.4rem; font-weight: 900; }
+    .tile-sub { font-size: 0.7rem; }
+
+    .salu-review-accordion { border: 1px solid var(--salu-border); border-radius: var(--salu-radius-sm); overflow: hidden; }
+    .accordion-head { background: #f1f5f9; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.85rem; color: var(--salu-navy); }
+    .head-badge { font-size: 0.74rem; background: #ffffff; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--salu-border); color: #475569; }
+    .accordion-body { padding: 16px 18px; background: #ffffff; font-size: 0.85rem; }
+
+    .salu-declaration-card { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--salu-radius-sm); padding: 16px; }
+    .salu-declaration-label { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; margin: 0; }
+    .salu-checkbox { width: 20px; height: 20px; margin-top: 2px; cursor: pointer; flex-shrink: 0; }
+    .declaration-text { font-size: 0.85rem; line-height: 1.5; color: #78350f; }
+
+    /* SUCCESS CELEBRATION */
+    .salu-success-celebration-card { background: #ffffff; border: 1px solid #a7f3d0; border-radius: var(--salu-radius); padding: 48px 32px; text-align: center; box-shadow: var(--salu-shadow-hover); }
+    .success-trophy { font-size: 64px; margin-bottom: 12px; }
+    .success-title { font-size: 1.55rem; font-weight: 900; color: #065f46; margin: 0; }
+    .success-desc { font-size: 0.95rem; color: var(--salu-text-muted); max-width: 600px; margin: 8px auto 0; }
+    .salu-ref-box { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: var(--salu-radius-sm); padding: 20px; max-width: 480px; margin: 28px auto; }
+    .ref-label { font-size: 0.78rem; font-weight: 700; color: var(--salu-text-muted); }
+    .ref-code { font-size: 1.8rem; font-weight: 900; color: var(--salu-royal); font-family: monospace; letter-spacing: 0.05em; margin: 4px 0; }
+    .ref-hint { font-size: 0.72rem; color: var(--salu-text-muted); }
+    .salu-success-summary-box { display: flex; justify-content: center; gap: 32px; margin-bottom: 32px; flex-wrap: wrap; }
+    .summary-item { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
+    .salu-success-action-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    /* BUTTONS */
+    .btn-salu-primary { background: linear-gradient(135deg, var(--salu-royal) 0%, #1d4ed8 100%); color: #ffffff; font-weight: 700; padding: 10px 20px; border-radius: var(--salu-radius-sm); border: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+    .btn-salu-primary:hover { background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); color: #ffffff; transform: translateY(-1px); }
+    .btn-salu-gold { background: linear-gradient(135deg, #f59e0b 0%, var(--salu-gold) 100%); color: #ffffff; font-weight: 700; padding: 10px 20px; border-radius: var(--salu-radius-sm); border: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25); }
+    .btn-salu-gold:hover { background: #b45309; color: #ffffff; transform: translateY(-1px); }
+    .btn-salu-accent { background: linear-gradient(135deg, var(--salu-accent) 0%, #c2410c 100%); color: #ffffff; font-weight: 700; padding: 8px 18px; border-radius: var(--salu-radius-sm); border: none; }
+    .btn-salu-outline { background: #ffffff; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; padding: 9px 18px; border-radius: var(--salu-radius-sm); }
+    .btn-salu-outline:hover { background: #f8fafc; color: var(--salu-navy); border-color: #94a3b8; }
+    .btn-salu-submit { background: linear-gradient(135deg, var(--salu-emerald) 0%, #047857 100%); color: #ffffff; font-weight: 800; padding: 12px 28px; border-radius: var(--salu-radius-sm); border: none; font-size: 1rem; box-shadow: 0 4px 16px rgba(13, 138, 79, 0.3); }
+    .btn-salu-submit:hover { background: #047857; color: #ffffff; transform: translateY(-2px); }
+
+    .animate-fade-in { animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* RESPONSIVE */
+    @@media (max-width: 992px) {
+        .salu-bio-layout { grid-template-columns: 1fr; }
+        .salu-photo-studio-wrap { max-width: 300px; margin: 0 auto; }
+        .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+        .salu-fee-summary-grid { grid-template-columns: 1fr; }
+        .salu-stepper-track { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @@media (max-width: 640px) {
+        .salu-hero-header { padding: 18px 16px; }
+        .salu-main-content { padding: 0 12px; margin-top: 16px; }
+        .salu-card-header { padding: 14px 16px; }
+        .salu-card-body { padding: 16px; }
+        .salu-card-footer { padding: 14px 16px; flex-direction: column; width: 100%; }
+        .salu-card-footer button { width: 100%; }
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        .salu-stepper-track { grid-template-columns: repeat(2, 1fr); }
+        .salu-official-cert-preview { padding: 18px; }
+        .cert-footer { flex-direction: column; gap: 20px; align-items: center; }
+        .salu-success-celebration-card { padding: 32px 16px; }
+        .salu-success-action-row a, .salu-success-action-row button { width: 100%; }
+    }
+</style>
+
+@code {
+    private const int TOTAL_STEPS = 7;
+    private int currentStep = 1;
+    private readonly HashSet<int> completedSteps = [];
+
+    private EnrollmentFormModel Input { get; set; } = new();
+    private ApplicationUser? currentUser;
+    private AcademicYear? activeAcademicYear;
+    private List<College> allColleges = [];
+    private List<College> filteredColleges = [];
+    private List<CollegeProgram> availablePrograms = [];
+    private List<AcademicYear> academicYearsList = [];
+    private FeeBreakdown feeBreakdown = new(1000, 0, 0, 1000, false, false, "Standard Regular Fee");
+
+    private readonly List<string> districtOptions = [
+        "KHAIRPUR", "SUKKUR", "GHOTKI", "LARKANA", "SHIKARPUR",
+        "JACOBABAD", "KASHMORE", "NAUSHAHRO FEROZE", "SHAHEED BENAZIRABAD",
+        "HYDERABAD", "KARACHI", "MIRPURKHAS", "BADIN", "THATTA", "DADU", "OTHER"
+    ];
+
+    private readonly List<string> boardOptions = [
+        "BISE SUKKUR",
+        "BISE LARKANA",
+        "BISE HYDERABAD",
+        "BISE KARACHI",
+        "BISE MIRPURKHAS",
+        "BISE SHAHEED BENAZIRABAD",
+        "FEDERAL BOARD (FBISE)",
+        "AGA KHAN BOARD",
+        "OTHER BOARD"
+    ];
+
+    // Dynamic document requirements checklist
+    private sealed record DocumentSpec(string DocType, string Description, bool IsMandatory);
+
+    private List<DocumentSpec> standardDocumentSpecs = [
+        new("COPY OF CNIC / B-FORM", "Clear readable copy of Candidate National ID Card or NADRA B-Form", true),
+        new("COPY OF INTERMEDIATE MARKSHEET", "Original Intermediate / HSSC Part-II Marks Certificate with Seat No & Marks", true),
+        new("COPY OF MATRIC MARKSHEET", "Original Matriculation / SSC Part-II Marks Certificate with Board Seat No", false),
+        new("PASSPORT SIZE PHOTOGRAPH", "Recent passport size color photograph with white or light blue background", true),
+        new("COPY OF DOMICILE & PRC", "Permanent Residence Certificate (Form C) and Domicile Certificate (Optional)", false)
+    ];
+
+    private int GetUploadedMandatoryCount()
+    {
+        return standardDocumentSpecs.Count(s => s.IsMandatory && GetDocumentByType(s.DocType) != null);
+    }
+
+    private int GetTotalMandatoryCount()
+    {
+        return standardDocumentSpecs.Count(s => s.IsMandatory);
+    }
+
+    private double GetDocumentUploadProgressPercent()
+    {
+        var total = standardDocumentSpecs.Count;
+        if (total == 0) return 0;
+        var uploaded = standardDocumentSpecs.Count(s => GetDocumentByType(s.DocType) != null);
+        return Math.Round((double)uploaded / total * 100, 1);
+    }
+
+    private static string GetDocIcon(string? docType)
+    {
+        if (string.IsNullOrWhiteSpace(docType)) return "bi-file-earmark-text-fill";
+        var dt = docType.ToUpperInvariant();
+        if (dt.Contains("CNIC") || dt.Contains("B-FORM")) return "bi-person-vcard-fill";
+        if (dt.Contains("INTER")) return "bi-mortarboard-fill";
+        if (dt.Contains("MATRIC")) return "bi-award-fill";
+        if (dt.Contains("PHOTO")) return "bi-person-bounding-box";
+        if (dt.Contains("DOMICILE") || dt.Contains("PRC")) return "bi-geo-alt-fill";
+        return "bi-file-earmark-text-fill";
+    }
+
+    // Fixed 2-Row Academic State (Starts Clean & Empty)
+    private string matricDiscipline = "";
+    private int matricYear = 0;
+    private string matricSeat = "";
+    private int? matricObtained = null;
+    private int? matricTotal = null;
+    private double matricPercentage = 0;
+    private string matricGrade = "";
+    private string matricBoard = "";
+
+    private string interDiscipline = "";
+    private int interYear = 0;
+    private string interSeat = "";
+    private int? interObtained = null;
+    private int? interTotal = null;
+    private double interPercentage = 0;
+    private string interGrade = "";
+    private string interBoard = "";
+
+    private List<AcademicRecordItem> academicRecords = [];
+
+    // Document attachments
+    private List<UploadedDocumentItem> uploadedDocuments = [];
+    private string? processingDocType;
+    private UploadedDocumentItem? previewModalDoc;
+
+    // Photo state
+    private string? photoPreviewUrl;
+    private bool uploadingPhoto;
+
+    private EntityEnrollment? existingEnrollment;
+    private WindowEvaluationResult? windowStatus;
+    private bool isSubmitted => existingEnrollment != null && existingEnrollment.Status != EnrollmentStatus.Draft;
+    private bool isWindowClosed => windowStatus != null && !windowStatus.IsActive;
+    private bool isDraftResumed;
+    private bool isCorrectionAuthorized;
+    private bool showErrors;
+    private bool isSubmitting;
+    private string? generalErrorMessage;
+    private string generatedReferenceNumber = "SALU-2026-000000";
+    private string? selectedCollegeName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            windowStatus = await ConfigService.GetEnrollmentWindowStatusAsync();
+        }
+        catch { }
+
+        allColleges = await Db.Colleges.AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+        filteredColleges = allColleges;
+        academicYearsList = await Db.AcademicYears.AsNoTracking().Where(y => y.IsActive).OrderByDescending(y => y.StartDate).ToListAsync();
+        activeAcademicYear = academicYearsList.FirstOrDefault();
+        if (activeAcademicYear != null)
+        {
+            Input.AcademicYearName = activeAcademicYear.Name;
+        }
+
+        CalculateMatricPercentage();
+        CalculateInterPercentage();
+        SyncAcademicRecords();
+
+        try
+        {
+            var docReqs = await ConfigService.GetDocumentRequirementsAsync();
+            standardDocumentSpecs = [
+                new("COPY OF CNIC / B-FORM", "Clear readable copy of Candidate National ID Card or NADRA B-Form", docReqs.CnicRequired),
+                new("COPY OF INTERMEDIATE MARKSHEET", "Original Intermediate / HSSC Part-II Marks Certificate with Seat No & Marks", docReqs.IntermediateMarksheetRequired),
+                new("COPY OF MATRIC MARKSHEET", "Original Matriculation / SSC Part-II Marks Certificate with Board Seat No", docReqs.MatricCertificateRequired),
+                new("PASSPORT SIZE PHOTOGRAPH", "Recent passport size color photograph with white or light blue background", docReqs.PhotoRequired),
+                new("COPY OF DOMICILE & PRC", "Permanent Residence Certificate (Form C) and Domicile Certificate (Optional)", docReqs.DomicilePrcRequired)
+            ];
+        }
+        catch { }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            currentUser = await UserManager.GetUserAsync(authState.User);
+            if (currentUser != null)
+            {
+                // Lock registration data
+                Input.FullName = (currentUser.FullName ?? "").ToUpperInvariant();
+                Input.FatherName = (currentUser.FatherName ?? "").ToUpperInvariant();
+                Input.Cnic = currentUser.Cnic ?? "";
+                Input.ContactNumber = currentUser.PhoneNumber ?? "";
+
+                existingEnrollment = await Db.Enrollments
+                    .AsNoTracking()
+                    .Include(e => e.College)
+                    .Include(e => e.Fees)
+                    .OrderByDescending(e => e.CreatedAt)
+                    .FirstOrDefaultAsync(e => e.UserId == currentUser.Id);
+
+                 isCorrectionAuthorized = existingEnrollment?.Status == EnrollmentStatus.Rejected
+                     && await EnrollmentCorrectionService.HasApprovedCorrectionAsync(existingEnrollment.Id, currentUser.Id);
+
+                if (existingEnrollment != null)
+                {
+                     if (existingEnrollment.Status != EnrollmentStatus.Draft)
+                     {
+                         currentStep = TOTAL_STEPS + 1;
+                     }
+
+                    // Restore data from existing enrollment / draft (without fake mock fallbacks)
+                    Input.CollegeId = existingEnrollment.CollegeId;
+                    Input.Program = (existingEnrollment.Program ?? "").ToUpperInvariant();
+                    Input.AdmittedDistrict = (existingEnrollment.College?.District ?? existingEnrollment.DomicileDistrict ?? "").ToUpperInvariant();
+                    if (!string.IsNullOrWhiteSpace(existingEnrollment.FatherName))
+                    {
+                        Input.FatherName = existingEnrollment.FatherName.ToUpperInvariant();
+                    }
+                    Input.Surname = (existingEnrollment.Surname ?? "").ToUpperInvariant();
+                    Input.SoDoWo = (existingEnrollment.SoDoWo ?? "").ToUpperInvariant();
+                    Input.DateOfBirth = existingEnrollment.DateOfBirth;
+                    Input.Gender = existingEnrollment.Gender;
+                    Input.Address = (existingEnrollment.Address ?? "").ToUpperInvariant();
+                    Input.DomicileDistrict = (existingEnrollment.DomicileDistrict ?? "").ToUpperInvariant();
+                    Input.DomicileProvince = (existingEnrollment.DomicileProvince ?? "").ToUpperInvariant();
+                    Input.DivisionObtained = (existingEnrollment.DivisionObtained ?? "").ToUpperInvariant();
+                    Input.PassingYear = existingEnrollment.PassingYear ?? 0;
+                    Input.BoardName = (existingEnrollment.BoardName ?? "").ToUpperInvariant();
+                    Input.ExamFromSalu = (existingEnrollment.ExamFromSalu ?? "NO").ToUpperInvariant();
+                    Input.SaluSeatNo = (existingEnrollment.SaluSeatNo ?? "").ToUpperInvariant();
+                    Input.SaluExamYear = (existingEnrollment.SaluExamYear ?? "").ToUpperInvariant();
+                    Input.EligibilityCertNo = (existingEnrollment.EligibilityCertNo ?? "").ToUpperInvariant();
+                    Input.PhotoUrl = existingEnrollment.PhotoUrl;
+                    photoPreviewUrl = existingEnrollment.PhotoUrl;
+                    generatedReferenceNumber = existingEnrollment.ReferenceNumber ?? "SALU-2026-000000";
+
+                    if (!string.IsNullOrWhiteSpace(existingEnrollment.AcademicRecordsJson))
+                    {
+                        try 
+                        { 
+                            var loaded = JsonSerializer.Deserialize<List<AcademicRecordItem>>(existingEnrollment.AcademicRecordsJson);
+                            if (loaded != null && loaded.Count > 0)
+                            {
+                                var matricRec = loaded.FirstOrDefault(r => r.Qualification.Contains("MATRIC", StringComparison.OrdinalIgnoreCase));
+                                if (matricRec != null)
+                                {
+                                    matricDiscipline = string.IsNullOrWhiteSpace(matricRec.Degree) || matricRec.Degree == "—" ? "" : matricRec.Degree;
+                                    matricYear = matricRec.PassingYear;
+                                    matricSeat = matricRec.SeatNo;
+                                    matricObtained = matricRec.MarksObtained > 0 ? matricRec.MarksObtained : null;
+                                    matricTotal = matricRec.TotalMarks > 0 ? matricRec.TotalMarks : null;
+                                    matricGrade = matricRec.GradeDivision;
+                                    matricBoard = matricRec.BoardUniversity;
+                                    CalculateMatricPercentage();
+                                }
+
+                                var interRec = loaded.FirstOrDefault(r => r.Qualification.Contains("INTER", StringComparison.OrdinalIgnoreCase));
+                                if (interRec != null)
+                                {
+                                    interDiscipline = string.IsNullOrWhiteSpace(interRec.Degree) || interRec.Degree == "—" ? "" : interRec.Degree;
+                                    interYear = interRec.PassingYear;
+                                    interSeat = interRec.SeatNo;
+                                    interObtained = interRec.MarksObtained > 0 ? interRec.MarksObtained : null;
+                                    interTotal = interRec.TotalMarks > 0 ? interRec.TotalMarks : null;
+                                    interGrade = interRec.GradeDivision;
+                                    interBoard = interRec.BoardUniversity;
+                                    CalculateInterPercentage();
+                                }
+                                SyncAcademicRecords();
+                            }
+                        } 
+                        catch { }
+                    }
+                    if (!string.IsNullOrWhiteSpace(existingEnrollment.DocumentsJson))
+                    {
+                        try { uploadedDocuments = JsonSerializer.Deserialize<List<UploadedDocumentItem>>(existingEnrollment.DocumentsJson) ?? uploadedDocuments; } catch { }
+                    }
+
+                    // Apply cascading filters for restored college/district
+                    if (!string.IsNullOrWhiteSpace(Input.AdmittedDistrict))
+                    {
+                        filteredColleges = allColleges.Where(c => c.District.Equals(Input.AdmittedDistrict, StringComparison.OrdinalIgnoreCase)).ToList();
+                    }
+
+                    if (Input.CollegeId.HasValue)
+                    {
+                        availablePrograms = await Db.CollegePrograms.Where(p => p.CollegeId == Input.CollegeId && p.IsActive).ToListAsync();
+                        var college = allColleges.FirstOrDefault(c => c.Id == Input.CollegeId);
+                        selectedCollegeName = college?.Name;
+                    }
+
+                    if (existingEnrollment.Status == EnrollmentStatus.Draft)
+                    {
+                        isDraftResumed = true;
+                    }
+                }
+            }
+        }
+
+        await RefreshFeeAsync();
+    }
+
+    private string GetStepShortTitle(int step) => step switch
+    {
+        1 => "1. PROFILE",
+        2 => "2. ACADEMICS",
+        3 => "3. DOCUMENTS",
+        4 => "4. ADMISSION CERT",
+        5 => "5. SCRUTINY",
+        6 => "6. ORDER",
+        7 => "7. LEGAL ACK",
+        _ => $"STEP {step}"
+    };
+
+    private string GetStepSubTitle(int step) => step switch
+    {
+        1 => "Bio & College",
+        2 => "Qualifications",
+        3 => "Vault & OCR",
+        4 => "Certificate",
+        5 => "Office Docket",
+        6 => "Controller",
+        7 => "Challan & Submit",
+        _ => ""
+    };
+
+    private double GetStepProgressPercent() => Math.Round((double)currentStep / TOTAL_STEPS * 100, 1);
+
+    // ================= REACTIVE ERROR DISMISSAL & NAVIGATION =================
+    private void ClearGeneralError() => generalErrorMessage = null;
+
+    private void OnFieldChanged()
+    {
+        if (showErrors)
+        {
+            generalErrorMessage = null;
+        }
+    }
+
+    private bool ValidateStep(int step, out string? errorMessage)
+    {
+        errorMessage = null;
+        if (step == 1)
+        {
+            if (string.IsNullOrWhiteSpace(Input.AdmittedDistrict))
+            {
+                errorMessage = "Admitted District is mandatory. Please select your admitted district.";
+                return false;
+            }
+            if (!Input.CollegeId.HasValue)
+            {
+                errorMessage = "Admitted College is mandatory. Please select your college.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.Program))
+            {
+                errorMessage = "Admitted Degree Program is mandatory. Please select your program.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.AcademicYearName))
+            {
+                errorMessage = "Academic Year is mandatory.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.FullName))
+            {
+                errorMessage = "Candidate Full Name is required.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.SoDoWo))
+            {
+                errorMessage = "Relation (S/O, D/O, or W/O) is mandatory. Please select relation.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.FatherName))
+            {
+                errorMessage = "Father's Name is mandatory. Please enter father's name.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.Cnic))
+            {
+                errorMessage = "CNIC / B-Form is mandatory.";
+                return false;
+            }
+            if (Input.DateOfBirth == default || Input.DateOfBirth >= DateTime.Today.AddYears(-12) || Input.DateOfBirth <= DateTime.Today.AddYears(-90))
+            {
+                errorMessage = "Valid Date of Birth is mandatory (Candidate must be between 12 and 80 years old).";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.DivisionObtained))
+            {
+                errorMessage = "Division / Grade is mandatory in personal profile.";
+                return false;
+            }
+            if (Input.PassingYear <= 0)
+            {
+                errorMessage = "Passing Year is mandatory. Please select passing year.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.BoardName))
+            {
+                errorMessage = "Board of Examination is mandatory. Please select your board.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.Address))
+            {
+                errorMessage = "Permanent Postal Address is mandatory.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.Nationality))
+            {
+                errorMessage = "Nationality is mandatory. Please select nationality.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.Religion))
+            {
+                errorMessage = "Religion is mandatory. Please select religion.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.DomicileProvince))
+            {
+                errorMessage = "Domicile Province is mandatory. Please select province.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(Input.DomicileDistrict))
+            {
+                errorMessage = "Domicile District is mandatory. Please select domicile district.";
+                return false;
+            }
+            if (Input.ExamFromSalu == "YES")
+            {
+                if (string.IsNullOrWhiteSpace(Input.SaluSeatNo))
+                {
+                    errorMessage = "Previous SALU Seat Number is mandatory when Exam from SALU is YES.";
+                    return false;
+                }
+                if (string.IsNullOrWhiteSpace(Input.SaluExamYear))
+                {
+                    errorMessage = "Previous SALU Exam Year is mandatory when Exam from SALU is YES.";
+                    return false;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(Input.PhotoUrl) && string.IsNullOrWhiteSpace(photoPreviewUrl))
+            {
+                errorMessage = "Passport Size Photograph is mandatory. Please upload your photo.";
+                return false;
+            }
+            return true;
+        }
+        else if (step == 2)
+        {
+            if (string.IsNullOrWhiteSpace(matricDiscipline))
+            {
+                errorMessage = "Matriculation Discipline / Group is mandatory.";
+                return false;
+            }
+            if (matricYear <= 0)
+            {
+                errorMessage = "Matriculation Passing Year is mandatory.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(matricSeat))
+            {
+                errorMessage = "Matriculation Roll / Seat Number is mandatory.";
+                return false;
+            }
+            if (!matricObtained.HasValue || matricObtained < 0)
+            {
+                errorMessage = "Matriculation Marks Obtained is mandatory.";
+                return false;
+            }
+            if (!matricTotal.HasValue || matricTotal <= 0)
+            {
+                errorMessage = "Matriculation Total Marks is mandatory.";
+                return false;
+            }
+            if (matricObtained > matricTotal)
+            {
+                errorMessage = "Matriculation Obtained Marks cannot exceed Total Marks.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(matricGrade))
+            {
+                errorMessage = "Matriculation Grade is mandatory.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(matricBoard))
+            {
+                errorMessage = "Matriculation Board is mandatory.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(interDiscipline))
+            {
+                errorMessage = "Intermediate Discipline / Group is mandatory.";
+                return false;
+            }
+            if (interYear <= 0)
+            {
+                errorMessage = "Intermediate Passing Year is mandatory.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(interSeat))
+            {
+                errorMessage = "Intermediate Roll / Seat Number is mandatory.";
+                return false;
+            }
+            if (!interObtained.HasValue || interObtained < 0)
+            {
+                errorMessage = "Intermediate Marks Obtained is mandatory.";
+                return false;
+            }
+            if (!interTotal.HasValue || interTotal <= 0)
+            {
+                errorMessage = "Intermediate Total Marks is mandatory.";
+                return false;
+            }
+            if (interObtained > interTotal)
+            {
+                errorMessage = "Intermediate Obtained Marks cannot exceed Total Marks.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(interGrade))
+            {
+                errorMessage = "Intermediate Grade is mandatory.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(interBoard))
+            {
+                errorMessage = "Intermediate Board is mandatory.";
+                return false;
+            }
+
+            SyncAcademicRecords();
+            return true;
+        }
+        else if (step == 3)
+        {
+            var missingMandatory = standardDocumentSpecs
+                .Where(s => s.IsMandatory && GetDocumentByType(s.DocType) == null)
+                .Select(s => s.DocType)
+                .ToList();
+
+            if (missingMandatory.Count > 0)
+            {
+                errorMessage = $"Missing mandatory documents: {string.Join(", ", missingMandatory)}. Please attach all required documents.";
+                return false;
+            }
+            return true;
+        }
+        return true;
+    }
+
+    private async Task NavigateToStepAsync(int targetStep)
+    {
+        if (isSubmitted)
+        {
+            Toast.ShowInfo("Application is submitted. Form tabs are locked in read-only mode.");
+            return;
+        }
+
+        if (isWindowClosed)
+        {
+            Toast.ShowWarning("Enrollment portal is closed. Submission tabs are disabled.");
+            return;
+        }
+
+        if (targetStep < 1 || targetStep > TOTAL_STEPS + 1) return;
+
+        if (targetStep == currentStep) return;
+
+        // Strict Step Guard: When moving forward, validate all preceding steps sequentially
+        if (targetStep > currentStep)
+        {
+            for (int s = 1; s < targetStep; s++)
+            {
+                if (!ValidateStep(s, out var stepError))
+                {
+                    currentStep = s;
+                    showErrors = true;
+                    generalErrorMessage = stepError?.ToUpperInvariant();
+                    Toast.ShowWarning(stepError ?? $"Please complete all required fields in Step {s} before proceeding.");
+                    return;
+                }
+                completedSteps.Add(s);
+            }
+        }
+
+        await SaveDraftAsync();
+        currentStep = targetStep;
+        showErrors = false;
+        generalErrorMessage = null;
+    }
+
+    private async Task ValidateAndGoStepAsync(int nextStep)
+    {
+        if (isSubmitted)
+        {
+            Toast.ShowInfo("Application is submitted and locked. Modifications are disabled.");
+            return;
+        }
+
+        if (isWindowClosed)
+        {
+            Toast.ShowWarning("Enrollment portal is closed. Modifications are disabled.");
+            return;
+        }
+
+        showErrors = true;
+        generalErrorMessage = null;
+
+        if (!ValidateStep(currentStep, out var err))
+        {
+            generalErrorMessage = err?.ToUpperInvariant();
+            Toast.ShowWarning(err ?? "Please complete all required fields.");
+            return;
+        }
+
+        completedSteps.Add(currentStep);
+        await SaveDraftAsync();
+        currentStep = nextStep;
+        showErrors = false;
+        generalErrorMessage = null;
+    }
+
+    // ================= CASCADING DROPDOWNS =================
+    private async Task OnDistrictChanged()
+    {
+        OnFieldChanged();
+        if (string.IsNullOrWhiteSpace(Input.AdmittedDistrict))
+        {
+            filteredColleges = [];
+        }
+        else
+        {
+            filteredColleges = allColleges
+                .Where(c => c.District.Equals(Input.AdmittedDistrict, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        Input.CollegeId = null;
+        availablePrograms = [];
+        Input.Program = "";
+        selectedCollegeName = null;
+        await RefreshFeeAsync();
+    }
+
+    private async Task OnCollegeChanged()
+    {
+        OnFieldChanged();
+        if (Input.CollegeId.HasValue)
+        {
+            availablePrograms = await Db.CollegePrograms
+                .AsNoTracking()
+                .Where(p => p.CollegeId == Input.CollegeId && p.IsActive)
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+            
+            var college = allColleges.FirstOrDefault(c => c.Id == Input.CollegeId);
+            selectedCollegeName = college?.Name;
+        }
+        else
+        {
+            availablePrograms = [];
+            selectedCollegeName = null;
+        }
+        Input.Program = "";
+    }
+
+    private void OnProgramChanged() => OnFieldChanged();
+
+    private void OnExamFromSaluChanged()
+    {
+        OnFieldChanged();
+        if (Input.ExamFromSalu != "YES")
+        {
+            Input.SaluSeatNo = "";
+            Input.SaluExamYear = "";
+            Input.EligibilityCertNo = "";
+        }
+    }
+
+    private async Task OnDomicileDistrictChanged()
+    {
+        OnFieldChanged();
+        await RefreshFeeAsync();
+    }
+
+    private async Task RefreshFeeAsync()
+    {
+        var district = string.IsNullOrWhiteSpace(Input.DomicileDistrict) ? Input.AdmittedDistrict : Input.DomicileDistrict;
+        feeBreakdown = await FeeCalculationService.CalculateAsync(district ?? "");
+    }
+
+    private string GetSessionString()
+    {
+        if (string.IsNullOrWhiteSpace(Input.AcademicYearName))
+            return $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
+        return Input.AcademicYearName;
+    }
+
+    // ================= STEP 2: MATRIC & INTER AUTO-CALCULATION =================
+    private void CalculateMatricPercentage()
+    {
+        OnFieldChanged();
+        if (matricObtained.HasValue && matricTotal.HasValue && matricTotal.Value > 0)
+        {
+            matricPercentage = Math.Round((double)matricObtained.Value / matricTotal.Value * 100.0, 2);
+            matricGrade = matricPercentage switch
+            {
+                >= 80.0 => "A-ONE",
+                >= 70.0 => "A",
+                >= 60.0 => "B",
+                >= 50.0 => "C",
+                >= 40.0 => "D",
+                _ => "E"
+            };
+        }
+        else
+        {
+            matricPercentage = 0;
+        }
+        SyncAcademicRecords();
+    }
+
+    private void CalculateInterPercentage()
+    {
+        OnFieldChanged();
+        if (interObtained.HasValue && interTotal.HasValue && interTotal.Value > 0)
+        {
+            interPercentage = Math.Round((double)interObtained.Value / interTotal.Value * 100.0, 2);
+            interGrade = interPercentage switch
+            {
+                >= 80.0 => "A-ONE",
+                >= 70.0 => "A",
+                >= 60.0 => "B",
+                >= 50.0 => "C",
+                >= 40.0 => "D",
+                _ => "E"
+            };
+        }
+        else
+        {
+            interPercentage = 0;
+        }
+        SyncAcademicRecords();
+    }
+
+    private void OnMatricFieldChanged()
+    {
+        OnFieldChanged();
+        SyncAcademicRecords();
+    }
+
+    private void OnMatricGradeSelected()
+    {
+        OnFieldChanged();
+        SyncAcademicRecords();
+    }
+
+    private void OnInterFieldChanged()
+    {
+        OnFieldChanged();
+        SyncAcademicRecords();
+    }
+
+    private void OnInterGradeSelected()
+    {
+        OnFieldChanged();
+        SyncAcademicRecords();
+    }
+
+    private void SyncAcademicRecords()
+    {
+        academicRecords = [
+            new AcademicRecordItem(
+                SNo: 1,
+                Qualification: "MATRICULATION / SSC",
+                Degree: matricDiscipline,
+                SeatNo: matricSeat.Trim().ToUpperInvariant(),
+                PassingYear: matricYear,
+                MarksObtained: matricObtained ?? 0,
+                TotalMarks: matricTotal ?? 850,
+                GradeDivision: matricGrade,
+                BoardUniversity: matricBoard
+            ),
+            new AcademicRecordItem(
+                SNo: 2,
+                Qualification: "INTERMEDIATE / HSSC",
+                Degree: interDiscipline,
+                SeatNo: interSeat.Trim().ToUpperInvariant(),
+                PassingYear: interYear,
+                MarksObtained: interObtained ?? 0,
+                TotalMarks: interTotal ?? 1100,
+                GradeDivision: interGrade,
+                BoardUniversity: interBoard
+            )
+        ];
+    }
+
+    // ================= PHOTO UPLOAD =================
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
+    {
+        if (isSubmitted)
+        {
+            Toast.ShowInfo("This enrollment has been submitted and is permanently locked.");
+            return;
+        }
+
+        var file = e.File;
+        if (file == null) return;
+
+        uploadingPhoto = true;
+        generalErrorMessage = null;
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            var savedPath = await FileStorageService.SavePhotoAsync(stream, file.Name);
+            photoPreviewUrl = savedPath;
+            Input.PhotoUrl = savedPath;
+            
+            // Also ensure passport photo is reflected in document vault
+            var photoDoc = new UploadedDocumentItem(
+                Id: Guid.NewGuid().ToString(),
+                FileName: file.Name,
+                RelativePath: savedPath,
+                DocumentType: "PASSPORT SIZE PHOTOGRAPH",
+                FileSizeBytes: file.Size,
+                UploadedAt: DateTime.UtcNow,
+                OcrResult: null,
+                Authenticity: new DocumentAuthenticityResult(true, "Verified", 100, "PASSPORT SIZE PHOTOGRAPH", "Valid Photo", null, Input.FullName, null, null, null, null, null, null, true, true, true, true, true, true, true, "Photo uploaded")
+            );
+            uploadedDocuments.RemoveAll(d => d.DocumentType.Equals("PASSPORT SIZE PHOTOGRAPH", StringComparison.OrdinalIgnoreCase));
+            uploadedDocuments.Add(photoDoc);
+
+            await SaveDraftAsync();
+            Toast.ShowSuccess("Passport photo uploaded and saved successfully.");
+        }
+        catch (Exception ex)
+        {
+            generalErrorMessage = $"Photo upload failed: {ex.Message}";
+            Toast.ShowError("Photo upload failed. Please try again.");
+        }
+        finally
+        {
+            uploadingPhoto = false;
+        }
+    }
+
+    // ================= STEP 3: DOCUMENT VAULT IN TABLE STYLE WITH NATIVE OCR =================
+    private UploadedDocumentItem? GetDocumentByType(string docType)
+    {
+        return uploadedDocuments.FirstOrDefault(d => d.DocumentType.Equals(docType, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsImageFile(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName)) return false;
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        return ext is ".jpg" or ".jpeg" or ".png" or ".webp";
+    }
+
+    private async Task OnRowFileSelected(InputFileChangeEventArgs e, string docType)
+    {
+        if (isSubmitted)
+        {
+            Toast.ShowInfo("This enrollment has been submitted and is permanently locked.");
+            return;
+        }
+
+        var file = e.File;
+        if (file == null) return;
+
+        processingDocType = docType;
+        generalErrorMessage = null;
+
+        try
+        {
+            using var fileStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            var docItem = await FileStorageService.SaveDocumentAsync(memoryStream, file.Name, docType.ToUpperInvariant());
+
+            var finalDoc = docItem;
+
+            uploadedDocuments.RemoveAll(d => d.DocumentType.Equals(docType, StringComparison.OrdinalIgnoreCase));
+            uploadedDocuments.Add(finalDoc);
+
+            if (docType.Equals("PASSPORT SIZE PHOTOGRAPH", StringComparison.OrdinalIgnoreCase))
+            {
+                photoPreviewUrl = finalDoc.RelativePath;
+                Input.PhotoUrl = finalDoc.RelativePath;
+            }
+
+            await SaveDraftAsync();
+            if (currentUser != null)
+            {
+                var savedEnrollment = await Db.Enrollments
+                    .Where(enrollment => enrollment.UserId == currentUser.Id)
+                    .OrderByDescending(enrollment => enrollment.CreatedAt)
+                    .FirstOrDefaultAsync();
+                if (savedEnrollment != null)
+                {
+                    Db.EnrollmentDocuments.Add(new EnrollmentDocument
+                    {
+                        EnrollmentId = savedEnrollment.Id,
+                        FileId = docItem.Id,
+                        FileName = docItem.FileName,
+                        RelativePath = docItem.RelativePath,
+                        DocumentType = docItem.DocumentType,
+                        FileSizeBytes = docItem.FileSizeBytes,
+                        ProcessingStatus = "Queued"
+                    });
+                    await Db.SaveChangesAsync();
+                }
+            }
+            Toast.ShowSuccess($"{docType} uploaded. OCR verification is processing in the background.");
+        }
+        catch (Exception ex)
+        {
+            generalErrorMessage = $"Upload failed for {docType}: {ex.Message}";
+            Toast.ShowError($"Upload failed for {docType}. Please try again.");
+        }
+        finally
+        {
+            processingDocType = null;
+        }
+    }
+
+    private async Task DelDocRow(UploadedDocumentItem doc)
+    {
+        uploadedDocuments.Remove(doc);
+        await FileStorageService.DeleteFileAsync(doc.RelativePath);
+        if (doc.DocumentType.Equals("PASSPORT SIZE PHOTOGRAPH", StringComparison.OrdinalIgnoreCase))
+        {
+            photoPreviewUrl = null;
+            Input.PhotoUrl = null;
+        }
+        await SaveDraftAsync();
+        Toast.ShowInfo($"{doc.DocumentType} removed.");
+    }
+
+    private void OpenPreviewModal(UploadedDocumentItem? doc)
+    {
+        if (doc != null)
+        {
+            previewModalDoc = doc;
+        }
+    }
+
+    private void ClosePreviewModal()
+    {
+        previewModalDoc = null;
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+
+    // ================= DRAFT PERSISTENCE & AUTO-SAVE =================
+    private async Task SaveDraftExplicitAsync()
+    {
+        if (isSubmitted)
+        {
+            Toast.ShowInfo("This enrollment has been submitted and is permanently locked.");
+            return;
+        }
+
+        SyncAcademicRecords();
+        await SaveDraftAsync();
+        isDraftResumed = true;
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        if (currentUser == null || isSubmitted) return;
+        var year = activeAcademicYear ?? await Db.AcademicYears.FirstOrDefaultAsync(y => y.IsActive);
+        if (year == null) return;
+
+        try
+        {
+            SyncAcademicRecords();
+
+            var submission = new EnrollmentSubmission(
+                UserId: currentUser.Id,
+                AcademicYearId: year.Id,
+                CollegeId: Input.CollegeId,
+                Program: Input.Program.ToUpperInvariant(),
+                FullName: Input.FullName.ToUpperInvariant(),
+                FatherName: Input.FatherName.ToUpperInvariant(),
+                DateOfBirth: Input.DateOfBirth,
+                Gender: Input.Gender,
+                Address: Input.Address.ToUpperInvariant(),
+                DomicileDistrict: Input.DomicileDistrict.ToUpperInvariant(),
+                DomicileProvince: Input.DomicileProvince.ToUpperInvariant(),
+                Surname: Input.Surname.ToUpperInvariant(),
+                SoDoWo: Input.SoDoWo.ToUpperInvariant(),
+                Session: Input.AcademicYearName,
+                ContactNumber: Input.ContactNumber,
+                Cnic: Input.Cnic,
+                DivisionObtained: Input.DivisionObtained.ToUpperInvariant(),
+                PassingYear: Input.PassingYear,
+                BoardName: Input.BoardName.ToUpperInvariant(),
+                ExamFromSalu: Input.ExamFromSalu.ToUpperInvariant(),
+                SaluSeatNo: Input.SaluSeatNo.ToUpperInvariant(),
+                SaluExamYear: Input.SaluExamYear.ToUpperInvariant(),
+                EligibilityCertNo: Input.EligibilityCertNo.ToUpperInvariant(),
+                Nationality: Input.Nationality.ToUpperInvariant(),
+                Religion: Input.Religion.ToUpperInvariant(),
+                MigrationProvince: Input.MigrationProvince.ToUpperInvariant(),
+                MigrationDistrict: Input.MigrationDistrict.ToUpperInvariant(),
+                PhotoUrl: Input.PhotoUrl,
+                AcademicRecordsJson: JsonSerializer.Serialize(academicRecords),
+                DocumentsJson: JsonSerializer.Serialize(uploadedDocuments)
+            );
+
+            await EnrollmentService.SaveDraftAsync(submission);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Draft AutoSave Warning]: {ex.Message}");
+            Toast.ShowWarning("Auto-save failed — please save manually.");
+        }
+    }
+
+    // ================= FINAL SUBMIT =================
+    private async Task SubmitFormAsync()
+    {
+        if (isSubmitted)
+        {
+            Toast.ShowInfo("This enrollment has already been submitted and is permanently locked.");
+            return;
+        }
+
+        if (!Input.DeclarationAccepted)
+        {
+            showErrors = true;
+            generalErrorMessage = "YOU MUST ACCEPT THE LEGAL DECLARATION BEFORE SUBMITTING.";
+            return;
+        }
+
+        isSubmitting = true;
+        generalErrorMessage = null;
+
+        try
+        {
+            SyncAcademicRecords();
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User) ?? throw new InvalidOperationException("User account not found.");
+            var year = activeAcademicYear ?? await Db.AcademicYears.FirstOrDefaultAsync(y => y.IsActive) ?? throw new InvalidOperationException("No active academic year found.");
+
+            var academicJson = JsonSerializer.Serialize(academicRecords);
+            var docsJson = JsonSerializer.Serialize(uploadedDocuments);
+
+            var submission = new EnrollmentSubmission(
+                UserId: user.Id,
+                AcademicYearId: year.Id,
+                CollegeId: Input.CollegeId,
+                Program: Input.Program.ToUpperInvariant(),
+                FullName: Input.FullName.ToUpperInvariant(),
+                FatherName: Input.FatherName.ToUpperInvariant(),
+                DateOfBirth: Input.DateOfBirth,
+                Gender: Input.Gender,
+                Address: Input.Address.ToUpperInvariant(),
+                DomicileDistrict: Input.DomicileDistrict.ToUpperInvariant(),
+                DomicileProvince: Input.DomicileProvince.ToUpperInvariant(),
+                Surname: Input.Surname.ToUpperInvariant(),
+                SoDoWo: Input.SoDoWo.ToUpperInvariant(),
+                Session: Input.AcademicYearName,
+                ContactNumber: Input.ContactNumber,
+                Cnic: Input.Cnic,
+                DivisionObtained: Input.DivisionObtained.ToUpperInvariant(),
+                PassingYear: Input.PassingYear,
+                BoardName: Input.BoardName.ToUpperInvariant(),
+                ExamFromSalu: Input.ExamFromSalu.ToUpperInvariant(),
+                SaluSeatNo: Input.SaluSeatNo.ToUpperInvariant(),
+                SaluExamYear: Input.SaluExamYear.ToUpperInvariant(),
+                EligibilityCertNo: Input.EligibilityCertNo.ToUpperInvariant(),
+                Nationality: Input.Nationality.ToUpperInvariant(),
+                Religion: Input.Religion.ToUpperInvariant(),
+                MigrationProvince: Input.MigrationProvince.ToUpperInvariant(),
+                MigrationDistrict: Input.MigrationDistrict.ToUpperInvariant(),
+                PhotoUrl: Input.PhotoUrl,
+                AcademicRecordsJson: academicJson,
+                DocumentsJson: docsJson
+            );
+
+            var createdEnrollment = await EnrollmentService.SubmitAsync(submission);
+            generatedReferenceNumber = createdEnrollment.ReferenceNumber ?? $"SALU-{DateTime.Now.Year}-{Random.Shared.Next(100000, 999999)}";
+            currentStep = 8;
+            Toast.ShowSuccess($"Application submitted! Reference: {generatedReferenceNumber}");
+        }
+        catch (Exception ex)
+        {
+            generalErrorMessage = ex.Message.ToUpperInvariant();
+            Toast.ShowError("Submission failed. Please check the errors and try again.");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task PrintForm()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private sealed class EnrollmentFormModel
+    {
+        public string AdmittedDistrict { get; set; } = "";
+        public Guid? CollegeId { get; set; }
+        public string Program { get; set; } = "";
+        public string AcademicYearName { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string SoDoWo { get; set; } = "";
+        public string FatherName { get; set; } = "";
+        public string Surname { get; set; } = "";
+        public string Cnic { get; set; } = "";
+        public DateTime DateOfBirth { get; set; } = default;
+        public Gender Gender { get; set; } = Gender.Male;
+        public string DivisionObtained { get; set; } = "";
+        public int PassingYear { get; set; } = 0;
+        public string ContactNumber { get; set; } = "";
+        public string Address { get; set; } = "";
+        public string BoardName { get; set; } = "";
+        public string Board { get => BoardName; set => BoardName = value; }
+        public string ExamFromSalu { get; set; } = "NO";
+        public string SaluSeatNo { get; set; } = "";
+        public string SaluExamYear { get; set; } = "";
+        public string EligibilityCertNo { get; set; } = "";
+        public string Nationality { get; set; } = "PAKISTANI";
+        public string Religion { get; set; } = "";
+        public string DomicileDistrict { get; set; } = "";
+        public string DomicileProvince { get; set; } = "";
+        public string MigrationDistrict { get; set; } = "";
+        public string MigrationProvince { get; set; } = "";
+        public string? PhotoUrl { get; set; }
+        public bool DeclarationAccepted { get; set; }
+    }
+}

@@ -1,0 +1,779 @@
+@page "/Administration/Enrollment"
+@attribute [Authorize(Policy = "UniversityAdministration")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Domain.Models
+@using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Application.Services
+@using MudBlazor
+@inject ApplicationDbContext Db
+@inject ISystemConfigurationService ConfigService
+@inject ICollegeScopingService ScopingService
+@inject IEnrollmentCorrectionService CorrectionService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Enrollment Hub – SALU Executive Administration</PageTitle>
+
+<div class="salu-admin-wrapper salu-gradient-surface">
+    <!-- HERO HEADER -->
+    <div class="salu-hero-header mb-4 salu-gradient-admin">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="salu-hero-crest-holder">
+                    <img src="images/salu-logo.png" alt="SALU Crest" class="salu-hero-crest" />
+                </div>
+                <div>
+                    <div class="salu-hero-pill">
+                        <span class="salu-pulse-dot"></span>
+                        <span>DIRECTORATE OF ADMISSIONS &amp; ENROLLMENTS</span>
+                    </div>
+                    <h2 class="salu-hero-heading">ENROLLMENT HUB</h2>
+                    <p class="salu-hero-subheading">Candidate Registration Lifecycle • Automated Schedules • Auto Late Fees • Scrutiny &amp; Verification</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <MudChip T="string" Color="@(windowStatus?.State == WindowState.RegularWindow ? Color.Success : (windowStatus?.State == WindowState.LateFeeWindow ? Color.Warning : Color.Error))" Variant="Variant.Filled" Size="Size.Medium" Class="fw-bold px-3">
+                    @(windowStatus?.StatusBadgeText ?? "LOADING...")
+                </MudChip>
+                
+                <MudButton Variant="Variant.Filled" 
+                           Color="@(enrollmentSettings.IsEnrollmentOpen ? Color.Error : Color.Success)" 
+                           StartIcon="@(enrollmentSettings.IsEnrollmentOpen ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)" 
+                           OnClick="ToggleGlobalEnrollmentAsync" 
+                           Class="fw-bold shadow-sm">
+                    @(enrollmentSettings.IsEnrollmentOpen ? "Emergency Close" : "Open Enrollment")
+                </MudButton>
+
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add" 
+                           OnClick="() => showAddAcademicYearModal = true" 
+                           Class="fw-bold">
+                    New Academic Year
+                </MudButton>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE SCHEDULE & AUTO LATE FEE ALERT BAR -->
+    @if (windowStatus != null)
+    {
+        <MudAlert Severity="@(windowStatus.State == WindowState.RegularWindow ? Severity.Success : (windowStatus.State == WindowState.LateFeeWindow ? Severity.Warning : Severity.Error))" Dense="false" Class="mb-4 shadow-sm" Icon="@(windowStatus.State == WindowState.RegularWindow ? Icons.Material.Filled.CheckCircle : (windowStatus.State == WindowState.LateFeeWindow ? Icons.Material.Filled.AccessAlarm : Icons.Material.Filled.Block))">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <strong>@windowStatus.StatusBadgeText:</strong> @windowStatus.StatusDetailMessage
+                </div>
+                <div class="font-monospace fw-bold">
+                    @if (windowStatus.IsLateFeeApplied)
+                    {
+                        <span class="badge bg-warning text-dark me-2">Base: Rs. @windowStatus.ApplicableBaseFee:N0 + Late: Rs. @windowStatus.ApplicableLateFee:N0</span>
+                        <span>Total: Rs. @windowStatus.TotalApplicableFee:N0</span>
+                    }
+                    else if (windowStatus.IsActive)
+                    {
+                        <span class="badge bg-success me-2">Standard Base Fee: Rs. @windowStatus.ApplicableBaseFee:N0</span>
+                    }
+                </div>
+            </div>
+        </MudAlert>
+    }
+
+    <!-- ENROLLMENT METRICS -->
+    <MudGrid Class="mb-4" Spacing="3">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="salu-kpi-mudcard kpi-blue-border">
+                <MudCardContent Class="p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="salu-kpi-sub">TOTAL ENROLLMENT APPLICATIONS</div>
+                            <div class="salu-kpi-val">@totalApplications</div>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Assignment" Color="Color.Primary" Size="Size.Large" />
+                    </div>
+                    <div class="salu-kpi-foot">Session @(activeAcademicYear?.Name ?? "2026-2027")</div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="salu-kpi-mudcard kpi-warning-border">
+                <MudCardContent Class="p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="salu-kpi-sub">UNDER SCRUTINY</div>
+                            <div class="salu-kpi-val text-warning">@pendingCount</div>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.PendingActions" Color="Color.Warning" Size="Size.Large" />
+                    </div>
+                    <div class="salu-kpi-foot">Awaiting Verification</div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="salu-kpi-mudcard kpi-success-border">
+                <MudCardContent Class="p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="salu-kpi-sub">APPROVED ENROLLMENTS</div>
+                            <div class="salu-kpi-val text-success">@approvedCount</div>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                    </div>
+                    <div class="salu-kpi-foot">Roll Numbers Issued</div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2" Class="salu-kpi-mudcard kpi-error-border">
+                <MudCardContent Class="p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="salu-kpi-sub">SCRUTINY REJECTIONS</div>
+                            <div class="salu-kpi-val text-danger">@rejectedCount</div>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Size="Size.Large" />
+                    </div>
+                    <div class="salu-kpi-foot">Deficiencies Flagged</div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- AUTOMATED SCHEDULES & TARIFF MANAGER CARD -->
+    <MudCard Elevation="2" Class="mb-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 w-100">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Automated Schedule &amp; Late Fee Rules Engine</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">The system automatically calculates opening times, regular deadlines, and late fee surcharges in real-time</MudText>
+                    </div>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveScheduleSettingsAsync" Class="fw-bold">
+                        Save Schedule &amp; Fees
+                    </MudButton>
+                </div>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker @bind-Date="enrollmentSettings.EnrollmentStartDate" Label="Opening Date &amp; Time" Variant="Variant.Outlined" HelperText="Portal opens for candidates" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker @bind-Date="enrollmentSettings.EnrollmentEndDate" Label="Regular Deadline" Variant="Variant.Outlined" HelperText="Standard fee applies until this date" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker @bind-Date="enrollmentSettings.EnrollmentLateFeeEndDate" Label="Late Submission Cutoff" Variant="Variant.Outlined" HelperText="Final cutoff with late fee surcharge" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <div class="d-flex flex-column h-100 justify-content-center">
+                        <MudSwitch @bind-Value="enrollmentSettings.IsLateEnrollmentAllowed" Label="Allow Late Submissions" Color="Color.Warning" />
+                    </div>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <MudNumericField @bind-Value="enrollmentSettings.BaseEnrollmentFee" Label="Standard Base Fee (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudNumericField @bind-Value="enrollmentSettings.LateEnrollmentFee" Label="Auto Late Surcharge (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" HelperText="Added after regular deadline" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudNumericField @bind-Value="enrollmentSettings.MigrationNocFee" Label="Migration / NOC Fee (Rs.)" Variant="Variant.Outlined" Min="0m" Format="N2" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudNumericField @bind-Value="enrollmentSettings.ChallanValidityDays" Label="Challan Expiry Window (Days)" Variant="Variant.Outlined" Min="1" Max="30" />
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudGrid Spacing="3" Class="mb-4">
+        <!-- ACADEMIC YEARS & LIFECYCLE -->
+        <MudItem xs="12" lg="5">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Academic Years &amp; Lifecycle</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Manage active sessions without code changes</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="() => showAddAcademicYearModal = true">
+                            New Session
+                        </MudButton>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudTable Items="@academicYearsList" Hover="true" Elevation="0" Dense="true">
+                        <HeaderContent>
+                            <MudTh>Session</MudTh>
+                            <MudTh>Dates</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh Style="text-align: right;">Action</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd Class="fw-bold">@context.Name</MudTd>
+                            <MudTd Class="small text-muted">@context.StartDate.ToString("dd MMM yyyy") - @context.EndDate.ToString("dd MMM yyyy")</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Color="@GetAcademicYearStatusColor(context.Status)" Size="Size.Small" Variant="Variant.Filled">
+                                    @context.Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd Style="text-align: right;">
+                                @if (context.Status != AcademicYearStatus.Active)
+                                {
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="() => MakeAcademicYearActiveAsync(context)">
+                                        Set Active
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">CURRENT</MudChip>
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- ENROLLMENT WINDOWS -->
+        <MudItem xs="12" lg="7">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Enrollment Windows Ledger</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Start, end, and extension deadlines</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudTable Items="@enrollmentWindowsList" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Session</MudTh>
+                            <MudTh>Opening Date</MudTh>
+                            <MudTh>Closing Date</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh Style="text-align: right;">Access</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd Class="fw-bold">@context.AcademicYear?.Name</MudTd>
+                            <MudTd>@context.StartDate.ToString("dd MMM yyyy")</MudTd>
+                            <MudTd>@context.EndDate.ToString("dd MMM yyyy")</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Color="@(context.IsOpen ? Color.Success : Color.Default)" Size="Size.Small" Variant="Variant.Filled">
+                                    @(context.IsOpen ? "OPEN" : "CLOSED")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudSwitch T="bool" Value="@context.IsOpen" ValueChanged="@((bool val) => ToggleWindowStatusAsync(context))" Color="Color.Success" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- LIVE SCRUTINY & PENDING ENROLLMENTS STREAM -->
+    <MudCard Elevation="2" Class="mb-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 w-100">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Enrollment Applications Queue &amp; Scrutiny</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Showing recent submissions across affiliated colleges</MudText>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Checklist" OnClick="BatchApproveVerifiedAsync">
+                            Batch Approve Verified
+                        </MudButton>
+                    </div>
+                </div>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent Class="pa-0">
+            <MudTable Items="@allEnrollments.Take(15)" Hover="true" Elevation="0" Dense="true">
+                <HeaderContent>
+                    <MudTh>Photo</MudTh>
+                    <MudTh>Reference / Roll No</MudTh>
+                    <MudTh>Candidate &amp; Father</MudTh>
+                    <MudTh>Program &amp; College</MudTh>
+                    <MudTh>Fee</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh Style="text-align: right;">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        @if (!string.IsNullOrWhiteSpace(context.PhotoUrl))
+                        {
+                            <img src="@context.PhotoUrl" alt="@GetCandidateName(context)" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="salu-avatar-thumb" style="width: 36px; height: 36px; font-size: 16px;">👤</div>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <div class="font-monospace fw-bold text-primary">@context.ReferenceNumber</div>
+                        @if (!string.IsNullOrWhiteSpace(context.RollNumber))
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" Class="font-monospace fw-bold mt-1">@context.RollNumber</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <div class="fw-bold text-navy">@GetCandidateName(context)</div>
+                        <div class="small text-muted">S/D/O @context.FatherName</div>
+                        <div class="small text-muted font-monospace">@context.ContactNumber</div>
+                    </MudTd>
+                    <MudTd>
+                        <div class="fw-bold">@context.Program</div>
+                        <div class="small text-muted">@(context.College?.Name ?? "Main Campus")</div>
+                    </MudTd>
+                    <MudTd>
+                        @if (context.Fees.Any(f => f.Status == FeeStatus.Paid))
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" Class="fw-bold">✓ PAID</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled" Class="fw-bold">UNPAID</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <span class="salu-status-badge status-@context.Status.ToString().ToLower()">@context.Status</span>
+                    </MudTd>
+                    <MudTd Style="text-align: right;">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Visibility" OnClick="() => OpenScrutinyModal(context)">
+                                Scrutiny
+                            </MudButton>
+                            @if (context.Status == EnrollmentStatus.Pending || context.Status == EnrollmentStatus.Draft)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" OnClick="() => ApproveApplicationAsync(context)">
+                                    Approve
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="() => PromptRejectModal(context)">
+                                    Reject
+                                </MudButton>
+                            }
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+</div>
+
+<!-- MODAL: FULL STUDENT SCRUTINY DOSSIER -->
+@if (selectedDossierApp != null)
+{
+    <div class="salu-modal-backdrop" @onclick="CloseScrutinyModal">
+        <div class="salu-modal-card animate-scale-up" @onclick:stopPropagation="true" style="max-width: 900px;">
+            <div class="salu-modal-header bg-navy text-white">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">📑</span>
+                    <div>
+                        <h4 class="m-0 fw-bold">Candidate Enrollment Scrutiny Dossier</h4>
+                        <span class="small text-warning">Ref: @selectedDossierApp.ReferenceNumber</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" @onclick="CloseScrutinyModal"></button>
+            </div>
+            
+            <div class="salu-modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-4">
+                    @if (!string.IsNullOrWhiteSpace(selectedDossierApp.PhotoUrl))
+                    {
+                        <img src="@selectedDossierApp.PhotoUrl" alt="@GetCandidateName(selectedDossierApp)" class="rounded-3 border" style="width: 80px; height: 80px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-secondary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 32px;">👤</div>
+                    }
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold text-navy m-0">@GetCandidateName(selectedDossierApp)</h4>
+                        <div class="text-muted">@selectedDossierApp.SoDoWo @selectedDossierApp.FatherName</div>
+                        <div class="d-flex gap-2 mt-2 flex-wrap">
+                            <span class="badge bg-primary">@selectedDossierApp.Program</span>
+                            <span class="badge bg-secondary">@(selectedDossierApp.College?.Name ?? "Main Campus")</span>
+                            <span class="salu-status-badge status-@selectedDossierApp.Status.ToString().ToLower()">@selectedDossierApp.Status</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DOCUMENTS & OCR AUTHENTICITY -->
+                <h5 class="fw-bold text-navy border-bottom pb-2 mb-3">Tesseract 5.2 LSTM Neural OCR Scrutiny Audit</h5>
+                <div class="row g-3 mb-4">
+                    @if (!string.IsNullOrWhiteSpace(selectedDossierApp.DocumentsJson))
+                    {
+                        try
+                        {
+                            var docs = JsonSerializer.Deserialize<List<UploadedDocumentItem>>(selectedDossierApp.DocumentsJson);
+                            if (docs != null && docs.Count > 0)
+                            {
+                                foreach (var doc in docs)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="card p-3 border shadow-sm">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <strong class="text-navy">@doc.DocumentType</strong>
+                                                    <div class="small text-muted">@doc.FileName</div>
+                                                </div>
+                                                <a href="@doc.RelativePath" target="_blank" class="btn btn-xs btn-outline-primary btn-sm">View Scan ↗</a>
+                                            </div>
+                                            @if (doc.Authenticity != null)
+                                            {
+                                                <div class="mt-2 p-2 bg-light rounded small">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>OCR Authenticity:</span>
+                                                        <strong class="@(doc.Authenticity.IsAuthentic ? "text-success" : "text-danger")">
+                                                            @(doc.Authenticity.IsAuthentic ? $"✓ VERIFIED ({doc.Authenticity.AuthenticityScore}% MATCH)" : "⚠️ SCRUTINY REQUIRED")
+                                                        </strong>
+                                                    </div>
+                                                    <div class="text-muted mt-1" style="font-size: 0.75rem;">@doc.Authenticity.AuditLog</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+
+                        catch { }
+                    }
+                </div>
+            </div>
+
+            <div class="salu-modal-footer bg-light p-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @onclick="CloseScrutinyModal">Close</button>
+                @if (selectedDossierApp.Status == EnrollmentStatus.Pending || selectedDossierApp.Status == EnrollmentStatus.Draft)
+                {
+                    <button type="button" class="btn btn-danger" @onclick="() => PromptRejectModal(selectedDossierApp)">Reject</button>
+                    <button type="button" class="btn btn-success" @onclick="() => ApproveApplicationAsync(selectedDossierApp)">✓ Approve &amp; Allocate Roll No</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL: REJECT REASON -->
+@if (rejectingApp != null)
+{
+    <div class="salu-modal-backdrop" @onclick="() => rejectingApp = null">
+        <div class="salu-modal-card animate-scale-up" @onclick:stopPropagation="true" style="max-width: 500px;">
+            <div class="salu-modal-header bg-danger text-white">
+                <h5 class="m-0 fw-bold">Reject Application</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="() => rejectingApp = null"></button>
+            </div>
+            <div class="salu-modal-body p-4">
+                <p>Provide the official scrutiny reason for rejecting <strong>@GetCandidateName(rejectingApp)</strong>:</p>
+                <textarea class="form-control" rows="3" placeholder="e.g. Incomplete marksheet, illegible scan..." @bind="rejectionReasonInput"></textarea>
+            </div>
+            <div class="salu-modal-footer p-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @onclick="() => rejectingApp = null">Cancel</button>
+                <button type="button" class="btn btn-danger" @onclick="ConfirmRejectionAsync">Confirm Rejection</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL: ADD ACADEMIC YEAR -->
+@if (showAddAcademicYearModal)
+{
+    <div class="salu-modal-backdrop" @onclick="() => showAddAcademicYearModal = false">
+        <div class="salu-modal-card animate-scale-up" @onclick:stopPropagation="true" style="max-width: 520px;">
+            <div class="salu-modal-header bg-navy text-white">
+                <h5 class="m-0 fw-bold">Create New Academic Year</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="() => showAddAcademicYearModal = false"></button>
+            </div>
+            <div class="salu-modal-body p-4 d-flex flex-column gap-3">
+                <MudTextField @bind-Value="newAcademicYearName" Label="Academic Year Title (e.g. 2027-2028)" Variant="Variant.Outlined" />
+                <MudDatePicker @bind-Date="newAcademicYearStartDate" Label="Session Start Date" Variant="Variant.Outlined" />
+                <MudDatePicker @bind-Date="newAcademicYearEndDate" Label="Session End Date" Variant="Variant.Outlined" />
+                <MudSelect @bind-Value="newAcademicYearStatus" Label="Initial Status" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@AcademicYearStatus.Draft">Draft (Preparation)</MudSelectItem>
+                    <MudSelectItem Value="@AcademicYearStatus.Active">Active (Current)</MudSelectItem>
+                    <MudSelectItem Value="@AcademicYearStatus.Closed">Closed</MudSelectItem>
+                </MudSelect>
+            </div>
+            <div class="salu-modal-footer p-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @onclick="() => showAddAcademicYearModal = false">Cancel</button>
+                <button type="button" class="btn btn-primary" @onclick="CreateAcademicYearAsync">Create Academic Year</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .salu-admin-wrapper { padding: 24px; background-color: #f1f5f9; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+    .salu-hero-header { background: linear-gradient(135deg, #0b2240 0%, #1e3a8a 50%, #0284c7 100%); color: white; padding: 24px 32px; border-radius: 12px; }
+    .salu-hero-crest-holder { width: 56px; height: 56px; background: white; border-radius: 8px; padding: 3px; display: flex; align-items: center; justify-content: center; }
+    .salu-hero-crest { width: 100%; height: 100%; object-fit: contain; }
+    .salu-hero-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
+    .salu-pulse-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; }
+    .salu-hero-heading { font-size: 1.4rem; font-weight: 800; margin: 0; }
+    .salu-hero-subheading { font-size: 0.8rem; color: #94a3b8; margin: 2px 0 0 0; }
+    .salu-kpi-mudcard { border-radius: 10px; border-left: 4px solid; }
+    .kpi-blue-border { border-left-color: #2563eb; }
+    .kpi-warning-border { border-left-color: #f59e0b; }
+    .kpi-success-border { border-left-color: #10b981; }
+    .kpi-error-border { border-left-color: #ef4444; }
+    .salu-kpi-sub { font-size: 0.65rem; font-weight: 800; color: #64748b; }
+    .salu-kpi-val { font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
+    .salu-kpi-foot { font-size: 0.68rem; color: #94a3b8; margin-top: 8px; }
+    .salu-status-badge { font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; display: inline-block; }
+    .status-draft { background: #e2e8f0; color: #475569; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-approved { background: #dcfce7; color: #15803d; }
+    .status-rejected { background: #fee2e2; color: #b91c1c; }
+    .salu-avatar-thumb { background: #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .salu-modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .salu-modal-card { background: white; border-radius: 12px; overflow: hidden; width: 100%; }
+    .salu-modal-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+</style>
+
+@code {
+    private int totalApplications;
+    private int pendingCount;
+    private int approvedCount;
+    private int rejectedCount;
+
+    private List<EntityEnrollment> allEnrollments = [];
+    private Dictionary<string, ApplicationUser> userMap = [];
+    private List<AcademicYear> academicYearsList = [];
+    private AcademicYear? activeAcademicYear;
+    private List<EnrollmentWindow> enrollmentWindowsList = [];
+
+    private EnrollmentSettings enrollmentSettings = new();
+    private WindowEvaluationResult? windowStatus;
+
+    private EntityEnrollment? selectedDossierApp;
+    private EntityEnrollment? rejectingApp;
+    private string rejectionReasonInput = string.Empty;
+
+    private bool showAddAcademicYearModal;
+    private string newAcademicYearName = string.Empty;
+    private DateTime? newAcademicYearStartDate = DateTime.UtcNow;
+    private DateTime? newAcademicYearEndDate = DateTime.UtcNow.AddYears(1);
+    private AcademicYearStatus newAcademicYearStatus = AcademicYearStatus.Active;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadDataAsync();
+    }
+
+    private string GetCandidateName(EntityEnrollment? app)
+    {
+        if (app == null) return string.Empty;
+        if (userMap.TryGetValue(app.UserId, out var user) && !string.IsNullOrWhiteSpace(user.FullName))
+            return user.FullName;
+        if (!string.IsNullOrWhiteSpace(app.Surname))
+            return $"{app.FatherName} ({app.Surname})";
+        return app.FatherName;
+    }
+
+    private async Task ReloadDataAsync()
+    {
+        enrollmentSettings = await ConfigService.GetEnrollmentSettingsAsync();
+        windowStatus = await ConfigService.GetEnrollmentWindowStatusAsync();
+
+        var users = await Db.Users.AsNoTracking().ToListAsync();
+        userMap = users.ToDictionary(u => u.Id, u => u);
+
+        academicYearsList = await Db.AcademicYears.AsNoTracking().OrderByDescending(y => y.StartDate).ToListAsync();
+        activeAcademicYear = academicYearsList.FirstOrDefault(y => y.IsActive) ?? academicYearsList.FirstOrDefault();
+        enrollmentWindowsList = await Db.EnrollmentWindows.Include(w => w.AcademicYear).AsNoTracking().OrderByDescending(w => w.StartDate).ToListAsync();
+
+        allEnrollments = await Db.Enrollments
+            .Include(e => e.College)
+            .Include(e => e.Fees)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync();
+
+        totalApplications = allEnrollments.Count;
+        pendingCount = allEnrollments.Count(e => e.Status == EnrollmentStatus.Pending || e.Status == EnrollmentStatus.Draft);
+        approvedCount = allEnrollments.Count(e => e.Status == EnrollmentStatus.Approved);
+        rejectedCount = allEnrollments.Count(e => e.Status == EnrollmentStatus.Rejected);
+    }
+
+    private Color GetAcademicYearStatusColor(AcademicYearStatus status) => status switch
+    {
+        AcademicYearStatus.Active => Color.Success,
+        AcademicYearStatus.Draft => Color.Warning,
+        AcademicYearStatus.Closed => Color.Dark,
+        AcademicYearStatus.Archived => Color.Default,
+        _ => Color.Primary
+    };
+
+    private void OpenScrutinyModal(EntityEnrollment app) => selectedDossierApp = app;
+    private void CloseScrutinyModal() => selectedDossierApp = null;
+    private void PromptRejectModal(EntityEnrollment app) { rejectingApp = app; rejectionReasonInput = string.Empty; }
+
+    private async Task AuthorizeCorrectionAsync(EntityEnrollment app)
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            await CorrectionService.AuthorizeAllFieldsAsync(app.Id, authState.User, "Administrative correction authorized after enrollment rejection.");
+            Snackbar.Add($"Correction access opened for {app.ReferenceNumber}.", Severity.Warning);
+            await ReloadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task ConfirmRejectionAsync()
+    {
+        if (rejectingApp == null) return;
+        var entity = await Db.Enrollments.FindAsync(rejectingApp.Id);
+        if (entity != null)
+        {
+            entity.Status = EnrollmentStatus.Rejected;
+            entity.RejectionReason = string.IsNullOrWhiteSpace(rejectionReasonInput) ? "Document scrutiny requirements not met." : rejectionReasonInput;
+            entity.LastModifiedAt = DateTime.UtcNow;
+            entity.LastModifiedBy = "SuperAdmin";
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"Application {rejectingApp.ReferenceNumber} rejected.", Severity.Warning);
+        }
+        rejectingApp = null;
+        selectedDossierApp = null;
+        await ReloadDataAsync();
+    }
+
+    private async Task ApproveApplicationAsync(EntityEnrollment app)
+    {
+        var entity = await Db.Enrollments.FindAsync(app.Id);
+        if (entity != null)
+        {
+            entity.Status = EnrollmentStatus.Approved;
+            entity.RejectionReason = null;
+            if (string.IsNullOrWhiteSpace(entity.RollNumber))
+            {
+                entity.RollNumber = $"SALU-26-{new Random().Next(10000, 99999)}";
+            }
+            entity.LastModifiedAt = DateTime.UtcNow;
+            entity.LastModifiedBy = "SuperAdmin";
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"Application {app.ReferenceNumber} APPROVED (Roll No: {entity.RollNumber})", Severity.Success);
+        }
+        selectedDossierApp = null;
+        await ReloadDataAsync();
+    }
+
+    private async Task BatchApproveVerifiedAsync()
+    {
+        var pending = allEnrollments.Where(e => e.Status == EnrollmentStatus.Pending || e.Status == EnrollmentStatus.Draft).ToList();
+        int count = 0;
+        var rand = new Random();
+        foreach (var app in pending)
+        {
+            var entity = await Db.Enrollments.FindAsync(app.Id);
+            if (entity != null)
+            {
+                entity.Status = EnrollmentStatus.Approved;
+                if (string.IsNullOrWhiteSpace(entity.RollNumber))
+                    entity.RollNumber = $"SALU-26-{rand.Next(10000, 99999)}";
+                entity.LastModifiedAt = DateTime.UtcNow;
+                entity.LastModifiedBy = "SuperAdmin";
+                count++;
+            }
+        }
+        if (count > 0)
+        {
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"Batch approved {count} candidate applications.", Severity.Success);
+            await ReloadDataAsync();
+        }
+    }
+
+    private async Task SaveScheduleSettingsAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        await ConfigService.SaveEnrollmentSettingsAsync(enrollmentSettings, authState.User);
+        Snackbar.Add("Automated Schedule & Late Fee Rules saved successfully.", Severity.Success);
+        await ReloadDataAsync();
+    }
+
+    private async Task ToggleGlobalEnrollmentAsync()
+    {
+        enrollmentSettings.IsEnrollmentOpen = !enrollmentSettings.IsEnrollmentOpen;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        await ConfigService.SaveEnrollmentSettingsAsync(enrollmentSettings, authState.User);
+        Snackbar.Add(enrollmentSettings.IsEnrollmentOpen ? "Enrollment Portal OPENED." : "Enrollment Portal CLOSED.", enrollmentSettings.IsEnrollmentOpen ? Severity.Success : Severity.Warning);
+        await ReloadDataAsync();
+    }
+
+    private async Task ToggleWindowStatusAsync(EnrollmentWindow window)
+    {
+        var w = await Db.EnrollmentWindows.FindAsync(window.Id);
+        if (w != null)
+        {
+            w.IsOpen = !w.IsOpen;
+            w.LastModifiedAt = DateTime.UtcNow;
+            w.LastModifiedBy = "SuperAdmin";
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"Window for {window.AcademicYear?.Name} is now {(w.IsOpen ? "OPEN" : "CLOSED")}.", Severity.Info);
+            await ReloadDataAsync();
+        }
+    }
+
+    private async Task MakeAcademicYearActiveAsync(AcademicYear year)
+    {
+        foreach (var y in await Db.AcademicYears.ToListAsync())
+        {
+            if (y.Id == year.Id) { y.IsActive = true; y.Status = AcademicYearStatus.Active; }
+            else if (y.IsActive) { y.IsActive = false; y.Status = AcademicYearStatus.Closed; }
+        }
+        await Db.SaveChangesAsync();
+        Snackbar.Add($"Academic Year {year.Name} marked as ACTIVE.", Severity.Success);
+        await ReloadDataAsync();
+    }
+
+    private async Task CreateAcademicYearAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newAcademicYearName))
+        {
+            Snackbar.Add("Title is required.", Severity.Error);
+            return;
+        }
+        var year = new AcademicYear
+        {
+            Name = newAcademicYearName.Trim(),
+            StartDate = newAcademicYearStartDate ?? DateTime.UtcNow,
+            EndDate = newAcademicYearEndDate ?? DateTime.UtcNow.AddYears(1),
+            Status = newAcademicYearStatus,
+            IsActive = newAcademicYearStatus == AcademicYearStatus.Active
+        };
+        if (year.IsActive)
+        {
+            foreach (var y in await Db.AcademicYears.ToListAsync())
+            {
+                y.IsActive = false;
+                if (y.Status == AcademicYearStatus.Active) y.Status = AcademicYearStatus.Closed;
+            }
+        }
+        Db.AcademicYears.Add(year);
+        Db.EnrollmentWindows.Add(new EnrollmentWindow
+        {
+            AcademicYear = year,
+            StartDate = year.StartDate,
+            EndDate = year.EndDate,
+            IsOpen = year.IsActive
+        });
+        await Db.SaveChangesAsync();
+        showAddAcademicYearModal = false;
+        Snackbar.Add($"Academic Year {year.Name} created.", Severity.Success);
+        await ReloadDataAsync();
+    }
+}

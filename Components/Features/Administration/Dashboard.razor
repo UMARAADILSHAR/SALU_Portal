@@ -1,0 +1,382 @@
+@page "/Administration"
+@attribute [Authorize(Policy = "UniversityAdministration")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Domain.Models
+@using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Application.Services
+@using MudBlazor
+@inject ApplicationDbContext Db
+@inject ISystemConfigurationService ConfigService
+@inject ICollegeScopingService ScopingService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>SuperAdmin Command Center – SALU Examination &amp; Enrollment Portal</PageTitle>
+
+<div class="salu-admin-wrapper salu-gradient-surface">
+    
+    <!-- EXECUTIVE BRAND HERO HEADER -->
+    <div class="salu-hero-header mb-4 salu-gradient-admin">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="salu-hero-crest-holder">
+                    <img src="images/salu-logo.png" alt="SALU Crest" class="salu-hero-crest" />
+                </div>
+                <div>
+                    <div class="salu-hero-pill">
+                        <span class="salu-pulse-dot"></span>
+                        <span>CONTROLLER OF EXAMINATIONS • SUPERADMIN COMMAND</span>
+                    </div>
+                    <h2 class="salu-hero-heading">SHAH ABDUL LATIF UNIVERSITY, KHAIRPUR</h2>
+                    <p class="salu-hero-subheading">Centralized Student Lifecycle • Affiliated Colleges Network • Anti-Skip Gatekeeper • Dynamic Tariffs</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <MudChip T="string" Color="@(enrollmentSettings.IsEnrollmentOpen ? Color.Success : Color.Error)" Variant="Variant.Filled" Size="Size.Medium" Class="fw-bold px-3">
+                    @(enrollmentSettings.IsEnrollmentOpen ? "PORTAL OPEN" : "PORTAL CLOSED")
+                </MudChip>
+                
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Settings" 
+                           Href="Administration/Settings" 
+                           Class="fw-bold shadow-sm">
+                    System Settings
+                </MudButton>
+            </div>
+        </div>
+
+        <!-- LIVE SYSTEM CONTROL CENTER STATUS BAR -->
+        <div class="salu-control-center-bar mt-3 pt-3 border-top border-light border-opacity-25 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="small fw-bold text-white-50 text-uppercase tracking-wider">Live System Telemetry:</span>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled" Class="fw-bold">
+                    🏛️ Session: @(activeAcademicYear?.Name ?? "2026-2027") [@(activeAcademicYear?.Status.ToString().ToUpper() ?? "ACTIVE")]
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="@(enrollmentSettings.IsEnrollmentOpen ? Color.Success : Color.Error)" Variant="Variant.Outlined" Class="fw-bold bg-white">
+                    🎓 Enrollment: @(enrollmentSettings.IsEnrollmentOpen ? "OPEN" : "CLOSED")
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="@(examinationSettings.IsExamRegistrationOpen ? Color.Success : Color.Warning)" Variant="Variant.Outlined" Class="fw-bold bg-white">
+                    🎫 Exams: @(examinationSettings.IsExamRegistrationOpen ? "OPEN" : "CLOSED")
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="@(documentSettings.OcrEnabled ? Color.Info : Color.Default)" Variant="Variant.Outlined" Class="fw-bold bg-white">
+                    🧠 Tesseract 5.2 OCR: @(documentSettings.OcrEnabled ? "ACTIVE" : "OFF")
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="@(examinationSettings.AntiSkipGatekeeperEnforced ? Color.Success : Color.Error)" Variant="Variant.Outlined" Class="fw-bold bg-white">
+                    🛡️ Anti-Skip Gatekeeper: @(examinationSettings.AntiSkipGatekeeperEnforced ? "ENFORCED" : "BYPASSED")
+                </MudChip>
+            </div>
+
+            <div class="small text-white-50">
+                <span>Refreshed: @DateTime.UtcNow.ToString("HH:mm:ss") UTC</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEPARATE HUBS EXECUTIVE COMMAND TILES -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-bold text-navy m-0">Modular Command Hubs</h4>
+        <span class="small text-muted">Direct independent subsystems</span>
+    </div>
+
+    <MudGrid Spacing="3" Class="mb-4">
+        <!-- 1. ENROLLMENT HUB CARD -->
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Elevation="2" Class="salu-hub-card salu-gradient-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <div class="salu-hub-icon-wrap bg-blue-light">
+                            <span class="fs-4">⏱️</span>
+                        </div>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Enrollment Hub</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Academic Sessions &amp; Windows</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Total Applications:</span>
+                        <strong class="font-monospace">@totalApplications</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Awaiting Scrutiny:</span>
+                        <strong class="text-warning font-monospace">@pendingCount</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Portal Status:</span>
+                        <MudChip T="string" Color="@(enrollmentSettings.IsEnrollmentOpen ? Color.Success : Color.Error)" Size="Size.Small" Variant="Variant.Filled">
+                            @(enrollmentSettings.IsEnrollmentOpen ? "OPEN" : "CLOSED")
+                        </MudChip>
+                    </div>
+                </MudCardContent>
+                <MudCardActions Class="p-3 pt-0">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="Administration/Enrollment" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        Open Enrollment Hub
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <!-- 2. EXAM HUB CARD -->
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Elevation="2" Class="salu-hub-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <div class="salu-hub-icon-wrap bg-purple-light">
+                            <span class="fs-4">🎫</span>
+                        </div>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Exam Hub</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Admit Cards &amp; Anti-Skip</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Admit Cards Issued:</span>
+                        <strong class="font-monospace text-primary">@issuedAdmitCards.Count</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Anti-Skip Policy:</span>
+                        <strong class="text-success font-monospace">Enforced</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Exam Session:</span>
+                        <span class="badge bg-light text-dark">Annual 2026</span>
+                    </div>
+                </MudCardContent>
+                <MudCardActions Class="p-3 pt-0">
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" Href="Administration/Exams" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        Open Exam Hub
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <!-- 3. STUDENTS HUB CARD -->
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Elevation="2" Class="salu-hub-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <div class="salu-hub-icon-wrap bg-teal-light">
+                            <span class="fs-4">👥</span>
+                        </div>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Students Hub</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Student Records &amp; Scrutiny</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Approved Candidates:</span>
+                        <strong class="text-success font-monospace">@approvedCount</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Rejected / Deficient:</span>
+                        <strong class="text-danger font-monospace">@rejectedCount</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Tesseract OCR:</span>
+                        <span class="badge bg-info-subtle text-info-emphasis border">LSTM 5.2</span>
+                    </div>
+                </MudCardContent>
+                <MudCardActions Class="p-3 pt-0">
+                    <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" Href="Administration/Students" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        Open Students Hub
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <!-- 4. FEES HUB CARD -->
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Elevation="2" Class="salu-hub-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <div class="salu-hub-icon-wrap bg-emerald-light">
+                            <span class="fs-4">💰</span>
+                        </div>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Fees Hub</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Challans &amp; Reconciliation</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Total Revenue:</span>
+                        <strong class="text-success font-monospace">Rs. @totalRevenueCollected.ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Paid Challans:</span>
+                        <strong class="font-monospace">@paidFeesCount verified</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Treasury Gate:</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </MudCardContent>
+                <MudCardActions Class="p-3 pt-0">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" Href="Administration/Fees" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        Open Fees Hub
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <!-- 5. COLLEGES HUB CARD -->
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Elevation="2" Class="salu-hub-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <div class="salu-hub-icon-wrap bg-sky-light">
+                            <span class="fs-4">🏫</span>
+                        </div>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Colleges Hub</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Affiliated Colleges &amp; Programs</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Affiliated Colleges:</span>
+                        <strong class="font-monospace">@allCollegesList.Count</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Total Capacity:</span>
+                        <strong class="font-monospace">@totalSystemCapacity seats</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Capacity Usage:</span>
+                        <strong class="text-primary font-monospace">@capacityPercentage%</strong>
+                    </div>
+                </MudCardContent>
+                <MudCardActions Class="p-3 pt-0">
+                    <MudButton Variant="Variant.Filled" Color="Color.Dark" FullWidth="true" Href="Administration/Colleges" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        Open Colleges Hub
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <!-- 6. SETTINGS HUB CARD -->
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Elevation="2" Class="salu-hub-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <div class="salu-hub-icon-wrap bg-slate-light">
+                            <span class="fs-4">⚙️</span>
+                        </div>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Settings Hub</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Dynamic System Config &amp; Toggles</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Base Enrollment Fee:</span>
+                        <strong class="font-monospace">Rs. @enrollmentSettings.BaseEnrollmentFee.ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Base Exam Fee:</span>
+                        <strong class="font-monospace">Rs. @examinationSettings.BaseExamFee.ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Maintenance Mode:</span>
+                        <span class="badge @(securitySettings.MaintenanceMode ? "bg-danger" : "bg-success")">@(securitySettings.MaintenanceMode ? "ON" : "OFF")</span>
+                    </div>
+                </MudCardContent>
+                <MudCardActions Class="p-3 pt-0">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" Href="Administration/Settings" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        Open Settings Hub
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+</div>
+
+<style>
+    .salu-admin-wrapper { padding: 24px; background-color: #f1f5f9; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+    .salu-hero-header { background: linear-gradient(135deg, #0b2240 0%, #1e3a8a 50%, #0284c7 100%); color: white; padding: 24px 32px; border-radius: 12px; }
+    .salu-hero-crest-holder { width: 60px; height: 60px; background: white; border-radius: 10px; padding: 4px; display: flex; align-items: center; justify-content: center; }
+    .salu-hero-crest { width: 100%; height: 100%; object-fit: contain; }
+    .salu-hero-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
+    .salu-pulse-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; }
+    .salu-hero-heading { font-size: 1.45rem; font-weight: 800; margin: 0; }
+    .salu-hero-subheading { font-size: 0.8rem; color: #94a3b8; margin: 2px 0 0 0; }
+    .salu-hub-card { border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; height: 100%; display: flex; flex-direction: column; }
+    .salu-hub-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -6px rgba(0,0,0,0.12); }
+    .salu-hub-icon-wrap { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .bg-blue-light { background: #dbeafe; }
+    .bg-purple-light { background: #f3e8ff; }
+    .bg-teal-light { background: #ccfbf1; }
+    .bg-emerald-light { background: #d1fae5; }
+    .bg-sky-light { background: #e0f2fe; }
+    .bg-slate-light { background: #e2e8f0; }
+</style>
+
+@code {
+    private int totalApplications;
+    private int pendingCount;
+    private int approvedCount;
+    private int rejectedCount;
+    private decimal totalRevenueCollected;
+    private int paidFeesCount;
+    private int totalSystemCapacity;
+    private int capacityPercentage;
+
+    private List<College> allCollegesList = [];
+    private List<AdmitCard> issuedAdmitCards = [];
+    private AcademicYear? activeAcademicYear;
+
+    private GeneralSettings generalSettings = new();
+    private EnrollmentSettings enrollmentSettings = new();
+    private ExaminationSettings examinationSettings = new();
+    private DocumentRequirementsSettings documentSettings = new();
+    private SecurityAndFeatureSettings securitySettings = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadDataAsync();
+    }
+
+    private async Task ReloadDataAsync()
+    {
+        generalSettings = await ConfigService.GetGeneralSettingsAsync();
+        enrollmentSettings = await ConfigService.GetEnrollmentSettingsAsync();
+        examinationSettings = await ConfigService.GetExaminationSettingsAsync();
+        documentSettings = await ConfigService.GetDocumentRequirementsAsync();
+        securitySettings = await ConfigService.GetSecuritySettingsAsync();
+
+        allCollegesList = await Db.Colleges.AsNoTracking().ToListAsync();
+        var academicYears = await Db.AcademicYears.AsNoTracking().ToListAsync();
+        activeAcademicYear = academicYears.FirstOrDefault(y => y.IsActive) ?? academicYears.FirstOrDefault();
+
+        var enrollments = await Db.Enrollments.AsNoTracking().ToListAsync();
+        totalApplications = enrollments.Count;
+        pendingCount = enrollments.Count(e => e.Status == EnrollmentStatus.Pending || e.Status == EnrollmentStatus.Draft);
+        approvedCount = enrollments.Count(e => e.Status == EnrollmentStatus.Approved);
+        rejectedCount = enrollments.Count(e => e.Status == EnrollmentStatus.Rejected);
+
+        var fees = await Db.Fees.AsNoTracking().ToListAsync();
+        totalRevenueCollected = fees.Where(f => f.Status == FeeStatus.Paid).Sum(f => f.Amount);
+        paidFeesCount = fees.Count(f => f.Status == FeeStatus.Paid);
+
+        issuedAdmitCards = await Db.AdmitCards.AsNoTracking().ToListAsync();
+
+        totalSystemCapacity = allCollegesList.Sum(c => c.BoysCapacity + c.GirlsCapacity);
+        capacityPercentage = totalSystemCapacity > 0 ? Math.Min(100, (int)Math.Round((double)approvedCount / totalSystemCapacity * 100)) : 0;
+    }
+}

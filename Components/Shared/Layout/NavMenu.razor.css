@@ -1,0 +1,285 @@
+.salu-sidebar-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 100vh;
+    background-color: #0b1a38;
+    /* BLUE COLOR STYLE WITH AJRAK PATTERN AT 40% OPACITY */
+    background-image: 
+        linear-gradient(145deg, rgba(11, 26, 56, 0.97) 0%, rgba(27, 55, 123, 0.94) 58%, rgba(79, 63, 145, 0.88) 100%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='%23ffffff' fill-opacity='0.40'%3E%3Cpath d='M28 6 L32 18 L44 14 L38 24 L48 28 L38 32 L44 42 L32 38 L28 50 L24 38 L12 42 L18 32 L8 28 L18 24 L12 14 L24 18 Z'/%3E%3Ccircle cx='28' cy='28' r='4' fill='%23ffffff' fill-opacity='0.40'/%3E%3Cpath d='M0 0 L4 8 L12 4 L8 12 L16 16 L8 20 L12 28 L4 24 L0 32 L-4 24 L-12 28 L-8 20 L-16 16 L-8 12 L-12 4 L-4 8 Z'/%3E%3Cpath d='M56 0 L60 8 L68 4 L64 12 L72 16 L64 20 L68 28 L60 24 L56 32 L52 24 L44 28 L48 20 L40 16 L48 12 L44 4 L52 8 Z'/%3E%3Cpath d='M0 56 L4 64 L12 60 L8 68 L16 72 L8 76 L12 84 L4 80 L0 88 L-4 80 L-12 84 L-8 76 L-16 72 L-8 68 L-12 60 L-4 64 Z'/%3E%3Cpath d='M56 56 L60 64 L68 60 L64 68 L72 72 L64 76 L68 84 L60 80 L56 88 L52 80 L44 84 L48 76 L40 72 L48 68 L44 60 L52 64 Z'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: auto, 56px 56px;
+    color: #ffffff;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+    position: relative;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    width: 250px;
+}
+
+.salu-side-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(11, 26, 56, .92), rgba(49, 91, 184, .42));
+    backdrop-filter: blur(8px);
+    min-height: 70px;
+}
+
+.nav-item ::deep .nav-link:focus-visible,
+.sidebar-collapse-btn:focus-visible {
+    outline: 3px solid rgba(253, 224, 71, .9);
+    outline-offset: 2px;
+}
+
+/* COLLAPSE TOGGLE BUTTON */
+.sidebar-collapse-btn {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+}
+.sidebar-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+/* COLLAPSED MODE */
+.sidebar-collapsed .salu-brand-text { display: none; }
+.sidebar-collapsed .nav-section-label { display: none; }
+.sidebar-collapsed .salu-side-brand { justify-content: center; gap: 0; padding: 14px 8px; }
+.sidebar-collapsed .sidebar-collapse-btn { margin-left: 0; }
+.sidebar-collapsed .nav-item { padding: 2px 6px; }
+.sidebar-collapsed .nav-item ::deep .nav-link {
+    justify-content: center;
+    padding: 0 8px;
+}
+.sidebar-collapsed .nav-icon { margin-right: 0; font-size: 1.25rem; }
+
+/* TOOLTIP ON HOVER IN COLLAPSED MODE */
+.sidebar-collapsed .nav-item {
+    position: relative;
+}
+.sidebar-collapsed .nav-item:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 76px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #0d1e3d;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-size: 0.80rem;
+    font-weight: 700;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    pointer-events: none;
+}
+
+.salu-brand-crest-box {
+    width: 44px;
+    height: 44px;
+    background: #ffffff;
+    border-radius: 50%;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(234, 88, 12, 0.6);
+    flex-shrink: 0;
+}
+
+.salu-mini-crest {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.salu-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.salu-brand-main {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+}
+
+.salu-brand-sub {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #f59e0b;
+    letter-spacing: 0.04em;
+    margin-top: 3px;
+    text-transform: uppercase;
+}
+
+.navbar-toggler {
+    appearance: none;
+    cursor: pointer;
+    width: 3rem;
+    height: 2.5rem;
+    color: #ffffff;
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.5rem rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    z-index: 10;
+}
+
+.navbar-toggler:checked {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.nav-section-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #93c5fd;
+    padding: 16px 20px 6px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+.nav-icon {
+    font-size: 1.1rem;
+    margin-right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-item {
+    font-size: 0.86rem;
+    padding: 2px 12px;
+}
+
+.nav-item ::deep .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    height: 2.6rem;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    font-weight: 600;
+    padding: 0 14px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(4px);
+}
+
+.nav-item ::deep .nav-link:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-item ::deep a.active {
+    background: linear-gradient(135deg, #ea580c 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35);
+    transform: translateX(2px);
+}
+
+.logout-btn {
+    color: #fca5a5 !important;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+
+.logout-btn:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #ffffff !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.nav-scrollable {
+    display: none;
+    flex: 1;
+    padding-bottom: 20px;
+}
+
+.navbar-toggler:checked ~ .nav-scrollable {
+    display: block;
+}
+
+@media (min-width: 641px) {
+    .navbar-toggler {
+        display: none;
+    }
+
+    .nav-scrollable {
+        display: block;
+        height: calc(100vh - 4.5rem);
+        overflow-y: auto;
+    }
+}
+
+/* DISABLED / CLOSED / SUBMITTED BADGES */
+.salu-nav-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-left: auto;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-submitted {
+    background: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.badge-closed {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.nav-item.nav-item-disabled ::deep .nav-link {
+    opacity: 0.48;
+    cursor: not-allowed !important;
+    background: rgba(255, 255, 255, 0.01);
+    border-color: rgba(255, 255, 255, 0.05);
+    color: #94a3b8 !important;
+    pointer-events: none;
+}
+
+.nav-item.nav-item-disabled ::deep .nav-link:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: rgba(255, 255, 255, 0.01) !important;
+}

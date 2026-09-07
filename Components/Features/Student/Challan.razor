@@ -1,0 +1,226 @@
+@page "/Student/Challan"
+@attribute [Authorize(Policy = "Student")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
+@inject IJSRuntime JS
+@inject IToastService Toast
+
+<PageTitle>Fee Challan Voucher - SALU Exam Portal</PageTitle>
+
+<div class="salu-portal-app p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+        <div>
+            <h2 class="m-0 text-navy fw-bold">Fee Challan Voucher</h2>
+            <p class="text-muted m-0">Shah Abdul Latif University — Examination Directorate</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Student" class="btn btn-outline">← Back to Dashboard</a>
+            <button type="button" class="btn btn-primary" @onclick="PrintChallan">🖨 Print Challan Slip</button>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="card p-5 text-center">
+            <div class="spinner-border text-primary mx-auto mb-2" role="status"></div>
+            <p class="text-muted">Loading your fee challan details...</p>
+        </div>
+    }
+    else if (enrollment is null)
+    {
+        <div class="card p-5 text-center">
+            <div class="fs-1 mb-2">📋</div>
+            <h4>No Active Application Found</h4>
+            <p class="text-muted">You have not submitted an enrollment application yet. Please complete the enrollment form first to generate your fee challan.</p>
+            <div class="mt-3">
+                <a href="/Student/Enrollment" class="btn btn-accent">Start Enrollment Application</a>
+            </div>
+        </div>
+    }
+    else if (enrollment.Fees.OrderByDescending(f => f.CreatedAt).FirstOrDefault() is not Fee fee)
+    {
+        <div class="card p-5 text-center">
+            <div class="fs-1 mb-2">📋</div>
+            <h4>Fee Challan Not Issued</h4>
+            <p class="text-muted">Your application does not have a stored fee challan yet. Please contact the examination branch instead of using an estimated amount.</p>
+        </div>
+    }
+    else
+    {
+        var totalAmount = fee.Amount;
+        var challanNo = fee.ChallanNumber;
+        var dueDate = fee.DueDate;
+        var isPaid = fee.Status == FeeStatus.Paid || fee.Status == FeeStatus.Verified;
+
+        <!-- 3-PART BANK CHALLAN VOUCHER -->
+         <div class="challan-voucher-container print-document print-challan">
+            @for (int part = 1; part <= 3; part++)
+            {
+                var copyTitle = part switch { 1 => "BANK COPY", 2 => "UNIVERSITY COPY", _ => "STUDENT COPY" };
+                <div class="challan-slip-copy">
+                    <!-- HEADER -->
+                    <div class="text-center pb-2 border-bottom border-dark">
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                            <img src="images/salu-logo.png" alt="SALU Logo" style="width:38px;height:38px;object-fit:contain;" />
+                            <div class="text-start">
+                                <h6 class="m-0 fw-bold" style="font-size:0.78rem;">SHAH ABDUL LATIF UNIVERSITY</h6>
+                                <small class="text-muted d-block" style="font-size:0.65rem;">KHAIRPUR, SINDH, PAKISTAN</small>
+                            </div>
+                        </div>
+                        <div class="badge bg-dark text-white my-1" style="font-size:0.68rem;letter-spacing:0.05em;">@copyTitle</div>
+                        <div class="fw-bold text-navy" style="font-size:0.75rem;">Habib Bank Limited (HBL) / NBP</div>
+                        <small style="font-size:0.65rem;">A/C No: 00427900185903 (SALU Exam Collection)</small>
+                    </div>
+
+                    <!-- META INFO -->
+                    <div class="my-2 py-1 bg-light border-top border-bottom" style="font-size:0.7rem;">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Challan No:</strong> @challanNo</span>
+                            <span><strong>Dated:</strong> @fee.IssuedAtUtc.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span><strong>Due Date:</strong> <span class="text-danger fw-bold">@dueDate.ToString("dd/MM/yyyy")</span></span>
+                            <span><strong>Status:</strong> @(isPaid ? "PAID" : "UNPAID")</span>
+                        </div>
+                    </div>
+
+                    <!-- CANDIDATE DETAILS -->
+                    <table class="table table-sm table-bordered m-0" style="font-size:0.68rem;">
+                        <tbody>
+                            <tr>
+                                <th style="width:40%;">Candidate Name</th>
+                                <td><strong>@(user?.FullName ?? "Candidate")</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Father's Name</th>
+                                <td>@enrollment.FatherName</td>
+                            </tr>
+                            <tr>
+                                <th>CNIC No</th>
+                                <td>@(user?.Cnic ?? enrollment.ReferenceNumber)</td>
+                            </tr>
+                            <tr>
+                                <th>College</th>
+                                <td>@(enrollment.College?.Name ?? "Affiliated Degree College")</td>
+                            </tr>
+                            <tr>
+                                <th>Program</th>
+                                <td>@enrollment.Program (@(enrollment.Session ?? $"{DateTime.Now.Year}-{DateTime.Now.Year+1}"))</td>
+                            </tr>
+                            <tr>
+                                <th>Ref No</th>
+                                <td>@enrollment.ReferenceNumber</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- FEE PARTICULARS -->
+                    <table class="table table-sm table-bordered my-2" style="font-size:0.68rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-end">Amount (PKR)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Enrollment / Registration Fee</td>
+                                <td class="text-end">@fee.BaseFee.ToString("N2")</td>
+                            </tr>
+                            @if (fee.LateFee > 0)
+                            {
+                                <tr>
+                                    <td>Late Fee</td>
+                                    <td class="text-end">@fee.LateFee.ToString("N2")</td>
+                                </tr>
+                            }
+                            @if (fee.MigrationFee > 0)
+                            {
+                                <tr>
+                                    <td>Migration / Non-Affiliated NOC Fee</td>
+                                    <td class="text-end">@fee.MigrationFee.ToString("N2")</td>
+                                </tr>
+                            }
+                            <tr class="fw-bold table-light">
+                                <th>TOTAL PAYABLE</th>
+                                <th class="text-end text-navy">PKR @totalAmount.ToString("N2")</th>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- AMOUNT IN WORDS -->
+                    <div class="border p-1 bg-light text-center mb-2" style="font-size:0.65rem;">
+                        <strong>Rupees in words:</strong> @fee.AmountInWordsEn
+                    </div>
+
+                    <!-- SIGNATURES -->
+                    <div class="d-flex justify-content-between pt-3 mt-auto" style="font-size:0.65rem;">
+                        <div class="text-center border-top border-dark pt-1" style="width:45%;">
+                            Candidate Signature
+                        </div>
+                        <div class="text-center border-top border-dark pt-1" style="width:45%;">
+                            Bank Officer / Stamp
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card p-3 mt-4 d-print-none bg-light border">
+            <h6 class="fw-bold text-navy mb-2">📌 Payment Instructions:</h6>
+            <ol class="m-0 ps-3 small text-muted">
+                <li>Print this 3-copy challan voucher and deposit the fee at any online branch of <strong>Habib Bank Limited (HBL)</strong> or <strong>National Bank of Pakistan (NBP)</strong>.</li>
+                <li>The bank will retain the <strong>Bank Copy</strong> and hand over the remaining copies to you stamped with the transaction number.</li>
+                <li>Retain the <strong>Student Copy</strong> and submit the <strong>University Copy</strong> along with your printed application form to your college.</li>
+            </ol>
+        </div>
+    }
+</div>
+
+@code {
+    private ApplicationUser? user;
+    private EntityEnrollment? enrollment;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            user = await UserManager.GetUserAsync(authState.User);
+            if (user != null)
+            {
+                enrollment = await Db.Enrollments
+                    .Include(e => e.College)
+                    .Include(e => e.Fees)
+                    .Include(e => e.AcademicYear)
+                    .OrderByDescending(e => e.CreatedAt)
+                    .FirstOrDefaultAsync(e => e.UserId == user.Id);
+            }
+        }
+        loading = false;
+
+        var latestFee = enrollment?.Fees?.OrderByDescending(f => f.CreatedAt).FirstOrDefault();
+        if (latestFee != null)
+        {
+            if (latestFee.Status == FeeStatus.Paid || latestFee.Status == FeeStatus.Verified)
+                Toast.ShowSuccess("Fee payment verified. Your challan is cleared.");
+            else
+                Toast.ShowWarning($"Fee unpaid. Please deposit challan #{latestFee.ChallanNumber} at the bank.");
+        }
+    }
+
+    private async Task PrintChallan()
+    {
+        Toast.ShowInfo("Printing fee challan…");
+        await JS.InvokeVoidAsync("window.print");
+    }
+}

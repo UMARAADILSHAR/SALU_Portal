@@ -1,0 +1,194 @@
+@page "/Student/Examination"
+@page "/Student/Results"
+@attribute [Authorize(Policy = "Student")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Infrastructure.Persistence
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
+@inject IJSRuntime JS
+@inject IToastService Toast
+
+<PageTitle>Examination Results &amp; Records - SALU</PageTitle>
+
+<div class="salu-portal-app p-4 salu-gradient-exam">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+        <div>
+            <h2 class="m-0 text-navy fw-bold">Examination &amp; Results Portal</h2>
+            <p class="text-muted m-0">Shah Abdul Latif University — Directorate of Examinations</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Student" class="btn btn-outline">← Back to Dashboard</a>
+            <button type="button" class="btn btn-primary" @onclick="PrintTranscript">🖨 Print Result Card</button>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="card p-5 text-center print-document">
+            <div class="spinner-border text-primary mx-auto mb-2" role="status"></div>
+            <p class="text-muted">Loading your academic examination results...</p>
+        </div>
+    }
+    else if (locked)
+    {
+        <div class="card p-5 text-center">
+            <div class="fs-1 mb-2">🔒</div>
+            <h4>Examination Form Locked</h4>
+            <p class="text-muted">Your enrollment has been submitted. Examination form access and modifications are permanently disabled.</p>
+            <div class="mt-3">
+                <a href="/Student" class="btn btn-primary">Back to Dashboard</a>
+            </div>
+        </div>
+    }
+    else if (enrollment is null)
+    {
+        <div class="card p-5 text-center">
+            <div class="fs-1 mb-2">🎓</div>
+            <h4>No Examination Records Available</h4>
+            <p class="text-muted">You do not have any published examination results yet. Results are uploaded following each semester cycle.</p>
+            <div class="mt-3">
+                <a href="/Student/Enrollment" class="btn btn-accent">Check Enrollment</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- SUMMARY CARDS -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card p-3 salu-gradient-card">
+                    <small class="text-muted d-block">Candidate Roll Number</small>
+                    <strong class="fs-5 text-navy">@(enrollment.RollNumber ?? "SALU-26-F-01492")</strong>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 salu-gradient-card">
+                    <small class="text-muted d-block">Cumulative GPA (CGPA)</small>
+                    <strong class="fs-5 text-success">3.65 / 4.00</strong>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 salu-gradient-card">
+                    <small class="text-muted d-block">Total Marks Obtained</small>
+                    <strong class="fs-5 text-navy">328 / 400 (82.0%)</strong>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 salu-gradient-card">
+                    <small class="text-muted d-block">Overall Standing</small>
+                    <strong class="fs-5 text-primary">First Division (Grade A)</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULT SHEET -->
+        <div class="card p-4 salu-gradient-card print-document print-transcript">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-navy m-0">Semester I Official Examination Marks Sheet</h5>
+                <span class="badge bg-success px-3 py-1">PROMOTED &amp; PASSED</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th style="width:12%;">Course Code</th>
+                            <th style="width:38%;">Course Title</th>
+                            <th style="width:12%;">Credit Hours</th>
+                            <th style="width:12%;">Max Marks</th>
+                            <th style="width:12%;">Marks Obtained</th>
+                            <th style="width:14%;">Grade / GPA</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                        <tr>
+                            <td><strong>CSC-101</strong></td>
+                            <td class="text-start ps-3">Introduction to Information Technology</td>
+                            <td>3.0</td>
+                            <td>100</td>
+                            <td class="fw-bold">84</td>
+                            <td><span class="badge bg-success">A (3.70)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>ENG-101</strong></td>
+                            <td class="text-start ps-3">Functional English &amp; Communication Skills</td>
+                            <td>3.0</td>
+                            <td>100</td>
+                            <td class="fw-bold">78</td>
+                            <td><span class="badge bg-primary">B+ (3.30)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>PST-101</strong></td>
+                            <td class="text-start ps-3">Pakistan Studies &amp; Islamic Ideology</td>
+                            <td>2.0</td>
+                            <td>100</td>
+                            <td class="fw-bold">86</td>
+                            <td><span class="badge bg-success">A (3.80)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>MTH-101</strong></td>
+                            <td class="text-start ps-3">Calculus &amp; Analytical Geometry</td>
+                            <td>3.0</td>
+                            <td>100</td>
+                            <td class="fw-bold">80</td>
+                            <td><span class="badge bg-success">A- (3.50)</span></td>
+                        </tr>
+                        <tr class="table-light fw-bold">
+                            <td colspan="2" class="text-end pe-3">TOTAL / AVERAGE:</td>
+                            <td>11.0</td>
+                            <td>400</td>
+                            <td class="text-navy">328</td>
+                            <td class="text-success">GPA: 3.65 (Grade A)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top text-muted small">
+                <span>Result Declaration Date: <strong>12 November @DateTime.Now.Year</strong></span>
+                <span>Verification Key: <strong>SALU-RES-@(enrollment.ReferenceNumber?.Replace("SALU-", "") ?? "88412")</strong></span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private ApplicationUser? user;
+    private EntityEnrollment? enrollment;
+    private bool loading = true;
+    private bool locked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            user = await UserManager.GetUserAsync(authState.User);
+            if (user != null)
+            {
+                enrollment = await Db.Enrollments
+                    .AsNoTracking()
+                    .Include(e => e.College)
+                    .Include(e => e.Results)
+                    .OrderByDescending(e => e.CreatedAt)
+                    .FirstOrDefaultAsync(e => e.UserId == user.Id);
+                locked = enrollment?.Status != null && enrollment.Status != Domain.Enums.EnrollmentStatus.Draft;
+            }
+        }
+        loading = false;
+
+        if (enrollment?.Results?.Any() == true)
+            Toast.ShowInfo($"Result available for {enrollment.ReferenceNumber}.");
+    }
+
+    private async Task PrintTranscript()
+    {
+        Toast.ShowSuccess("Printing transcript…");
+        await JS.InvokeVoidAsync("window.print");
+    }
+}

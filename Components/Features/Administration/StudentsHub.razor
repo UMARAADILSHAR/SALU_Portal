@@ -1,0 +1,435 @@
+@page "/Administration/Students"
+@attribute [Authorize(Policy = "UniversityAdministration")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+@using SaluExamPortal.Domain.Entities
+@using EntityEnrollment = SaluExamPortal.Domain.Entities.Enrollment
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Application.Services
+@using MudBlazor
+@inject ApplicationDbContext Db
+@inject ICollegeScopingService ScopingService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Students Hub – SALU Master Student Directory</PageTitle>
+
+<div class="salu-admin-wrapper">
+    <!-- HERO HEADER -->
+    <div class="salu-hero-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="salu-hero-crest-holder">
+                    <img src="images/salu-logo.png" alt="SALU Crest" class="salu-hero-crest" />
+                </div>
+                <div>
+                    <div class="salu-hero-pill">
+                        <span class="salu-pulse-dot"></span>
+                        <span>STUDENT RECORDS &amp; SCRUTINY DIRECTORY</span>
+                    </div>
+                    <h2 class="salu-hero-heading">STUDENTS HUB</h2>
+                    <p class="salu-hero-subheading">Candidate Search • Scrutiny Dossiers • Document Vault • Roll Number Management</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Checklist" OnClick="BatchApproveVerifiedAsync" Class="fw-bold">
+                    Batch Approve Verified
+                </MudButton>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT DIRECTORY CARD -->
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 w-100">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">All Candidate Records (@allEnrollments.Count)</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">Use multi-parameter filters to search candidates</MudText>
+                    </div>
+                </div>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <!-- FILTERS BAR -->
+            <MudGrid Class="mb-3" Spacing="2">
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="searchQuery" Placeholder="Search by Name, CNIC, Phone, Ref, Roll No..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudSelect @bind-Value="collegeFilter" Label="Filter by College" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@("")">All Colleges / Main Campus</MudSelectItem>
+                        @foreach (var col in allCollegesList)
+                        {
+                            <MudSelectItem Value="@col.Name">@col.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudSelect @bind-Value="statusFilter" Label="Status" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@("ALL")">All Statuses</MudSelectItem>
+                        <MudSelectItem Value="@("Pending")">Pending</MudSelectItem>
+                        <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
+                        <MudSelectItem Value="@("Approved")">Approved</MudSelectItem>
+                        <MudSelectItem Value="@("Rejected")">Rejected</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudSelect @bind-Value="feeFilter" Label="Fee Status" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@("ALL")">All Fees</MudSelectItem>
+                        <MudSelectItem Value="@("Paid")">Paid Only</MudSelectItem>
+                        <MudSelectItem Value="@("Unpaid")">Unpaid Only</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <MudTable Items="@FilteredEnrollments" Hover="true" Elevation="0" Striped="true">
+                <HeaderContent>
+                    <MudTh>Photo</MudTh>
+                    <MudTh>Ref / Roll No</MudTh>
+                    <MudTh>Candidate &amp; Father</MudTh>
+                    <MudTh>Program &amp; College</MudTh>
+                    <MudTh>Fee</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh Style="text-align: right;">Action</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        @if (!string.IsNullOrWhiteSpace(context.PhotoUrl))
+                        {
+                            <img src="@context.PhotoUrl" alt="@GetCandidateName(context)" class="rounded-circle" style="width: 38px; height: 38px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="salu-avatar-thumb">👤</div>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <div class="font-monospace fw-bold text-primary">@context.ReferenceNumber</div>
+                        @if (!string.IsNullOrWhiteSpace(context.RollNumber))
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" Class="font-monospace fw-bold mt-1">@context.RollNumber</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <div class="fw-bold text-navy">@GetCandidateName(context)</div>
+                        <div class="small text-muted">S/D/O @context.FatherName</div>
+                        <div class="small text-muted font-monospace">@context.ContactNumber</div>
+                    </MudTd>
+                    <MudTd>
+                        <div class="fw-bold">@context.Program</div>
+                        <div class="small text-muted">@(context.College?.Name ?? "Main Campus")</div>
+                    </MudTd>
+                    <MudTd>
+                        @if (context.Fees.Any(f => f.Status == FeeStatus.Paid))
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" Class="fw-bold">✓ PAID</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled" Class="fw-bold">UNPAID</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <span class="salu-status-badge status-@context.Status.ToString().ToLower()">@context.Status</span>
+                    </MudTd>
+                    <MudTd Style="text-align: right;">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Visibility" OnClick="() => OpenScrutinyModal(context)">
+                                Scrutiny
+                            </MudButton>
+                            @if (context.Status == EnrollmentStatus.Pending || context.Status == EnrollmentStatus.Draft)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" OnClick="() => ApproveApplicationAsync(context)">
+                                    Approve
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="() => PromptRejectModal(context)">
+                                    Reject
+                                </MudButton>
+                            }
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+</div>
+
+<!-- MODAL: FULL STUDENT SCRUTINY DOSSIER -->
+@if (selectedDossierApp != null)
+{
+    <div class="salu-modal-backdrop" @onclick="CloseScrutinyModal">
+        <div class="salu-modal-card animate-scale-up" @onclick:stopPropagation="true" style="max-width: 900px;">
+            <div class="salu-modal-header bg-navy text-white">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">📑</span>
+                    <div>
+                        <h4 class="m-0 fw-bold">Candidate Scrutiny Dossier</h4>
+                        <span class="small text-warning">Ref: @selectedDossierApp.ReferenceNumber</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" @onclick="CloseScrutinyModal"></button>
+            </div>
+            
+            <div class="salu-modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-4">
+                    @if (!string.IsNullOrWhiteSpace(selectedDossierApp.PhotoUrl))
+                    {
+                        <img src="@selectedDossierApp.PhotoUrl" alt="@GetCandidateName(selectedDossierApp)" class="rounded-3 border" style="width: 80px; height: 80px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-secondary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 32px;">👤</div>
+                    }
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold text-navy m-0">@GetCandidateName(selectedDossierApp)</h4>
+                        <div class="text-muted">@selectedDossierApp.SoDoWo @selectedDossierApp.FatherName</div>
+                        <div class="d-flex gap-2 mt-2 flex-wrap">
+                            <span class="badge bg-primary">@selectedDossierApp.Program</span>
+                            <span class="badge bg-secondary">@(selectedDossierApp.College?.Name ?? "Main Campus")</span>
+                            <span class="salu-status-badge status-@selectedDossierApp.Status.ToString().ToLower()">@selectedDossierApp.Status</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DOCUMENTS & OCR AUTHENTICITY -->
+                <h5 class="fw-bold text-navy border-bottom pb-2 mb-3">Tesseract 5.2 LSTM Neural OCR Scrutiny Audit</h5>
+                <div class="row g-3 mb-4">
+                    @if (!string.IsNullOrWhiteSpace(selectedDossierApp.DocumentsJson))
+                    {
+                        try
+                        {
+                            var docs = JsonSerializer.Deserialize<List<UploadedDocumentItem>>(selectedDossierApp.DocumentsJson);
+                            if (docs != null && docs.Count > 0)
+                            {
+                                foreach (var doc in docs)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="card p-3 border shadow-sm">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <strong class="text-navy">@doc.DocumentType</strong>
+                                                    <div class="small text-muted">@doc.FileName</div>
+                                                </div>
+                                                <a href="@doc.RelativePath" target="_blank" class="btn btn-xs btn-outline-primary btn-sm">View Scan ↗</a>
+                                            </div>
+                                            @if (doc.Authenticity != null)
+                                            {
+                                                <div class="mt-2 p-2 bg-light rounded small">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>OCR Authenticity:</span>
+                                                        <strong class="@(doc.Authenticity.IsAuthentic ? "text-success" : "text-danger")">
+                                                            @(doc.Authenticity.IsAuthentic ? $"✓ VERIFIED ({doc.Authenticity.AuthenticityScore}% MATCH)" : "⚠️ SCRUTINY REQUIRED")
+                                                        </strong>
+                                                    </div>
+                                                    <div class="text-muted mt-1" style="font-size: 0.75rem;">@doc.Authenticity.AuditLog</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                </div>
+            </div>
+
+            <div class="salu-modal-footer bg-light p-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @onclick="CloseScrutinyModal">Close</button>
+                @if (selectedDossierApp.Status == EnrollmentStatus.Pending || selectedDossierApp.Status == EnrollmentStatus.Draft)
+                {
+                    <button type="button" class="btn btn-danger" @onclick="() => PromptRejectModal(selectedDossierApp)">Reject</button>
+                    <button type="button" class="btn btn-success" @onclick="() => ApproveApplicationAsync(selectedDossierApp)">✓ Approve &amp; Allocate Roll No</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL: REJECT REASON -->
+@if (rejectingApp != null)
+{
+    <div class="salu-modal-backdrop" @onclick="() => rejectingApp = null">
+        <div class="salu-modal-card animate-scale-up" @onclick:stopPropagation="true" style="max-width: 500px;">
+            <div class="salu-modal-header bg-danger text-white">
+                <h5 class="m-0 fw-bold">Reject Application</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="() => rejectingApp = null"></button>
+            </div>
+            <div class="salu-modal-body p-4">
+                <p>Provide scrutiny reason for rejecting <strong>@GetCandidateName(rejectingApp)</strong>:</p>
+                <textarea class="form-control" rows="3" placeholder="e.g. Discrepancy on marksheet..." @bind="rejectionReasonInput"></textarea>
+            </div>
+            <div class="salu-modal-footer p-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @onclick="() => rejectingApp = null">Cancel</button>
+                <button type="button" class="btn btn-danger" @onclick="ConfirmRejectionAsync">Confirm Rejection</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .salu-admin-wrapper { padding: 24px; background-color: #f1f5f9; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+    .salu-hero-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); color: white; padding: 24px 32px; border-radius: 12px; }
+    .salu-hero-crest-holder { width: 56px; height: 56px; background: white; border-radius: 8px; padding: 3px; display: flex; align-items: center; justify-content: center; }
+    .salu-hero-crest { width: 100%; height: 100%; object-fit: contain; }
+    .salu-hero-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
+    .salu-pulse-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; }
+    .salu-hero-heading { font-size: 1.4rem; font-weight: 800; margin: 0; }
+    .salu-hero-subheading { font-size: 0.8rem; color: #94a3b8; margin: 2px 0 0 0; }
+    .salu-status-badge { font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; display: inline-block; }
+    .status-draft { background: #e2e8f0; color: #475569; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-approved { background: #dcfce7; color: #15803d; }
+    .status-rejected { background: #fee2e2; color: #b91c1c; }
+    .salu-avatar-thumb { width: 38px; height: 38px; background: #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .salu-modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .salu-modal-card { background: white; border-radius: 12px; overflow: hidden; width: 100%; }
+    .salu-modal-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+</style>
+
+@code {
+    private List<EntityEnrollment> allEnrollments = [];
+    private Dictionary<string, ApplicationUser> userMap = [];
+    private List<College> allCollegesList = [];
+
+    private string searchQuery = string.Empty;
+    private string collegeFilter = string.Empty;
+    private string statusFilter = "ALL";
+    private string feeFilter = "ALL";
+
+    private EntityEnrollment? selectedDossierApp;
+    private EntityEnrollment? rejectingApp;
+    private string rejectionReasonInput = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadDataAsync();
+    }
+
+    private string GetCandidateName(EntityEnrollment? app)
+    {
+        if (app == null) return string.Empty;
+        if (userMap.TryGetValue(app.UserId, out var user) && !string.IsNullOrWhiteSpace(user.FullName))
+            return user.FullName;
+        if (!string.IsNullOrWhiteSpace(app.Surname))
+            return $"{app.FatherName} ({app.Surname})";
+        return app.FatherName;
+    }
+
+    private async Task ReloadDataAsync()
+    {
+        var users = await Db.Users.AsNoTracking().ToListAsync();
+        userMap = users.ToDictionary(u => u.Id, u => u);
+
+        allCollegesList = await Db.Colleges.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
+
+        allEnrollments = await Db.Enrollments
+            .Include(e => e.College)
+            .Include(e => e.Fees)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync();
+    }
+
+    private IEnumerable<EntityEnrollment> FilteredEnrollments => allEnrollments.Where(e =>
+    {
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            var q = searchQuery.Trim().ToLowerInvariant();
+            var name = GetCandidateName(e).ToLowerInvariant();
+            var father = (e.FatherName ?? "").ToLowerInvariant();
+            var refNo = (e.ReferenceNumber ?? "").ToLowerInvariant();
+            var rollNo = (e.RollNumber ?? "").ToLowerInvariant();
+            var cnic = (userMap.TryGetValue(e.UserId, out var u) ? u.Cnic ?? "" : "").ToLowerInvariant();
+            var phone = (e.ContactNumber ?? "").ToLowerInvariant();
+
+            if (!name.Contains(q) && !father.Contains(q) && !refNo.Contains(q) && !rollNo.Contains(q) && !cnic.Contains(q) && !phone.Contains(q))
+                return false;
+        }
+
+        if (statusFilter != "ALL" && e.Status.ToString() != statusFilter)
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(collegeFilter) && (e.College?.Name ?? "Main Campus") != collegeFilter)
+            return false;
+
+        if (feeFilter == "Paid" && !e.Fees.Any(f => f.Status == FeeStatus.Paid))
+            return false;
+
+        if (feeFilter == "Unpaid" && e.Fees.Any(f => f.Status == FeeStatus.Paid))
+            return false;
+
+        return true;
+    });
+
+    private void OpenScrutinyModal(EntityEnrollment app) => selectedDossierApp = app;
+    private void CloseScrutinyModal() => selectedDossierApp = null;
+    private void PromptRejectModal(EntityEnrollment app) { rejectingApp = app; rejectionReasonInput = string.Empty; }
+
+    private async Task ConfirmRejectionAsync()
+    {
+        if (rejectingApp == null) return;
+        var entity = await Db.Enrollments.FindAsync(rejectingApp.Id);
+        if (entity != null)
+        {
+            entity.Status = EnrollmentStatus.Rejected;
+            entity.RejectionReason = string.IsNullOrWhiteSpace(rejectionReasonInput) ? "Document scrutiny requirements not met." : rejectionReasonInput;
+            entity.LastModifiedAt = DateTime.UtcNow;
+            entity.LastModifiedBy = "SuperAdmin";
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"Application {rejectingApp.ReferenceNumber} rejected.", Severity.Warning);
+        }
+        rejectingApp = null;
+        selectedDossierApp = null;
+        await ReloadDataAsync();
+    }
+
+    private async Task ApproveApplicationAsync(EntityEnrollment app)
+    {
+        var entity = await Db.Enrollments.FindAsync(app.Id);
+        if (entity != null)
+        {
+            entity.Status = EnrollmentStatus.Approved;
+            entity.RejectionReason = null;
+            if (string.IsNullOrWhiteSpace(entity.RollNumber))
+                entity.RollNumber = $"SALU-26-{new Random().Next(10000, 99999)}";
+            entity.LastModifiedAt = DateTime.UtcNow;
+            entity.LastModifiedBy = "SuperAdmin";
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"Application {app.ReferenceNumber} APPROVED (Roll No: {entity.RollNumber})", Severity.Success);
+        }
+        selectedDossierApp = null;
+        await ReloadDataAsync();
+    }
+
+    private async Task BatchApproveVerifiedAsync()
+    {
+        var pending = allEnrollments.Where(e => e.Status == EnrollmentStatus.Pending || e.Status == EnrollmentStatus.Draft).ToList();
+        int count = 0;
+        var rand = new Random();
+        foreach (var app in pending)
+        {
+            var entity = await Db.Enrollments.FindAsync(app.Id);
+            if (entity != null)
+            {
+                entity.Status = EnrollmentStatus.Approved;
+                if (string.IsNullOrWhiteSpace(entity.RollNumber))
+                    entity.RollNumber = $"SALU-26-{rand.Next(10000, 99999)}";
+                entity.LastModifiedAt = DateTime.UtcNow;
+                entity.LastModifiedBy = "SuperAdmin";
+                count++;
+            }
+        }
+        if (count > 0)
+        {
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"Batch approved {count} verified candidates.", Severity.Success);
+            await ReloadDataAsync();
+        }
+    }
+}

@@ -1,0 +1,281 @@
+@page "/Administration/Colleges"
+@attribute [Authorize(Policy = "UniversityAdministration")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Entities
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@using MudBlazor
+@inject ApplicationDbContext Db
+@inject ISnackbar Snackbar
+
+<PageTitle>Colleges Hub – Affiliated Colleges Network</PageTitle>
+
+<div class="salu-admin-wrapper">
+    <!-- HERO HEADER -->
+    <div class="salu-hero-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="salu-hero-crest-holder">
+                    <img src="images/salu-logo.png" alt="SALU Crest" class="salu-hero-crest" />
+                </div>
+                <div>
+                    <div class="salu-hero-pill">
+                        <span class="salu-pulse-dot"></span>
+                        <span>AFFILIATED INSTITUTIONS NETWORK</span>
+                    </div>
+                    <h2 class="salu-hero-heading">COLLEGES HUB</h2>
+                    <p class="salu-hero-subheading">Degree Colleges Directory • Degree Programs Offered • Seat Capacities</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => showAddCollegeModal = true" Class="fw-bold">
+                    Add College
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.School" OnClick="() => showAddProgramModal = true" Class="fw-bold bg-white">
+                    Add Program
+                </MudButton>
+            </div>
+        </div>
+    </div>
+
+    <MudGrid Spacing="3">
+        <!-- AFFILIATED COLLEGES TABLE -->
+        <MudItem xs="12" lg="7">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Affiliated Colleges Network (@allCollegesList.Count)</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudTable Items="@allCollegesList" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Code</MudTh>
+                            <MudTh>College Name</MudTh>
+                            <MudTh>District</MudTh>
+                            <MudTh>Capacity</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh Style="text-align: right;">Action</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd Class="font-monospace fw-bold">@context.Code</MudTd>
+                            <MudTd Class="fw-bold">@context.Name</MudTd>
+                            <MudTd>@context.District</MudTd>
+                            <MudTd>@(context.BoysCapacity + context.GirlsCapacity) seats</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Default)" Size="Size.Small" Variant="Variant.Filled">
+                                    @(context.IsActive ? "ACTIVE" : "INACTIVE")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd Style="text-align: right;">
+                                <MudButton Variant="Variant.Outlined" Color="@(context.IsActive ? Color.Warning : Color.Success)" Size="Size.Small" OnClick="() => ToggleCollegeStatusAsync(context)">
+                                    @(context.IsActive ? "Suspend" : "Activate")
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- DEGREE PROGRAMS TABLE -->
+        <MudItem xs="12" lg="5">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-navy">Degree Programs Offered (@allProgramsList.Count)</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudTable Items="@allProgramsList" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Code</MudTh>
+                            <MudTh>Program Name</MudTh>
+                            <MudTh>College</MudTh>
+                            <MudTh>Status</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@context.Code</MudChip></MudTd>
+                            <MudTd Class="fw-bold">@context.Name</MudTd>
+                            <MudTd Class="small text-muted">@(context.College?.Name ?? "Main Campus")</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Default)" Size="Size.Small" Variant="Variant.Filled">
+                                    @(context.IsActive ? "ACTIVE" : "INACTIVE")
+                                </MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+<!-- MODAL: ADD COLLEGE -->
+@if (showAddCollegeModal)
+{
+    <div class="salu-modal-backdrop" @onclick="() => showAddCollegeModal = false">
+        <div class="salu-modal-card animate-scale-up" @onclick:stopPropagation="true" style="max-width: 550px;">
+            <div class="salu-modal-header bg-navy text-white">
+                <h5 class="m-0 fw-bold">Affiliate New Degree College</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="() => showAddCollegeModal = false"></button>
+            </div>
+            <div class="salu-modal-body p-4 d-flex flex-column gap-3">
+                <MudTextField @bind-Value="newCollegeCode" Label="College Code (e.g. GDC-KHP)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="newCollegeName" Label="College Full Name" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="newCollegeDistrict" Label="District" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="newCollegePrincipal" Label="Principal Name" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="newCollegeCapacity" Label="Approved Seat Capacity" Variant="Variant.Outlined" Min="50" Max="5000" />
+            </div>
+            <div class="salu-modal-footer p-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @onclick="() => showAddCollegeModal = false">Cancel</button>
+                <button type="button" class="btn btn-primary" @onclick="AddCollegeAsync">Add College</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL: ADD DEGREE PROGRAM -->
+@if (showAddProgramModal)
+{
+    <div class="salu-modal-backdrop" @onclick="() => showAddProgramModal = false">
+        <div class="salu-modal-card animate-scale-up" @onclick:stopPropagation="true" style="max-width: 500px;">
+            <div class="salu-modal-header bg-navy text-white">
+                <h5 class="m-0 fw-bold">Add Degree Program</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="() => showAddProgramModal = false"></button>
+            </div>
+            <div class="salu-modal-body p-4 d-flex flex-column gap-3">
+                <MudSelect @bind-Value="newProgramCollegeId" Label="Affiliated College" Variant="Variant.Outlined">
+                    @foreach (var col in allCollegesList)
+                    {
+                        <MudSelectItem Value="@col.Id">@col.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField @bind-Value="newProgramCode" Label="Program Code (e.g. BSCS, BBA, ADS)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="newProgramName" Label="Degree Program Full Name" Variant="Variant.Outlined" />
+            </div>
+            <div class="salu-modal-footer p-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @onclick="() => showAddProgramModal = false">Cancel</button>
+                <button type="button" class="btn btn-primary" @onclick="AddProgramAsync">Add Program</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .salu-admin-wrapper { padding: 24px; background-color: #f1f5f9; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+    .salu-hero-header { background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 50%, #0369a1 100%); color: white; padding: 24px 32px; border-radius: 12px; }
+    .salu-hero-crest-holder { width: 56px; height: 56px; background: white; border-radius: 8px; padding: 3px; display: flex; align-items: center; justify-content: center; }
+    .salu-hero-crest { width: 100%; height: 100%; object-fit: contain; }
+    .salu-hero-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
+    .salu-pulse-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; }
+    .salu-hero-heading { font-size: 1.4rem; font-weight: 800; margin: 0; }
+    .salu-hero-subheading { font-size: 0.8rem; color: #bae6fd; margin: 2px 0 0 0; }
+    .salu-modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .salu-modal-card { background: white; border-radius: 12px; overflow: hidden; width: 100%; }
+    .salu-modal-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+</style>
+
+@code {
+    private List<College> allCollegesList = [];
+    private List<CollegeProgram> allProgramsList = [];
+
+    private bool showAddCollegeModal;
+    private string newCollegeCode = string.Empty;
+    private string newCollegeName = string.Empty;
+    private string newCollegeDistrict = string.Empty;
+    private string newCollegePrincipal = string.Empty;
+    private int newCollegeCapacity = 1000;
+
+    private bool showAddProgramModal;
+    private string newProgramCode = string.Empty;
+    private string newProgramName = string.Empty;
+    private Guid newProgramCollegeId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadDataAsync();
+    }
+
+    private async Task ReloadDataAsync()
+    {
+        allCollegesList = await Db.Colleges.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
+        allProgramsList = await Db.CollegePrograms.Include(p => p.College).AsNoTracking().OrderBy(p => p.Name).ToListAsync();
+    }
+
+    private async Task ToggleCollegeStatusAsync(College col)
+    {
+        var c = await Db.Colleges.FindAsync(col.Id);
+        if (c != null)
+        {
+            c.IsActive = !c.IsActive;
+            c.LastModifiedAt = DateTime.UtcNow;
+            c.LastModifiedBy = "SuperAdmin";
+            await Db.SaveChangesAsync();
+            Snackbar.Add($"College '{c.Name}' is now {(c.IsActive ? "ACTIVE" : "SUSPENDED")}.", Severity.Info);
+            await ReloadDataAsync();
+        }
+    }
+
+    private async Task AddCollegeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newCollegeCode) || string.IsNullOrWhiteSpace(newCollegeName) || string.IsNullOrWhiteSpace(newCollegeDistrict))
+        {
+            Snackbar.Add("Code, Name, and District are required.", Severity.Error);
+            return;
+        }
+
+        var col = new College
+        {
+            Code = newCollegeCode.Trim().ToUpperInvariant(),
+            Name = newCollegeName.Trim(),
+            District = newCollegeDistrict.Trim().ToUpperInvariant(),
+            PrincipalName = string.IsNullOrWhiteSpace(newCollegePrincipal) ? null : newCollegePrincipal.Trim(),
+            BoysCapacity = newCollegeCapacity / 2,
+            GirlsCapacity = newCollegeCapacity / 2,
+            IsActive = true,
+            Type = CollegeType.Coed
+        };
+
+        Db.Colleges.Add(col);
+        await Db.SaveChangesAsync();
+
+        showAddCollegeModal = false;
+        newCollegeCode = string.Empty;
+        newCollegeName = string.Empty;
+        newCollegeDistrict = string.Empty;
+        newCollegePrincipal = string.Empty;
+
+        Snackbar.Add($"Affiliated College '{col.Name}' added successfully.", Severity.Success);
+        await ReloadDataAsync();
+    }
+
+    private async Task AddProgramAsync()
+    {
+        if (newProgramCollegeId == Guid.Empty || string.IsNullOrWhiteSpace(newProgramCode) || string.IsNullOrWhiteSpace(newProgramName))
+        {
+            Snackbar.Add("College, Program Code, and Program Name are required.", Severity.Error);
+            return;
+        }
+
+        var prog = new CollegeProgram
+        {
+            CollegeId = newProgramCollegeId,
+            Code = newProgramCode.Trim().ToUpperInvariant(),
+            Name = newProgramName.Trim(),
+            IsActive = true
+        };
+
+        Db.CollegePrograms.Add(prog);
+        await Db.SaveChangesAsync();
+
+        showAddProgramModal = false;
+        newProgramCode = string.Empty;
+        newProgramName = string.Empty;
+
+        Snackbar.Add($"Degree Program '{prog.Name}' added successfully.", Severity.Success);
+        await ReloadDataAsync();
+    }
+}

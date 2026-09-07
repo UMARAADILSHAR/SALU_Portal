@@ -1,0 +1,23 @@
+<div class="enrollment-actions">
+    @if (ShowBack)
+    {
+        <button class="btn btn-outline" type="button" @onclick="Back">← Back</button>
+    }
+    @if (Submit)
+    {
+        <button class="btn btn-accent" type="submit" disabled="@Disabled">@(Disabled ? "Submitting..." : "Submit enrollment")</button>
+    }
+    else
+    {
+        <button class="btn btn-accent" type="button" @onclick="Next">@(First ? "Save and continue" : "Continue") →</button>
+    }
+</div>
+
+@code {
+    [Parameter] public bool ShowBack { get; set; }
+    [Parameter] public bool First { get; set; }
+    [Parameter] public bool Submit { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback Back { get; set; }
+    [Parameter] public EventCallback Next { get; set; }
+}

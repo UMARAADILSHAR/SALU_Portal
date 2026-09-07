@@ -1,0 +1,212 @@
+@page "/Administration/Fees"
+@attribute [Authorize(Policy = "UniversityAdministration")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Entities
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Application.Services
+@using MudBlazor
+@inject ApplicationDbContext Db
+@inject IFeePaymentService FeePaymentService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Fees Hub – Bank Challan Ledger &amp; Reconciliation</PageTitle>
+
+<div class="salu-admin-wrapper">
+    <!-- HERO HEADER -->
+    <div class="salu-hero-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="salu-hero-crest-holder">
+                    <img src="images/salu-logo.png" alt="SALU Crest" class="salu-hero-crest" />
+                </div>
+                <div>
+                    <div class="salu-hero-pill">
+                        <span class="salu-pulse-dot"></span>
+                        <span>TREASURY &amp; ACCOUNTS DIRECTORY</span>
+                    </div>
+                    <h2 class="salu-hero-heading">FEES HUB</h2>
+                    <p class="salu-hero-subheading">Bank Challans • HBL / NBP Revenue Reconciliation • Real-Time Tariff Ledgers</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Large" Class="fw-bold px-3">
+                    TOTAL REVENUE: Rs. @totalRevenueCollected.ToString("N0")
+                </MudChip>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEES LEDGER -->
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6" Class="fw-bold text-navy">Bank Challan Ledger &amp; Manual Reconciliation (@allFeesList.Count Records)</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">Reconcile bank scroll records directly against student application fees</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent Class="pa-0">
+            <MudTable Items="@allFeesList" Hover="true" Elevation="0" Dense="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Challan No</MudTh>
+                    <MudTh>Student Reference</MudTh>
+                    <MudTh>Amount (PKR)</MudTh>
+                    <MudTh>Due Date</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh Style="text-align: right;">Action</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd Class="font-monospace fw-bold text-primary">@context.ChallanNumber</MudTd>
+                    <MudTd>@context.Enrollment?.ReferenceNumber</MudTd>
+                    <MudTd Class="fw-bold font-monospace">Rs. @context.Amount.ToString("N2")</MudTd>
+                    <MudTd>@context.DueDate.ToString("dd MMM yyyy")</MudTd>
+                    <MudTd>
+                        <MudChip T="string" Color="@(context.Status == FeeStatus.Paid ? Color.Success : Color.Warning)" Size="Size.Small" Variant="Variant.Filled">
+                            @context.Status
+                        </MudChip>
+                    </MudTd>
+                    <MudTd Style="text-align: right;">
+                        @if (context.Status is FeeStatus.Unpaid or FeeStatus.PendingVerification)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" OnClick="() => BeginMarkPaid(context)">
+                                Post Bank Payment
+                            </MudButton>
+                        }
+                        else if (context.Status == FeeStatus.Paid)
+                        {
+                            <span class="small text-warning fw-bold">Bank posted; checker verification required</span>
+                        }
+                        else if (context.Status == FeeStatus.Verified)
+                        {
+                            <span class="small text-success fw-bold">✓ Verified @context.VerifiedAt?.ToString("dd MMM")</span>
+                        }
+                        else
+                        {
+                            <span class="small text-muted fw-bold">@context.Status</span>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+
+    @if (selectedFee is not null)
+    {
+        <MudCard Class="mt-4" Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Post bank payment for @selectedFee.ChallanNumber</MudText>
+                    <MudText Typo="Typo.caption">The exact issued amount is PKR @selectedFee.Amount.ToString("N2"). This creates an auditable bank-posted event.</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <MudTextField @bind-Value="bankTransactionId" Label="Bank transaction / scroll number" Required="true" Variant="Variant.Outlined" />
+                    </div>
+                    <div class="col-md-4">
+                        <MudTextField @bind-Value="bankChannel" Label="Bank or channel" Required="true" Variant="Variant.Outlined" />
+                    </div>
+                    <div class="col-md-3">
+                        <MudDatePicker @bind-Date="bankPaidDate" Label="Bank payment date" Required="true" Variant="Variant.Outlined" />
+                    </div>
+                </div>
+                <MudCheckBox @bind-Value="paymentConfirmed" Color="Color.Warning" Class="mt-3">
+                    I confirm that the bank record and amount match the stored challan.
+                </MudCheckBox>
+                <div class="d-flex gap-2 mt-3">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="PostBankPaymentAsync">Confirm and post payment</MudButton>
+                    <MudButton Variant="Variant.Outlined" OnClick="CancelMarkPaid">Cancel</MudButton>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+</div>
+
+<style>
+    .salu-admin-wrapper { padding: 24px; background-color: #f1f5f9; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+    .salu-hero-header { background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%); color: white; padding: 24px 32px; border-radius: 12px; }
+    .salu-hero-crest-holder { width: 56px; height: 56px; background: white; border-radius: 8px; padding: 3px; display: flex; align-items: center; justify-content: center; }
+    .salu-hero-crest { width: 100%; height: 100%; object-fit: contain; }
+    .salu-hero-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
+    .salu-pulse-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; }
+    .salu-hero-heading { font-size: 1.4rem; font-weight: 800; margin: 0; }
+    .salu-hero-subheading { font-size: 0.8rem; color: #a7f3d0; margin: 2px 0 0 0; }
+</style>
+
+@code {
+    private List<Fee> allFeesList = [];
+    private decimal totalRevenueCollected;
+    private Fee? selectedFee;
+    private string bankTransactionId = string.Empty;
+    private string bankChannel = "Manual";
+    private DateTime? bankPaidDate = DateTime.Today;
+    private bool paymentConfirmed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadDataAsync();
+    }
+
+    private async Task ReloadDataAsync()
+    {
+        allFeesList = await Db.Fees.Include(f => f.Enrollment).OrderByDescending(f => f.CreatedAt).ToListAsync();
+        totalRevenueCollected = allFeesList.Where(f => f.Status == FeeStatus.Paid).Sum(f => f.Amount);
+    }
+
+    private void BeginMarkPaid(Fee fee)
+    {
+        selectedFee = fee;
+        bankTransactionId = string.Empty;
+        bankChannel = "Manual";
+        bankPaidDate = DateTime.Today;
+        paymentConfirmed = false;
+    }
+
+    private void CancelMarkPaid()
+    {
+        selectedFee = null;
+        paymentConfirmed = false;
+    }
+
+    private async Task PostBankPaymentAsync()
+    {
+        if (selectedFee is null || !paymentConfirmed)
+        {
+            Snackbar.Add("Confirm that the bank record and exact challan amount match before posting.", Severity.Warning);
+            return;
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var actorUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(actorUserId))
+        {
+            Snackbar.Add("The authenticated officer identity could not be determined.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            await FeePaymentService.ProposePaidAsync(
+                selectedFee.Id,
+                actorUserId,
+                bankTransactionId,
+                selectedFee.Amount,
+                bankChannel,
+                bankPaidDate?.ToUniversalTime() ?? DateTime.UtcNow,
+                branchCode: null,
+                totpCode: null);
+
+            Snackbar.Add($"Challan #{selectedFee.ChallanNumber} posted with bank reference {bankTransactionId.Trim()}.", Severity.Success);
+            CancelMarkPaid();
+            await ReloadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

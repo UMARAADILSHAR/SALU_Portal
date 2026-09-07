@@ -1,0 +1,51 @@
+@inherits ErrorBoundary
+@inject ILogger<SaluErrorBoundary> Logger
+
+@if (CurrentException is null)
+{
+    @ChildContent
+}
+else
+{
+    <div class="salu-error-container p-4 m-3 rounded border border-danger-subtle bg-white shadow-sm">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                ⚠️
+            </div>
+            <div>
+                <h5 class="text-danger mb-0 font-weight-bold">System Notice: Recoverable Service Exception</h5>
+                <small class="text-muted">Shah Abdul Latif University Examination Portal Circuit Protection</small>
+            </div>
+        </div>
+
+        <p class="text-secondary" style="font-size: 0.92rem;">
+            An unexpected error occurred while processing this component. Your session remains secure and active.
+        </p>
+
+        @if (ShowDetails)
+        {
+            <div class="p-3 bg-light rounded text-monospace small mb-3 border text-danger" style="white-space: pre-wrap; max-height: 150px; overflow-y: auto;">
+                @CurrentException.Message
+            </div>
+        }
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm px-3" @onclick="Recover">
+                🔄 Retry Component
+            </button>
+            <button class="btn btn-link text-secondary btn-sm" @onclick="() => ShowDetails = !ShowDetails">
+                @(ShowDetails ? "Hide Technical Details" : "Show Technical Details")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowDetails { get; set; } = false;
+
+    protected override Task OnErrorAsync(Exception exception)
+    {
+        Logger.LogError(exception, "Unhandled Blazor component exception intercepted by SaluErrorBoundary.");
+        return Task.CompletedTask;
+    }
+}

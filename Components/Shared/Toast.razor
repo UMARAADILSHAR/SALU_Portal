@@ -1,0 +1,86 @@
+@implements IDisposable
+@inject IToastService ToastService
+@using SaluExamPortal.Application.Services
+
+<div class="salu-toast-container" aria-live="polite" aria-atomic="false">
+    @foreach (var toast in _visibleToasts)
+    {
+        <div class="salu-toast toast-@toast.Type.ToString().ToLower() @(toast.Visible ? "toast-visible" : "toast-hiding")"
+             role="alert">
+            <i class="bi @GetIcon(toast.Type) salu-toast-icon toast-@toast.Type.ToString().ToLower()"></i>
+            <span class="salu-toast-message">@toast.Message</span>
+            <button class="salu-toast-close" @onclick="() => Dismiss(toast.Id)"
+                    aria-label="Dismiss notification">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private record VisibleToast(Guid Id, string Message, ToastType Type, bool Visible);
+    private readonly List<VisibleToast> _visibleToasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnToastsChanged += OnToastsChanged;
+    }
+
+    private void OnToastsChanged()
+    {
+        InvokeAsync(() =>
+        {
+            // Sync visible toasts from service
+            var serviceIds = ToastService.Toasts.Select(t => t.Id).ToHashSet();
+
+            // Add new toasts
+            foreach (var t in ToastService.Toasts)
+            {
+                if (!_visibleToasts.Any(v => v.Id == t.Id))
+                    _visibleToasts.Add(new VisibleToast(t.Id, t.Message, t.Type, true));
+            }
+
+            // Mark removed toasts as hiding, then remove after transition
+            var toRemove = _visibleToasts
+                .Where(v => !serviceIds.Contains(v.Id) && v.Visible)
+                .ToList();
+
+            foreach (var v in toRemove)
+            {
+                var idx = _visibleToasts.IndexOf(v);
+                if (idx >= 0) _visibleToasts[idx] = v with { Visible = false };
+            }
+
+            StateHasChanged();
+
+            if (toRemove.Count > 0)
+            {
+                _ = Task.Delay(350).ContinueWith(_ =>
+                    InvokeAsync(() =>
+                    {
+                        _visibleToasts.RemoveAll(v => !v.Visible);
+                        StateHasChanged();
+                    }));
+            }
+        });
+    }
+
+    private void Dismiss(Guid id)
+    {
+        ToastService.Remove(id);
+    }
+
+    private static string GetIcon(ToastType type) => type switch
+    {
+        ToastType.Success => "bi-check-circle-fill",
+        ToastType.Error   => "bi-x-circle-fill",
+        ToastType.Warning => "bi-exclamation-triangle-fill",
+        ToastType.Info    => "bi-info-circle-fill",
+        _                 => "bi-bell-fill"
+    };
+
+    public void Dispose()
+    {
+        ToastService.OnToastsChanged -= OnToastsChanged;
+    }
+}
