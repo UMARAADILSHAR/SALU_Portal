@@ -1,10 +1,13 @@
 @page "/"
 @page "/Account/Login"
+@page "/Account/Login/Annual"
+@page "/Account/Login/Regular"
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Enums
 @using SaluExamPortal.Infrastructure.Persistence
 
 @inject UserManager<ApplicationUser> UserManager
@@ -16,7 +19,7 @@
 <PageTitle>SALU Examination &amp; Enrollment Portal – Student Login</PageTitle>
 
 <div class="salu-auth-wrapper salu-auth-board salu-auth-board-login">
-    <!-- RIGHT-ALIGNED COMPACT LOGIN CARD -->
+    <!-- LEFT-ALIGNED COMPACT LOGIN CARD OVER AJRAK PATTERN -->
     <div class="salu-card-container">
         <div class="salu-login-card salu-auth-card">
             
@@ -27,18 +30,20 @@
                 </div>
             </div>
 
-            <!-- TRUST BADGE -->
-            <div class="salu-security-badge">
-                <i class="bi bi-shield-check"></i>
-                <span>Secure Portal</span>
+            <div class="salu-admission-options" aria-label="Admission type">
+                <a href="/Account/Login/Annual" class="salu-admission-btn @(selectedAdmissionType == AdmissionType.AffiliatedCollege ? "active" : "")">
+                    <i class="bi bi-calendar2-check-fill"></i>
+                    <span>Annual Admission</span>
+                </a>
+                <a href="/Account/Login/Regular" class="salu-admission-btn @(selectedAdmissionType == AdmissionType.UniversityRegular ? "active" : "")">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Regular Admission</span>
+                </a>
             </div>
-
-            <!-- UNIVERSAL HEADINGS (ROLE-AGNOSTIC) -->
-            <h2 class="salu-heading-main">Portal Sign In</h2>
-            <p class="salu-heading-sub">Access your examination & enrollment account securely</p>
 
             <StatusMessage Message="@errorMessage" />
             <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
+                <input type="hidden" name="Input.AdmissionType" value="@selectedAdmissionType" />
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger small mb-3" role="alert" />
 
@@ -84,7 +89,7 @@
 
                 <!-- FORGOT PASSWORD ROW -->
                 <div class="salu-forgot-row">
-                    <a href="/Account/ForgotPassword" class="salu-forgot-text">
+                    <a href="@($"/Account/ForgotPassword?admissionType={selectedAdmissionType}")" class="salu-forgot-text">
                         <i class="bi bi-question-circle"></i>
                         Forgot Password?
                     </a>
@@ -112,7 +117,7 @@
                 <div class="salu-copy-label">
                     <i class="bi bi-c-circle"></i> @DateTime.Now.Year SALU. All rights reserved.
                 </div>
-                <a href="/Account/Register" class="salu-reg-link">
+                <a href="@(selectedAdmissionType == AdmissionType.UniversityRegular ? "/Account/UniversityRegister" : "/Account/Register")" class="salu-reg-link">
                     <i class="bi bi-person-plus-fill"></i>
                     Don't have an account? Create one
                 </a>
@@ -136,27 +141,27 @@
         background-attachment: fixed;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        padding: 24px clamp(2rem, 7vw, 7.5rem) 24px 24px;
+        justify-content: flex-start;
+        padding: 24px 24px 24px clamp(2.5rem, 7vw, 7.5rem);
         overflow-x: hidden;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
 
-    /* COMPACT RIGHT-ALIGNED CARD CONTAINER */
+    /* COMPACT & HORIZONTALLY STRETCHED LEFT-ALIGNED CARD CONTAINER */
     .salu-card-container {
         position: relative;
         z-index: 2;
-        max-width: 360px;
+        max-width: 420px;
         width: 100%;
         margin: 0;
         padding: 8px 0;
-        animation: cardSlideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: cardSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @@keyframes cardSlideRight {
+    @@keyframes cardSlideLeft {
         from {
             opacity: 0;
-            transform: translateX(25px);
+            transform: translateX(-25px);
         }
         to {
             opacity: 1;
@@ -164,17 +169,17 @@
         }
     }
 
-    /* COMPACT GLASS MORPHISM CARD */
+    /* GLASS MORPHISM CARD - TRANSLUCENT OVER AJRAK PATTERN */
     .salu-login-card {
-        background: rgba(10, 22, 54, 0.93);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(10, 22, 54, 0.82);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
         border-radius: 20px;
-        padding: 22px 20px 18px;
-        box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.7),
-                    0 0 30px rgba(249, 115, 22, 0.1),
-                    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+        padding: 26px 28px 22px;
+        box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.6),
+                    0 0 25px rgba(249, 115, 22, 0.08),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.2);
         color: #ffffff;
         text-align: center;
         position: relative;
@@ -229,6 +234,58 @@
     }
 
     .salu-security-badge i { font-size: 0.78rem; }
+
+    .salu-admission-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0 0 16px;
+    }
+
+    .salu-admission-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 42px;
+        padding: 8px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(147, 197, 253, 0.08));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 8px 18px rgba(2, 8, 30, 0.16);
+        color: #e0f2fe;
+        font: inherit;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        text-decoration: none;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .salu-admission-btn i {
+        color: #bfdbfe;
+        font-size: 0.9rem;
+    }
+
+    .salu-admission-btn:hover,
+    .salu-admission-btn:focus-visible {
+        transform: translateY(-2px);
+        border-color: rgba(191, 219, 254, 0.85);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.32), rgba(255, 255, 255, 0.14));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 10px 24px rgba(2, 8, 30, 0.28);
+        color: #ffffff;
+        outline: none;
+    }
+
+    .salu-admission-btn.active {
+        border-color: rgba(191, 219, 254, 0.95);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.4), rgba(255, 255, 255, 0.18));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 0 0 2px rgba(96, 165, 250, 0.22), 0 10px 24px rgba(2, 8, 30, 0.28);
+        color: #ffffff;
+    }
 
     /* HEADINGS */
     .salu-heading-main {
@@ -463,6 +520,13 @@
             border-radius: 16px;
             padding: 20px 16px 16px;
         }
+        .salu-admission-options {
+            gap: 6px;
+        }
+        .salu-admission-btn {
+            font-size: 0.64rem;
+            padding-inline: 6px;
+        }
     }
 </style>
 
@@ -471,12 +535,19 @@
     private EditContext editContext = default!;
     private bool showPassword = false;
     private bool isLoggingIn = false;
+    private AdmissionType selectedAdmissionType = AdmissionType.AffiliatedCollege;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "admissionType")]
+    private string? AdmissionTypeQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "type")]
+    private string? TypeQuery { get; set; }
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -486,12 +557,37 @@
         Input ??= new();
         editContext = new EditContext(Input);
 
+        var uri = NavigationManager.Uri.ToLowerInvariant();
+        if (uri.Contains("/regular") ||
+            string.Equals(AdmissionTypeQuery, "regular", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(AdmissionTypeQuery, nameof(AdmissionType.UniversityRegular), StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(TypeQuery, "regular", StringComparison.OrdinalIgnoreCase))
+        {
+            selectedAdmissionType = AdmissionType.UniversityRegular;
+        }
+        else
+        {
+            selectedAdmissionType = AdmissionType.AffiliatedCollege;
+        }
+
+        if (Input.AdmissionType.HasValue)
+        {
+            selectedAdmissionType = Input.AdmissionType.Value;
+        }
+        else
+        {
+            Input.AdmissionType = selectedAdmissionType;
+        }
+
         if (HttpContext.User.Identity?.IsAuthenticated == true)
         {
             var currentUser = await UserManager.GetUserAsync(HttpContext.User);
             if (currentUser is not null && await UserManager.IsInRoleAsync(currentUser, "Student"))
             {
-                RedirectManager.RedirectTo("Student");
+                var destination = currentUser.AdmissionType == AdmissionType.UniversityRegular
+                    ? "Student/UniversityAdmission"
+                    : "Student";
+                RedirectManager.RedirectTo(destination);
                 return;
             }
 
@@ -560,6 +656,15 @@
             }
         }
 
+        var isStudent = user is not null && await UserManager.IsInRoleAsync(user, "Student");
+        if (isStudent && user!.AdmissionType != selectedAdmissionType)
+        {
+            var expectedTab = user.AdmissionType == AdmissionType.UniversityRegular ? "Regular Admission" : "Annual Admission";
+            errorMessage = $"This student account is registered under {expectedTab}. Please switch to the {expectedTab} tab above.";
+            isLoggingIn = false;
+            return;
+        }
+
         var result = string.IsNullOrWhiteSpace(loginIdentifier)
             ? SignInResult.Failed
             : await SignInManager.PasswordSignInAsync(loginIdentifier, Input.Password, isPersistent: true, lockoutOnFailure: true);
@@ -568,10 +673,13 @@
         {
             Logger.LogInformation("User {Identifier} logged in successfully.", loginIdentifier);
             var signedInUser = user ?? await UserManager.FindByNameAsync(loginIdentifier);
-            var isStudent = signedInUser is not null && await UserManager.IsInRoleAsync(signedInUser, "Student");
-            var destination = string.IsNullOrWhiteSpace(ReturnUrl)
-                ? (isStudent ? "Student" : "Administration")
-                : ReturnUrl;
+            var isStudentUser = signedInUser is not null && await UserManager.IsInRoleAsync(signedInUser, "Student");
+            var studentDestination = signedInUser?.AdmissionType == AdmissionType.UniversityRegular
+                ? "Student/UniversityAdmission"
+                : "Student";
+            var destination = isStudentUser
+                ? studentDestination
+                : (string.IsNullOrWhiteSpace(ReturnUrl) ? "Administration" : ReturnUrl);
             RedirectManager.RedirectTo(destination);
         }
         else if (result.RequiresTwoFactor)
@@ -601,6 +709,8 @@
         [Required(ErrorMessage = "Please enter your password.")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
+
+        public AdmissionType? AdmissionType { get; set; }
     }
 
     private static string FormatCnic(string digits)

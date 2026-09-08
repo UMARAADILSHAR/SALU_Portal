@@ -12,6 +12,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject ApplicationDbContext Db
+@inject NavigationManager NavigationManager
 
 <PageTitle>Student Command Center – SALU Examination Portal</PageTitle>
 
@@ -994,6 +995,12 @@
             user = await UserManager.GetUserAsync(authState.User);
             if (user != null)
             {
+                if (user.AdmissionType == AdmissionType.UniversityRegular)
+                {
+                    NavigationManager.NavigateTo("Student/UniversityAdmission", replace: true);
+                    return;
+                }
+
                 latestEnrollment = await Db.Enrollments
                     .Include(e => e.College)
                     .Include(e => e.Fees)

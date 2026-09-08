@@ -1,0 +1,51 @@
+
+<div class="panel">
+    <div class="panel-title-bar">
+        <span>Instructions</span>
+        <span class="badge badge-blue">Getting Started Guide</span>
+    </div>
+
+    <p style="font-size:13px; line-height:1.6; color:#334155; margin-top:0; margin-bottom:20px;">
+        The menu on the left-hand-side provides links to each part of the application.
+        Here is a brief description of each option.
+    </p>
+
+    @foreach (var item in _items)
+    {
+        <div class="inst-item">
+            <div class="inst-title"><span>@item.Emoji</span> @item.Title</div>
+            <div class="inst-desc">@item.Description</div>
+        </div>
+    }
+</div>
+
+@code {
+    private record InstItem(string Emoji, string Title, string Description);
+
+    private readonly List<InstItem> _items =
+    [
+        new("🔄", "Candidate Status",
+            "This section basically provides information about the overall status of the candidate starting from filling the Admission Form until the test is conducted and admission is confirmed or rejected."),
+        new("📝", "Submit Application",
+            "This is the actual form that you must complete and submit. There are about five sections in the application form, which must be completed (depending on the program requirements you are applying for) before the application can be submitted to the Admission Office."),
+        new("📋", "Checklist",
+            "Lists all documents that you must submit to the Admission Office before the deadline date mentioned in admission schedule as well as details about application processing fee."),
+        new("ℹ️", "Instructions",
+            "The current page you are viewing. Provides a quick getting started guide."),
+        new("📅", "Admission Schedule",
+            "This page provides the complete Admission Schedule mentioning all the important details related to the complete Admission process from start to end."),
+        new("🎓", "Eligibility Criteria-General",
+            "Lists general eligibility criteria for all the programs. You should go through this section to determine if you meet the required criteria."),
+        new("📄", "Eligibility Criteria-Program Wise",
+            "Provides information whether you are eligible or ineligible to take admission in certain department of a certain program considering your past education."),
+        new("🏛️", "Admission Procedure",
+            "This page provides you information on how to apply for admission in Shah Abdul Latif University."),
+        new("📑", "Prospectus",
+            "This page provides you to view prospectus of the Programs offered in Shah Abdul Latif University for the current year."),
+        new("📖", "Sample Papers",
+            "This page provides you to view sample test papers of the departments offered in Shah Abdul Latif University."),
+        new("💳", "Fee Structure",
+            "This page provides you to view fee structure for the specific department offered in Shah Abdul Latif University for the current Year."),
+    ];
+}
+

@@ -1,0 +1,166 @@
+
+<div class="panel">
+    <div class="panel-title-bar">
+        <span>Eligibility Criteria - Program Wise</span>
+        <span class="badge badge-orange">Session 2026-2027</span>
+    </div>
+
+    <!-- SELECTOR ROW -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,320px)); gap:18px; margin-bottom:24px;">
+        <div class="field">
+            <label style="font-size:12.5px; font-weight:600; margin-bottom:6px;">Admission Type</label>
+            <select style="padding:8px 12px; font-size:13px; border-radius:4px; border:1px solid var(--border);"
+                    @bind="_selectedType" @bind:after="OnAdmissionTypeChanged">
+                <option value="">Select</option>
+                @foreach (var t in _admissionTypes)
+                {
+                    <option value="@t">@t</option>
+                }
+            </select>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_selectedType))
+        {
+            <div class="field">
+                <label style="font-size:12.5px; font-weight:600; margin-bottom:6px;">Select Program</label>
+                <select style="padding:8px 12px; font-size:13px; border-radius:4px; border:1px solid var(--border);"
+                        @bind="_selectedProgIdx" @bind:after="OnProgramSelected">
+                    <option value="-2">Select Program</option>
+                    <option value="-1">[ View All Programs under @_selectedType ]</option>
+                    @for (int i = 0; i < _currentItems.Count; i++)
+                    {
+                        var idx = i;
+                        <option value="@idx">@_currentItems[idx].Prog</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+
+    <!-- RESULTS AREA -->
+    @if (string.IsNullOrEmpty(_selectedType))
+    {
+        <div class="prompt-box">
+            Please select an <strong>Admission Type</strong> above to view its program options.
+        </div>
+    }
+    else if (_selectedProgIdx == -2)
+    {
+        <div class="prompt-box-blue">
+            <div style="font-size:14px; font-weight:bold; color:var(--navy); margin-bottom:6px;">
+                Admission Type Selected: <span style="color:var(--orange);">@_selectedType</span>
+            </div>
+            <div style="font-size:12.5px; color:#3b82f6;">
+                Please choose a specific program from the <strong>Select Program</strong> dropdown above to view its eligibility criteria.
+            </div>
+        </div>
+    }
+    else if (_selectedProgIdx == -1)
+    {
+        <!-- ALL PROGRAMS TABLE -->
+        <div style="margin-bottom:12px; font-size:13px; font-weight:bold; color:var(--navy);">
+            All Programs under <span style="color:var(--orange);">@_selectedType</span> (@_currentItems.Count Programs)
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:35px;">#</th>
+                        <th>Program Name</th>
+                        <th>Faculty &amp; Department</th>
+                        <th>Required Past Education / Eligibility</th>
+                        <th>Min Percentage / CGPA</th>
+                        <th>Test Requirement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < _currentItems.Count; i++)
+                    {
+                        var it = _currentItems[i];
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td><strong style="color:var(--navy);">@it.Prog</strong></td>
+                            <td>@it.Faculty &bull; @it.Dept</td>
+                            <td style="line-height:1.4;">@it.Req</td>
+                            <td><span class="badge badge-green">@it.Min</span></td>
+                            <td><span class="badge badge-blue">@it.Test</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (_selectedProg != null)
+    {
+        <!-- SINGLE PROGRAM CARD -->
+        <div class="elig-card">
+            <div class="elig-card-header">
+                <div>
+                    <span class="badge badge-orange" style="margin-bottom:6px;">@_selectedType</span>
+                    <h2>@_selectedProg.Prog</h2>
+                    <div style="font-size:12.5px; color:var(--text-muted); margin-top:4px;">
+                        Faculty of @_selectedProg.Faculty &bull; Department of @_selectedProg.Dept
+                    </div>
+                </div>
+                <button class="btn btn-orange" style="padding:7px 16px; font-size:12.5px;"
+                        @onclick="ApplyForProgram">
+                    Apply for this Program &rarr;
+                </button>
+            </div>
+
+            <div class="elig-metrics">
+                <div class="elig-metric">
+                    <div class="elig-metric-label">Minimum Percentage / CGPA</div>
+                    <div class="elig-metric-val" style="color:#16a34a;">@_selectedProg.Min</div>
+                </div>
+                <div class="elig-metric">
+                    <div class="elig-metric-label">Test / Entrance Requirement</div>
+                    <div class="elig-metric-val" style="color:var(--blue);">@_selectedProg.Test</div>
+                </div>
+            </div>
+
+            <div class="elig-req-label">Required Educational Background &amp; Eligibility:</div>
+            <div class="elig-req-box">@_selectedProg.Req</div>
+
+            <div class="elig-note">
+                <strong>Important Note:</strong> Candidates awaiting final qualifying results may apply
+                conditionally subject to submission of clearance before final merit list announcement.
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnApplyForProgram { get; set; }
+
+    private string _selectedType = "";
+    private int _selectedProgIdx = -2;
+    private ProgramCriteria? _selectedProg;
+    private List<ProgramCriteria> _currentItems = [];
+
+    private readonly List<string> _admissionTypes =
+        ["BS-I / BBA-I", "BS-III", "MBA 1.5", "MBA 3.5", "MS / M.Phil", "Ph.D"];
+
+    private void OnAdmissionTypeChanged()
+    {
+        _selectedProgIdx = -2;
+        _selectedProg = null;
+        _currentItems = string.IsNullOrEmpty(_selectedType)
+            ? []
+            : (SetupDataService.CriteriaDatabase.TryGetValue(_selectedType, out var list) ? list : []);
+    }
+
+    private void OnProgramSelected()
+    {
+        if (_selectedProgIdx >= 0 && _selectedProgIdx < _currentItems.Count)
+            _selectedProg = _currentItems[_selectedProgIdx];
+        else
+            _selectedProg = null;
+    }
+
+    private async Task ApplyForProgram()
+    {
+        await OnApplyForProgram.InvokeAsync();
+    }
+}
+

@@ -8,6 +8,12 @@ public enum PortalRole
     Student
 }
 
+public enum AdmissionType
+{
+    AffiliatedCollege,
+    UniversityRegular
+}
+
 public enum EnrollmentStatus
 {
     Draft,

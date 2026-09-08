@@ -721,27 +721,6 @@ html, body {
   overflow-x: hidden;
 }
 
-/* THE SWEEPING DEEP BLUE PATTERNED BACKDROP */
-.authentication-page::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 58%;
-  min-width: 600px;
-  background-color: #0d1b4c;
-  background-image: 
-    radial-gradient(circle at 40% 50%, #1e3a8a 0%, #101f5c 60%, #0a1338 100%),
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0, rgba(255, 255, 255, 0.015) 1px, transparent 0, transparent 16px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.015) 0, rgba(255, 255, 255, 0.015) 1px, transparent 0, transparent 16px);
-  border-radius: 0 0 100% 0 / 0 0 100% 0;
-  border-right: 4px solid #ea580c;
-  box-shadow: 20px 0 60px rgba(0, 0, 0, 0.6);
-  z-index: 1;
-  pointer-events: none;
-}
-
 .auth-shell {
   margin: 2rem 0 2rem clamp(2rem, 6vw, 6rem);
   max-width: 440px;

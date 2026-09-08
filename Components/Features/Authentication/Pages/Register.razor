@@ -151,7 +151,7 @@
                         </label>
                         <div class="salu-input-box">
                             <i class="bi bi-lock-fill salu-field-icon"></i>
-                            <InputText type="@(showConfirmPassword ? "text" : "password")" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Repeat password" />
+                            <InputText type="@(showConfirmPassword ? "text" : "password")" @bind-Value="Input.ConfirmPassword" @oninput="UpdateConfirmPassword" id="Input.ConfirmPassword" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Repeat password" />
                             <button type="button" class="salu-eye-btn" @onclick="() => showConfirmPassword = !showConfirmPassword" tabindex="-1" title="@(showConfirmPassword ? "Hide password" : "Show password")">
                                 @if (showConfirmPassword)
                                 {
@@ -244,8 +244,8 @@
         background-attachment: fixed;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        padding: 24px clamp(2rem, 7vw, 7.5rem) 24px 24px;
+        justify-content: flex-start;
+        padding: 24px 24px 24px clamp(2.5rem, 7vw, 7.5rem);
         overflow-x: hidden;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
@@ -257,17 +257,17 @@
         width: 100%;
         margin: 0;
         padding: 8px 0;
-        animation: cardSlideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: cardFlipLeft 0.65s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    @@keyframes cardSlideRight {
+    @@keyframes cardFlipLeft {
         from {
             opacity: 0;
-            transform: translateX(25px);
+            transform: perspective(1000px) rotateY(14deg) translateX(-24px);
         }
         to {
             opacity: 1;
-            transform: translateX(0);
+            transform: perspective(1000px) rotateY(0) translateX(0);
         }
     }
 
@@ -826,6 +826,7 @@
         user.Cnic = normalizedCnic;
         user.PhoneNumber = normalizedPhone;
         user.IsVerified = true;
+        user.AdmissionType = AdmissionType.AffiliatedCollege;
 
         await UserStore.SetUserNameAsync(user, emailClean, CancellationToken.None);
         var emailStore = GetEmailStore();
@@ -862,7 +863,7 @@
         }
 
         await SignInManager.SignInAsync(user, isPersistent: false);
-        RedirectManager.RedirectTo(ReturnUrl ?? "Student");
+        RedirectManager.RedirectTo("Student");
     }
 
     private ApplicationUser CreateUser()
@@ -886,7 +887,7 @@
         return (IUserEmailStore<ApplicationUser>)UserStore;
     }
 
-    private sealed class InputModel
+    private sealed class InputModel : IValidatableObject
     {
         [Required(ErrorMessage = "Full name is required."), StringLength(255, MinimumLength = 2)]
         public string FullName { get; set; } = "";
@@ -911,6 +912,34 @@
         [DataType(DataType.Password)]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (string.IsNullOrEmpty(Password))
+            {
+                yield break;
+            }
+
+            if (Password.Length < 8)
+            {
+                yield return new ValidationResult("Password must be at least 8 characters long.", new[] { nameof(Password) });
+            }
+
+            if (!Password.Any(char.IsUpper))
+            {
+                yield return new ValidationResult("Password must contain at least one uppercase letter.", new[] { nameof(Password) });
+            }
+
+            if (!Password.Any(char.IsLower))
+            {
+                yield return new ValidationResult("Password must contain at least one lowercase letter.", new[] { nameof(Password) });
+            }
+
+            if (!Password.Any(char.IsDigit))
+            {
+                yield return new ValidationResult("Password must contain at least one number.", new[] { nameof(Password) });
+            }
+        }
     }
 
     private void FormatCnicInput(ChangeEventArgs args) => Input.Cnic = FormatCnic(args.Value?.ToString() ?? "");
@@ -944,6 +973,11 @@
     {
         Input.Password = args.Value?.ToString() ?? "";
         CalculatePasswordStrength();
+    }
+
+    private void UpdateConfirmPassword(ChangeEventArgs args)
+    {
+        Input.ConfirmPassword = args.Value?.ToString() ?? "";
     }
 
     private void CalculatePasswordStrength()

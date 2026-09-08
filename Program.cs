@@ -10,6 +10,7 @@ using SaluExamPortal.Infrastructure.Initialization;
 using SaluExamPortal.Application.Common.Interfaces;
 using SaluExamPortal.Application.Services;
 using SaluExamPortal.Domain.Enums;
+using SaluExamPortal.Infrastructure.UniversityAdmission.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +81,9 @@ builder.Services.AddScoped<IDualControlApprovalService, DualControlApprovalServi
 builder.Services.AddHostedService<ExamIntegrityReconciliationWorker>();
 // Toast notification service (scoped = per SignalR circuit)
 builder.Services.AddScoped<IToastService, ToastService>();
+builder.Services.AddScoped<SaluExamPortal.Application.UniversityAdmission.Services.AdmissionFormService>();
+builder.Services.AddScoped<SaluExamPortal.Application.UniversityAdmission.Services.SetupDataService>();
+builder.Services.AddScoped<SaluExamPortal.Application.UniversityAdmission.Services.UniversityAdmissionApplicationStore>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
@@ -95,6 +99,18 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UniversityAdministration", policy => policy.RequireRole(nameof(PortalRole.SuperAdmin), nameof(PortalRole.Admin)));
     options.AddPolicy("CollegeAdministration", policy => policy.RequireRole(nameof(PortalRole.SuperAdmin), nameof(PortalRole.Admin), nameof(PortalRole.CollegeAdmin)));
     options.AddPolicy("Student", policy => policy.RequireRole(nameof(PortalRole.Student)));
+});
+
+var universityAdmissionConnection = builder.Configuration.GetConnectionString("UniversityAdmissionConnection")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<UniversityAdmissionDbContext>(options =>
+{
+    options.UseSqlServer(universityAdmissionConnection, sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+    });
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -197,6 +213,15 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     await DbInitializer.InitializeAsync(scope.ServiceProvider, builder.Configuration);
+    try
+    {
+        await scope.ServiceProvider.GetRequiredService<UniversityAdmissionDbContext>().Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        var migrationLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("UniversityAdmissionMigration");
+        migrationLogger.LogError(ex, "An error occurred while migrating the University Admission database.");
+    }
 }
 
 // Configure the HTTP request pipeline.

@@ -1,0 +1,20 @@
+<div class="panel">
+    <div class="panel-title-bar"><span>Prospectus</span><span class="badge badge-orange">Official University Prospectus</span></div>
+    <p style="font-size:13px; line-height:1.6; color:#334155;">This page provides you to view prospectus of the Programs offered in Shah Abdul Latif University for the current year.</p>
+    <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:20px; display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h4 style="margin:0 0 6px 0; color:var(--navy);">Shah Abdul Latif University Prospectus 2026-2027</h4>
+            <div style="font-size:12px; color:var(--text-muted);">PDF Document &bull; Complete Guide to Faculties, Departments &amp; Admissions</div>
+        </div>
+        <button class="btn btn-orange" @onclick='() => _msg = "Downloading Official Prospectus PDF..."'>Download Prospectus</button>
+    </div>
+    @if (!string.IsNullOrEmpty(_msg))
+    {
+        <div class="banner-note" style="margin-top:12px;">@_msg</div>
+    }
+</div>
+
+@code {
+    private string _msg = "";
+}
+

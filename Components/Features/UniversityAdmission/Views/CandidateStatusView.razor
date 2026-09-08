@@ -1,0 +1,90 @@
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Infrastructure.UniversityAdmission.Persistence
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject UniversityAdmissionDbContext Db
+
+<div class="panel">
+    <div class="panel-title-bar">
+        <span>Candidate Admission Status</span>
+        <span class="badge badge-green">Candidate ID: @(_application?.ApplicationNumber ?? _currentUser?.Cnic ?? "Pending")</span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:24px;">
+        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:16px;">
+            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Applicant Name</div>
+            <div style="font-size:16px; font-weight:bold; color:var(--navy); margin-top:4px;">@(_currentUser?.FullName ?? _currentUser?.UserName ?? "Student")</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:16px;">
+            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Form Status</div>
+            <div style="font-size:16px; font-weight:bold; color:var(--orange); margin-top:4px;">@(_application?.Status ?? "In Progress (Draft)")</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:16px;">
+            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Challan Verification</div>
+            <div style="font-size:16px; font-weight:bold; color:#e11d48; margin-top:4px;">Pending Deposit</div>
+        </div>
+    </div>
+
+    <div class="section-title">Application Status Timeline</div>
+    <table>
+        <thead>
+            <tr><th>Stage</th><th>Status</th><th>Remarks</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Online Admission Form Submission</td>
+                <td>
+                    @if (_application != null && _application.Status == "Submitted")
+                    {
+                        <span class="badge badge-green">Submitted</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-orange">Incomplete</span>
+                    }
+                </td>
+                <td>@(_application != null && _application.Status == "Submitted" ? "Submitted on " + _application.UpdatedAtUtc.ToString("dd MMM yyyy") : "Complete and verify all steps")</td>
+            </tr>
+            <tr>
+                <td>Challan Deposit &amp; Scrutiny</td>
+                <td><span class="badge">Pending</span></td>
+                <td>PKR 2,500 via HBL Branch or HBL Konnect</td>
+            </tr>
+            <tr>
+                <td>Admit Card Generation</td>
+                <td><span class="badge">Awaiting</span></td>
+                <td>Available after scrutiny</td>
+            </tr>
+            <tr>
+                <td>Entrance Test &amp; Interview</td>
+                <td><span class="badge">Scheduled</span></td>
+                <td>Cut-off marks 50%</td>
+            </tr>
+            <tr>
+                <td>Merit List Display</td>
+                <td><span class="badge">Upcoming</span></td>
+                <td>1st Merit List</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private ApplicationUser? _currentUser;
+    private UniversityAdmissionApplication? _application;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _currentUser = await UserManager.GetUserAsync(authState.User);
+        if (_currentUser != null)
+        {
+            _application = await Db.Applications.FirstOrDefaultAsync(a => a.UserId == _currentUser.Id);
+        }
+    }
+}
+

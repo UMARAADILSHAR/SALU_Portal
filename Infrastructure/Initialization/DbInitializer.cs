@@ -32,6 +32,10 @@ public static class DbInitializer
             BEGIN
                 ALTER TABLE AspNetUsers ADD TotpSecretEncrypted nvarchar(500) NULL;
             END;
+            IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'AdmissionType')
+            BEGIN
+                ALTER TABLE AspNetUsers ADD AdmissionType int NOT NULL CONSTRAINT DF_AspNetUsers_AdmissionType DEFAULT 0;
+            END;
         ");
 
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();

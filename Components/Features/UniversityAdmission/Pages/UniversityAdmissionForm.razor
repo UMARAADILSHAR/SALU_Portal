@@ -1,0 +1,1296 @@
+@page "/Student/UniversityAdmission/Form"
+@attribute [Authorize(Policy = "Student")]
+@rendermode InteractiveServer
+@inject AdmissionFormService FormService
+@inject SetupDataService SetupData
+@inject UniversityAdmissionApplicationStore ApplicationStore
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>SALU – Admission &amp; Enrollment Form</PageTitle>
+
+<style>
+    /* General & Shell */
+    .form-shell {
+        max-width: 960px;
+        margin: 1.5rem auto 3rem;
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        color: #334155;
+    }
+
+    /* Stepper Navigation */
+    .stepper {
+        display: flex;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .step-btn {
+        flex: 1;
+        padding: 13px 8px;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        border-right: 1px solid #e2e8f0;
+        font-size: 0.88rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .step-btn:last-child { border-right: none; }
+    .step-btn.active {
+        background: #1e293b;
+        color: #fff;
+        font-weight: 600;
+    }
+    .step-btn:hover:not(.active) { background: #e2e8f0; }
+    .step-btn .step-done-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 17px;
+        height: 17px;
+        border-radius: 50%;
+        background: #22c55e;
+        color: #fff;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    .step-btn.active .step-done-badge {
+        background: #4ade80;
+        color: #0f172a;
+    }
+
+    /* Panel & Cards */
+    .panel {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    .panel-title-bar {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #fff;
+        padding: 16px 24px;
+        font-weight: 600;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .banner-note {
+        background: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 12px 18px;
+        margin: 18px 24px;
+        font-size: 0.85rem;
+        color: #334155;
+        border-radius: 4px;
+        line-height: 1.5;
+    }
+    .section-title {
+        font-weight: 600;
+        color: #1e293b;
+        padding: 0 24px 10px;
+        border-bottom: 2px solid #f1f5f9;
+        margin: 24px 24px 18px;
+        font-size: 1.02rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Form Grid & Inputs */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        padding: 0 24px;
+    }
+    .field {
+        display: flex;
+        flex-direction: column;
+    }
+    .field-wide {
+        grid-column: span 2;
+    }
+    .field label {
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+    .req {
+        color: #ef4444;
+        margin-left: 2px;
+        font-weight: bold;
+    }
+    .input-shell input,
+    .input-shell select {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        font-size: 0.9rem;
+        background: #fff;
+        box-sizing: border-box;
+        color: #1e293b;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-shell input:focus,
+    .input-shell select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .hint {
+        font-size: 0.76rem;
+        color: #64748b;
+        margin-top: 5px;
+    }
+    .error-msg {
+        color: #dc2626;
+        font-size: 0.82rem;
+        margin: 0 24px 12px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        padding: 10px 14px;
+        border-radius: 6px;
+    }
+    .validation-summary {
+        color: #dc2626;
+        font-size: 0.82rem;
+        margin: 16px 24px 8px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        padding: 10px 16px;
+        border-radius: 6px;
+    }
+    .validation-summary ul {
+        margin: 6px 0 0 16px;
+        padding: 0;
+    }
+
+    /* Photo Box */
+    .photo-box-card {
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #f8fafc;
+    }
+    .photo-box-avatar {
+        width: 64px;
+        height: 74px;
+        border-radius: 6px;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+    }
+    .photo-box-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .photo-box-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .photo-box-note {
+        font-size: 0.76rem;
+        color: #64748b;
+    }
+
+    /* Buttons */
+    .btn-row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        padding: 20px 24px;
+    }
+    .btn {
+        padding: 9px 20px;
+        border: none;
+        border-radius: 7px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-orange {
+        background: #f97316;
+        color: #fff;
+    }
+    .btn-orange:hover {
+        background: #ea580c;
+    }
+    .btn-blue {
+        background: #3b82f6;
+        color: #fff;
+    }
+    .btn-blue:hover {
+        background: #2563eb;
+    }
+    .btn-grey {
+        background: #e2e8f0;
+        color: #334155;
+    }
+    .btn-grey:hover {
+        background: #cbd5e1;
+    }
+    .btn-disabled {
+        background: #cbd5e1;
+        color: #94a3b8;
+        cursor: not-allowed;
+    }
+    .del-link {
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 0.85rem;
+        text-decoration: underline;
+        font-weight: 500;
+    }
+    .del-link:hover { color: #b91c1c; }
+
+    /* Tables */
+    .table-shell {
+        overflow-x: auto;
+        margin: 0 24px 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+    }
+    th, td {
+        border: 1px solid #e2e8f0;
+        padding: 9px 12px;
+        text-align: left;
+    }
+    th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #334155;
+    }
+    .empty-row td {
+        text-align: center;
+        color: #94a3b8;
+        padding: 16px;
+    }
+
+    /* Segmented Choice */
+    .segmented-choice {
+        display: flex;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        overflow: hidden;
+    }
+    .segmented-option {
+        flex: 1;
+        text-align: center;
+        padding: 9px;
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.88rem;
+        background: #fff;
+        transition: background 0.15s, color 0.15s;
+    }
+    .segmented-option:first-child { border-right: 1px solid #cbd5e1; }
+    .segmented-option input { display: none; }
+    .segmented-option.selected {
+        background: #f97316;
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Status Table */
+    .status-table th, .status-table td {
+        text-align: center;
+        padding: 16px 12px;
+        font-weight: 600;
+    }
+    .status-ok {
+        color: #15803d;
+        background: #dcfce7;
+    }
+    .status-incomplete {
+        color: #dc2626;
+        background: #fee2e2;
+    }
+
+    @@media (max-width: 768px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .field-wide { grid-column: span 1; }
+        .stepper { flex-wrap: wrap; }
+        .step-btn { flex: 1 1 30%; border-bottom: 1px solid #e2e8f0; }
+    }
+</style>
+
+<div class="form-shell">
+    <!-- Step Navigation (Stepper Bar) -->
+    <div class="stepper">
+        <div class="step-btn @(_currentStep == 1 ? "active" : "")" @onclick="() => GoToStep(1)">
+            <span>1. Personal</span>
+            @if (FormService.State.PersonalDone) { <span class="step-done-badge">✓</span> }
+        </div>
+        <div class="step-btn @(_currentStep == 2 ? "active" : "")" @onclick="() => GoToStep(2)">
+            <span>2. Academic</span>
+            @if (FormService.State.AcademicsDone) { <span class="step-done-badge">✓</span> }
+        </div>
+        <div class="step-btn @(_currentStep == 3 ? "active" : "")" @onclick="() => GoToStep(3)">
+            <span>3. Preferences</span>
+            @if (FormService.State.PreferencesDone) { <span class="step-done-badge">✓</span> }
+        </div>
+        <div class="step-btn @(_currentStep == 4 ? "active" : "")" @onclick="() => GoToStep(4)">
+            <span>4. Documents</span>
+            @if (FormService.State.DocumentsDone) { <span class="step-done-badge">✓</span> }
+        </div>
+        <div class="step-btn @(_currentStep == 5 ? "active" : "")" @onclick="() => GoToStep(5)">
+            <span>5. Undertaking</span>
+            @if (FormService.State.UndertakingDone) { <span class="step-done-badge">✓</span> }
+        </div>
+        <div class="step-btn @(_currentStep == 6 ? "active" : "")" @onclick="() => GoToStep(6)">
+            <span>6. Status</span>
+            @if (FormService.State.AllMandatoryComplete) { <span class="step-done-badge">✓</span> }
+        </div>
+    </div>
+
+    <div class="panel">
+
+        @* ═══════════════════════════════════════════════════════════════
+           STEP 1: PERSONAL INFORMATION
+           ═══════════════════════════════════════════════════════════════ *@
+        @if (_currentStep == 1)
+        {
+            <div class="panel-title-bar">
+                <span>Personal Information</span>
+                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 1 of 6</span>
+            </div>
+
+            <EditForm Model="FormService.State.Personal" OnValidSubmit="SavePersonal">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary" />
+
+                <div class="form-grid" style="margin-top: 15px;">
+                    <div class="field field-wide">
+                        <label>Name<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputText id="p_name" @bind-Value="FormService.State.Personal.Name" placeholder="Full name" />
+                        </div>
+                    </div>
+                    <div class="field field-wide">
+                        <label>Father's Name<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputText id="p_father" @bind-Value="FormService.State.Personal.FatherName" placeholder="Father's name" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Surname</label>
+                        <div class="input-shell">
+                            <InputText id="p_surname" @bind-Value="FormService.State.Personal.Surname" placeholder="Surname" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Gender<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputSelect id="p_gender" @bind-Value="FormService.State.Personal.Gender">
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Guardian's Name</label>
+                        <div class="input-shell">
+                            <InputText id="p_guardian" @bind-Value="FormService.State.Personal.GuardianName" placeholder="Optional" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>CNIC Number<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputText id="p_cnic" @bind-Value="FormService.State.Personal.Cnic" maxlength="15" placeholder="45203-1234567-1" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Date of Birth<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputDate id="p_dob" @bind-Value="FormService.State.Personal.DateOfBirth" />
+                        </div>
+                    </div>
+                    <div class="field field-wide">
+                        <label>Current Address<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputText id="p_curr_addr" @bind-Value="FormService.State.Personal.CurrentAddress" placeholder="Current residential address" />
+                        </div>
+                    </div>
+                    <div class="field field-wide">
+                        <label>Permanent Address<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputText id="p_perm_addr" @bind-Value="FormService.State.Personal.PermanentAddress" placeholder="Permanent address" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Correspondence Address</label>
+                        <div class="input-shell">
+                            <InputSelect id="p_corr_addr" @bind-Value="FormService.State.Personal.CorrespondenceAddress">
+                                <option value="">Select Correspondence Address</option>
+                                <option value="Same as Current">Same as Current</option>
+                                <option value="Same as Permanent">Same as Permanent</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Nationality<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputSelect id="p_nat" @bind-Value="FormService.State.Personal.Nationality">
+                                <option value="">Select Nationality</option>
+                                @foreach (var n in _nationalities) { <option value="@n">@n</option> }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Religion<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputSelect id="p_rel" @bind-Value="FormService.State.Personal.Religion">
+                                <option value="">Select Religion</option>
+                                <option value="Islam">Islam</option>
+                                <option value="Christianity">Christianity</option>
+                                <option value="Hinduism">Hinduism</option>
+                                <option value="Other">Other</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Domicile Province<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputSelect id="p_prov" @bind-Value="FormService.State.Personal.DomicileProvince">
+                                <option value="">Select Province</option>
+                                @foreach (var p in _provinces) { <option value="@p">@p</option> }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Domicile District<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputSelect id="p_dist" @bind-Value="FormService.State.Personal.DomicileDistrict">
+                                <option value="">Select District</option>
+                                @foreach (var d in _districts) { <option value="@d">@d</option> }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Mobile No<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputText id="p_mobile" @bind-Value="FormService.State.Personal.MobileNo" placeholder="03xx-xxxxxxx" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Email Address<span class="req">*</span></label>
+                        <div class="input-shell">
+                            <InputText id="p_email" @bind-Value="FormService.State.Personal.Email" placeholder="name@example.com" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Are You Employed Anywhere?<span class="req">*</span></label>
+                        <div class="segmented-choice">
+                            <label class="segmented-option @(FormService.State.Personal.IsEmployed ? "selected" : "")" @onclick="() => FormService.State.Personal.IsEmployed = true">
+                                <span>Yes</span>
+                            </label>
+                            <label class="segmented-option @(!FormService.State.Personal.IsEmployed ? "selected" : "")" @onclick="() => FormService.State.Personal.IsEmployed = false">
+                                <span>No</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Self-Finance Base</label>
+                        <div class="segmented-choice">
+                            <label class="segmented-option @(FormService.State.Personal.SelfFinance ? "selected" : "")" @onclick="() => FormService.State.Personal.SelfFinance = true">
+                                <span>Yes</span>
+                            </label>
+                            <label class="segmented-option @(!FormService.State.Personal.SelfFinance ? "selected" : "")" @onclick="() => FormService.State.Personal.SelfFinance = false">
+                                <span>No</span>
+                            </label>
+                        </div>
+                        <div class="hint">Considered on Self-Finance basis if not selected on merit quota.</div>
+                    </div>
+                    <div class="field">
+                        <label>Avail University Hostel?</label>
+                        <div class="segmented-choice">
+                            <label class="segmented-option @(FormService.State.Personal.AvailHostel ? "selected" : "")" @onclick="() => FormService.State.Personal.AvailHostel = true">
+                                <span>Yes</span>
+                            </label>
+                            <label class="segmented-option @(!FormService.State.Personal.AvailHostel ? "selected" : "")" @onclick="() => FormService.State.Personal.AvailHostel = false">
+                                <span>No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field field-wide">
+                        <div class="photo-box-card">
+                            <div class="photo-box-avatar">
+                                <svg width="34" height="42" viewBox="0 0 24 28" fill="#94a3b8">
+                                    <circle cx="12" cy="7" r="5" />
+                                    <path d="M2 24c0-5 4-8 10-8s10 3 10 8z" />
+                                </svg>
+                            </div>
+                            <div class="photo-box-info">
+                                <div class="photo-box-name">Applicant Photo: @(string.IsNullOrWhiteSpace(FormService.State.Personal.Name) ? "Candidate" : FormService.State.Personal.Name)</div>
+                                <div class="photo-box-note">Passport-size color photograph with white background (size &lt; 200KB)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="submit" class="btn btn-orange">Save &amp; Continue</button>
+                </div>
+            </EditForm>
+        }
+
+        @* ═══════════════════════════════════════════════════════════════
+           STEP 2: ACADEMIC INFORMATION
+           ═══════════════════════════════════════════════════════════════ *@
+        @if (_currentStep == 2)
+        {
+            <div class="panel-title-bar">
+                <span>Academic Information</span>
+                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 2 of 6</span>
+            </div>
+            <div class="banner-note">Select your faculty, department, program, and qualifying degree. Then add all academic records from Matriculation through your final qualification.</div>
+
+            <div class="section-title">Program Selection</div>
+            <div class="form-grid" style="margin-bottom: 15px;">
+                <div class="field">
+                    <label>Admission Faculty Type<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="a_faculty" @bind="_faculty" @bind:after="OnFacultyChanged">
+                            <option value="">Select Faculty</option>
+                            @foreach (var f in SetupDataService.FacultyDepartmentsMap.Keys) { <option value="@f">@f</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Faculty Department<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="a_dept" @bind="_dept" @bind:after="OnDeptChanged">
+                            <option value="">Select Department</option>
+                            @foreach (var d in _depts) { <option value="@d">@d</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Program Name<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="a_program" @bind="_program" @bind:after="OnProgramChanged">
+                            <option value="">Select Program</option>
+                            @foreach (var p in _programs) { <option value="@p.Name">@p.Name</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Qualifying / Last Degree<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="a_degree" @bind="FormService.State.Academics.QualifyingDegree">
+                            <option value="">Select Last Degree</option>
+                            @foreach (var d in _lastDegrees) { <option value="@d">@d</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Eligible Major<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="a_major" @bind="FormService.State.Academics.EligibleMajor">
+                            <option value="">Select Eligible Major</option>
+                            @foreach (var m in _majors) { <option value="@m">@m</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Academic Year<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="a_year" @bind="FormService.State.Academics.AcademicYear">
+                            <option value="">Select Academic Year</option>
+                            @foreach (var y in _acadYears) { <option value="@y">@y</option> }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:20px;">Academic Details</div>
+            <div class="banner-note">It is mandatory to provide complete qualifications history from Matriculation through the qualifying degree.</div>
+
+            <div class="form-grid" style="margin-bottom: 15px;">
+                <div class="field">
+                    <label>Examination<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="r_exam" @bind="_row.Examination">
+                            <option value="">Select Examination</option>
+                            @foreach (var e in _examinations) { <option value="@e.Name">@e.Name</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Group / Major Subject<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <input type="text" id="r_group" @bind="_row.GroupMajor" placeholder="Major subject" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Year<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="r_year" @bind="_row.Year">
+                            <option value="">Select Year</option>
+                            @foreach (var y in _pgYears) { <option value="@y">@y</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Seat No / Roll No<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <input type="text" id="r_seat" @bind="_row.SeatNo" placeholder="Seat No" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Obtained Marks<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <input type="text" id="r_obt" @bind="_row.ObtainedMarks" placeholder="Obtained marks" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Total Marks<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <input type="text" id="r_tot" @bind="_row.TotalMarks" placeholder="Total marks" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Board / University<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="r_board" @bind="_row.Board">
+                            <option value="">Select Board / University</option>
+                            @foreach (var b in _boards) { <option value="@b.Name">@b.Name</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field field-wide">
+                    <label>School / College / Institute<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <input type="text" id="r_inst" @bind="_row.Institute" placeholder="Institute name" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-row" style="padding-top: 0;">
+                <button class="btn btn-blue" @onclick="AddRecord">+ Add Record</button>
+                <button class="btn btn-grey" @onclick="ClearForm">Reset</button>
+            </div>
+            @if (!string.IsNullOrEmpty(_error)) { <div class="error-msg">@_error</div> }
+
+            <div class="section-title" style="margin-top:20px;">Recorded Academic History</div>
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No.</th><th>Examination</th><th>Group/Major</th><th>Year</th>
+                            <th>Seat No</th><th>Obtained</th><th>Total</th><th>Board</th><th>Institute</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!FormService.State.Academics.History.Any())
+                        {
+                            <tr class="empty-row"><td colspan="10">No Academic Records Added Yet</td></tr>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < FormService.State.Academics.History.Count; i++)
+                            {
+                                var r = FormService.State.Academics.History[i];
+                                var idx = i;
+                                <tr>
+                                    <td>@(idx + 1)</td>
+                                    <td><strong>@r.Examination</strong></td>
+                                    <td>@r.GroupMajor</td>
+                                    <td>@r.Year</td>
+                                    <td>@r.SeatNo</td>
+                                    <td>@r.ObtainedMarks</td>
+                                    <td>@r.TotalMarks</td>
+                                    <td>@r.Board</td>
+                                    <td>@r.Institute</td>
+                                    <td><span class="del-link" @onclick="() => RemoveRecord(idx)">Delete</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-grey" @onclick="() => GoToStep(1)">Back</button>
+                <button class="btn btn-orange" @onclick="SaveAcademics">Save &amp; Continue</button>
+            </div>
+        }
+
+        @* ═══════════════════════════════════════════════════════════════
+           STEP 3: PREFERENCES
+           ═══════════════════════════════════════════════════════════════ *@
+        @if (_currentStep == 3)
+        {
+            <div class="panel-title-bar">
+                <span>Preference Details</span>
+                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 3 of 6</span>
+            </div>
+            <div class="banner-note">Kindly choose at least three programs of your preference other than your primary applied program.</div>
+
+            <div class="form-grid">
+                <div class="field">
+                    <label>Admission Faculty Type<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="pref_fac" @bind="_fac" @bind:after="OnPrefFacultyChanged">
+                            <option value="">Select Faculty</option>
+                            @foreach (var f in SetupDataService.FacultyDepartmentsMap.Keys) { <option value="@f">@f</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Faculty Department<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="pref_dept" @bind="_prefDept" @bind:after="OnPrefDeptChanged">
+                            <option value="">Select Department</option>
+                            @foreach (var d in _prefDepts) { <option value="@d">@d</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Faculty Department Program<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="pref_prog" @bind="_prog">
+                            <option value="">Select Program</option>
+                            @foreach (var p in _prefPrograms) { <option value="@p.Name">@p.Name</option> }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-row" style="padding-top: 0; margin-top: 15px;">
+                <button class="btn btn-blue" @onclick="AddPreference">+ Add Preference</button>
+                <button class="btn btn-grey" @onclick="ClearPref">Reset</button>
+            </div>
+            @if (!string.IsNullOrEmpty(_errPref)) { <div class="error-msg">@_errPref</div> }
+
+            <div class="section-title" style="margin-top:20px;">Preference Records</div>
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Preference #</th><th>Faculty Name</th><th>Department Name</th><th>Program Name</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!FormService.State.Preferences.Any())
+                        {
+                            <tr class="empty-row"><td colspan="5">No Preferences Added (Optional, but recommended)</td></tr>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < FormService.State.Preferences.Count; i++)
+                            {
+                                var r = FormService.State.Preferences[i];
+                                var idx = i;
+                                <tr>
+                                    <td>Choice @(idx + 1)</td>
+                                    <td>@r.Faculty</td>
+                                    <td>@r.Department</td>
+                                    <td><strong>@r.Program</strong></td>
+                                    <td><span class="del-link" @onclick="() => FormService.State.Preferences.RemoveAt(idx)">Delete</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-grey" @onclick="() => GoToStep(2)">Back</button>
+                <button class="btn btn-orange" @onclick="SavePreferences">Save &amp; Continue</button>
+            </div>
+        }
+
+        @* ═══════════════════════════════════════════════════════════════
+           STEP 4: DOCUMENTS
+           ═══════════════════════════════════════════════════════════════ *@
+        @if (_currentStep == 4)
+        {
+            <div class="panel-title-bar">
+                <span>Document Information</span>
+                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 4 of 6</span>
+            </div>
+            <div class="banner-note">Kindly upload all relevant documents as mentioned in the academic records and admission checklist (CNIC, Transcripts, Certificates, Domicile).</div>
+
+            <div class="form-grid">
+                <div class="field">
+                    <label>Document Type<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <select id="d_type" @bind="_type" @bind:after="OnDocTypeSelected">
+                            <option value="">Select Document Type</option>
+                            @foreach (var d in _docTypes) { <option value="@d.Name">@d.Name</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Document Title / Name<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <input type="text" id="d_name" @bind="_name" placeholder="e.g. Matric Certificate, CNIC Front" />
+                    </div>
+                </div>
+                <div class="field field-wide">
+                    <label>Upload Attachment<span class="req">*</span></label>
+                    <div class="input-shell">
+                        <InputFile id="d_file" OnChange="OnFileSelected" style="padding: 7px 10px;" />
+                    </div>
+                    <div class="hint">Supported formats: PDF, JPG, PNG (Max 5MB each). @(!string.IsNullOrEmpty(_fileName) ? $"Selected: {_fileName}" : "")</div>
+                </div>
+            </div>
+
+            <div class="btn-row" style="padding-top: 0; margin-top: 15px;">
+                <button class="btn btn-blue" @onclick="AddDocument">+ Add Document</button>
+                <button class="btn btn-grey" @onclick="ClearDoc">Reset</button>
+            </div>
+            @if (!string.IsNullOrEmpty(_errDoc)) { <div class="error-msg">@_errDoc</div> }
+
+            <div class="section-title" style="margin-top:20px;">Uploaded Document List</div>
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No.</th><th>File Name</th><th>Document Type</th><th>Title</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!FormService.State.Documents.Any())
+                        {
+                            <tr class="empty-row"><td colspan="6">No Documents Uploaded Yet</td></tr>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < FormService.State.Documents.Count; i++)
+                            {
+                                var r = FormService.State.Documents[i];
+                                var idx = i;
+                                <tr>
+                                    <td>@(idx + 1)</td>
+                                    <td><strong>@r.FileName</strong></td>
+                                    <td>@r.DocType</td>
+                                    <td>@r.DocName</td>
+                                    <td><span style="color: #15803d; font-weight: 500;">Ready</span></td>
+                                    <td><span class="del-link" @onclick="() => FormService.State.Documents.RemoveAt(idx)">Delete</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-grey" @onclick="() => GoToStep(3)">Back</button>
+                <button class="btn btn-orange" @onclick="SaveDocuments">Save &amp; Continue</button>
+            </div>
+        }
+
+        @* ═══════════════════════════════════════════════════════════════
+           STEP 5: UNDERTAKING
+           ═══════════════════════════════════════════════════════════════ *@
+        @if (_currentStep == 5)
+        {
+            <div class="panel-title-bar">
+                <span>Undertaking Details</span>
+                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 5 of 6</span>
+            </div>
+
+            <div style="background: #fff8f0; border: 1px solid #fed7aa; border-radius: 12px; padding: 22px; margin: 24px;">
+                <div style="display: flex; align-items: flex-start; gap: 14px;">
+                    <InputCheckbox id="u_check" @bind-Value="FormService.State.UndertakingAccepted"
+                                   style="width: 20px; height: 20px; margin-top: 3px; cursor: pointer; accent-color: #f97316; flex-shrink: 0;" />
+                    <label for="u_check" style="margin: 0; font-size: 13.5px; line-height: 1.75; color: #334155; cursor: pointer;">
+                        <strong>I hereby undertake</strong> that the entries made in this admission form are correct and complete to the best of my knowledge and belief, and that my admission to Shah Abdul Latif University (SALU) is provisional and subject to cancellation if any irregularity, misstatement, or false document is found at any stage.
+                        <br /><br />
+                        Further, I declare that I am not currently registered/enrolled as a regular student for any degree program in any other University/Institute. I solemnly undertake to abide by the rules, code of conduct, and regulations of Shah Abdul Latif University.
+                    </label>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errUndertaking)) { <div class="error-msg">@_errUndertaking</div> }
+
+            <div class="btn-row">
+                <button class="btn btn-grey" @onclick="() => GoToStep(4)">Back</button>
+                <button class="btn btn-orange" @onclick="SaveUndertaking">Accept &amp; Continue</button>
+            </div>
+        }
+
+        @* ═══════════════════════════════════════════════════════════════
+           STEP 6: STATUS & FINAL SUBMISSION
+           ═══════════════════════════════════════════════════════════════ *@
+        @if (_currentStep == 6)
+        {
+            <div class="panel-title-bar">
+                <span>Status &amp; Final Submission</span>
+                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 6 of 6</span>
+            </div>
+            <div class="banner-note">Please review the checklist below. All mandatory sections must be completed before you can finalize and submit your application.</div>
+
+            <div class="table-shell">
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>Personal Info</th>
+                            <th>Academics</th>
+                            <th>Preferences (Optional)</th>
+                            <th>Documents</th>
+                            <th>Undertaking</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="@(FormService.State.PersonalDone ? "status-ok" : "status-incomplete")">
+                                @(FormService.State.PersonalDone ? "✓ Complete" : "⚠ Incomplete")
+                            </td>
+                            <td class="@(FormService.State.AcademicsDone ? "status-ok" : "status-incomplete")">
+                                @(FormService.State.AcademicsDone ? "✓ Complete" : "⚠ Incomplete")
+                            </td>
+                            <td class="@(FormService.State.PreferencesDone ? "status-ok" : "status-incomplete")">
+                                @(FormService.State.PreferencesDone ? "✓ Complete" : "Optional")
+                            </td>
+                            <td class="@(FormService.State.DocumentsDone ? "status-ok" : "status-incomplete")">
+                                @(FormService.State.DocumentsDone ? "✓ Complete" : "⚠ Incomplete")
+                            </td>
+                            <td class="@(FormService.State.UndertakingDone ? "status-ok" : "status-incomplete")">
+                                @(FormService.State.UndertakingDone ? "✓ Complete" : "⚠ Incomplete")
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-row" style="justify-content: center; margin-top: 20px; flex-direction: column; gap: 14px;">
+                <button class="btn @(FormService.State.AllMandatoryComplete ? "btn-orange" : "btn-disabled")"
+                        disabled="@(!FormService.State.AllMandatoryComplete)"
+                        style="padding: 12px 36px; font-size: 1.05rem;"
+                        @onclick="SubmitForm">
+                    Finalize And Submit Application
+                </button>
+                @if (!FormService.State.AllMandatoryComplete)
+                {
+                    <div style="font-size: 0.82rem; color: #64748b;">Please complete all required sections to enable final submission.</div>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(_submissionError))
+            {
+                <div class="error-msg">@_submissionError</div>
+            }
+
+            @if (_submitted)
+            {
+                <div style="margin: 20px 24px 24px; padding: 24px; background: #dcfce7; border: 1px solid #86efac; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: bold; color: #15803d; margin-bottom: 8px;">
+                        🎉 Application Submitted Successfully!
+                    </div>
+                    <div style="font-size: 0.95rem; color: #166534; line-height: 1.6;">
+                        Your admission form has been received by Shah Abdul Latif University.<br />
+                        Your Candidate Tracking ID is: <strong style="font-size: 1.05rem; background: #bbf7d0; padding: 2px 8px; border-radius: 4px;">SALU-2026-08412</strong>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private int _currentStep = 1;
+
+    // Step 1 Data
+    private List<string> _nationalities = [];
+    private List<string> _provinces = [];
+    private readonly List<string> _districts = ["Khairpur", "Sukkur", "Larkana", "Ghotki", "Shikarpur", "Kashmore", "Badin", "Hyderabad", "Karachi", "Nawabshah (SBA)", "Naushahro Feroze", "Dadu", "Jacobabad", "Mirpurkhas"];
+
+    // Step 2 Academic State
+    private string _faculty = "", _dept = "", _program = "";
+    private string _error = "";
+    private List<string> _depts = [], _lastDegrees = [], _majors = [], _acadYears = [], _pgYears = [];
+    private List<ProgramEntry> _programs = [];
+    private List<IdNameItem> _examinations = [], _boards = [];
+    private AcademicRecord _row = new();
+
+    // Step 3 Preferences State
+    private string _fac = "", _prefDept = "", _prog = "", _errPref = "";
+    private List<string> _prefDepts = [];
+    private List<ProgramEntry> _prefPrograms = [];
+
+    // Step 4 Documents State
+    private string _type = "", _name = "", _fileName = "", _errDoc = "";
+    private List<DocumentType> _docTypes = [];
+
+    // Step 5 Undertaking State
+    private string _errUndertaking = "";
+
+    // Step 6 Status State
+    private bool _submitted = false;
+    private string _submissionError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _nationalities = await SetupData.GetNationalitiesAsync();
+        _provinces = await SetupData.GetProvincesAsync();
+        
+        _examinations = await SetupData.GetExaminationsAsync();
+        _boards = await SetupData.GetBoardsAsync();
+        _acadYears = await SetupData.GetAcademicYearsAsync();
+        _pgYears = await SetupData.GetYearsForPGAsync();
+        
+        _docTypes = await SetupData.GetDocumentTypesAsync();
+
+        // Restore any existing state if user returns to this page
+        if (!string.IsNullOrWhiteSpace(FormService.State.Academics.Faculty))
+        {
+            _faculty = FormService.State.Academics.Faculty;
+            _depts = SetupDataService.FacultyDepartmentsMap.TryGetValue(_faculty, out var d) ? d : [];
+            _dept = FormService.State.Academics.Department;
+            _programs = SetupDataService.DepartmentProgramsMap.TryGetValue(_dept, out var p) ? p : [];
+            _program = FormService.State.Academics.Program;
+            var entry = _programs.FirstOrDefault(pr => pr.Name == _program);
+            if (entry != null)
+            {
+                _lastDegrees = [entry.Deg];
+                _majors = entry.Majors;
+            }
+        }
+    }
+
+    private void GoToStep(int step)
+    {
+        if (step >= 1 && step <= 6)
+            _currentStep = step;
+    }
+
+    private void NextStep()
+    {
+        if (_currentStep < 6)
+            _currentStep++;
+    }
+
+    // ─── Step 1 Methods ─────────────────────────────────────────────
+    private void SavePersonal()
+    {
+        FormService.SavePersonal();
+        NextStep();
+    }
+
+    // ─── Step 2 Methods ─────────────────────────────────────────────
+    private void OnFacultyChanged()
+    {
+        _dept = "";
+        _program = "";
+        _depts = SetupDataService.FacultyDepartmentsMap.TryGetValue(_faculty, out var d) ? d : [];
+        _programs = [];
+        _lastDegrees = [];
+        _majors = [];
+    }
+
+    private void OnDeptChanged()
+    {
+        _program = "";
+        _programs = SetupDataService.DepartmentProgramsMap.TryGetValue(_dept, out var p) ? p : [];
+        _lastDegrees = [];
+        _majors = [];
+    }
+
+    private void OnProgramChanged()
+    {
+        var entry = _programs.FirstOrDefault(p => p.Name == _program);
+        if (entry != null)
+        {
+            _lastDegrees = [entry.Deg];
+            _majors = entry.Majors;
+            FormService.State.Academics.QualifyingDegree = entry.Deg;
+            FormService.State.Academics.Faculty = _faculty;
+            FormService.State.Academics.Department = _dept;
+            FormService.State.Academics.Program = _program;
+        }
+        else
+        {
+            _lastDegrees = [];
+            _majors = [];
+        }
+    }
+
+    private void AddRecord()
+    {
+        if (string.IsNullOrWhiteSpace(_row.Examination) || string.IsNullOrWhiteSpace(_row.Year) ||
+            string.IsNullOrWhiteSpace(_row.SeatNo) || string.IsNullOrWhiteSpace(_row.ObtainedMarks) ||
+            string.IsNullOrWhiteSpace(_row.TotalMarks) || string.IsNullOrWhiteSpace(_row.Board) ||
+            string.IsNullOrWhiteSpace(_row.Institute))
+        {
+            _error = "Please fill all required academic fields before adding a record.";
+            return;
+        }
+        _error = "";
+        FormService.State.Academics.History.Add(_row);
+        _row = new();
+    }
+
+    private void ClearForm()
+    {
+        _row = new();
+        _error = "";
+    }
+
+    private void RemoveRecord(int i)
+    {
+        if (i >= 0 && i < FormService.State.Academics.History.Count)
+            FormService.State.Academics.History.RemoveAt(i);
+    }
+    
+    private void SaveAcademics()
+    {
+        FormService.SaveAcademics();
+        NextStep();
+    }
+
+    // ─── Step 3 Methods ─────────────────────────────────────────────
+    private void OnPrefFacultyChanged()
+    {
+        _prefDept = "";
+        _prog = "";
+        _prefDepts = SetupDataService.FacultyDepartmentsMap.TryGetValue(_fac, out var d) ? d : [];
+        _prefPrograms = [];
+    }
+
+    private void OnPrefDeptChanged()
+    {
+        _prog = "";
+        _prefPrograms = SetupDataService.DepartmentProgramsMap.TryGetValue(_prefDept, out var p) ? p : [];
+    }
+
+    private void AddPreference()
+    {
+        if (string.IsNullOrWhiteSpace(_fac) || string.IsNullOrWhiteSpace(_prefDept) || string.IsNullOrWhiteSpace(_prog))
+        { 
+            _errPref = "Please select faculty, department, and program for your preference."; 
+            return; 
+        }
+        _errPref = "";
+        FormService.State.Preferences.Add(new() { Faculty = _fac, Department = _prefDept, Program = _prog });
+        FormService.SavePreferences();
+        ClearPref();
+    }
+    
+    private void ClearPref()
+    {
+        _fac = "";
+        _prefDept = "";
+        _prog = "";
+        _errPref = "";
+        _prefDepts = [];
+        _prefPrograms = [];
+    }
+    
+    private void SavePreferences()
+    {
+        FormService.SavePreferences();
+        NextStep();
+    }
+
+    // ─── Step 4 Methods ─────────────────────────────────────────────
+    private void OnDocTypeSelected()
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+            _name = _type;
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _fileName = e.File.Name;
+        if (string.IsNullOrWhiteSpace(_name))
+            _name = System.IO.Path.GetFileNameWithoutExtension(_fileName);
+    }
+
+    private void AddDocument()
+    {
+        if (string.IsNullOrWhiteSpace(_type) || string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_fileName))
+        { 
+            _errDoc = "Please choose a document type, provide a name, and select an attachment file."; 
+            return; 
+        }
+        _errDoc = "";
+        FormService.State.Documents.Add(new() { DocType = _type, DocName = _name, FileName = _fileName });
+        FormService.SaveDocuments();
+        ClearDoc();
+    }
+    
+    private void ClearDoc()
+    {
+        _type = "";
+        _name = "";
+        _fileName = "";
+        _errDoc = "";
+    }
+    
+    private void SaveDocuments()
+    {
+        FormService.SaveDocuments();
+        NextStep();
+    }
+
+    // ─── Step 5 Methods ─────────────────────────────────────────────
+    private void SaveUndertaking()
+    {
+        if (!FormService.State.UndertakingAccepted)
+        { 
+            _errUndertaking = "Please review and check the undertaking declaration box before proceeding."; 
+            return; 
+        }
+        _errUndertaking = "";
+        FormService.SaveUndertaking();
+        NextStep();
+    }
+
+    // ─── Step 6 Methods ─────────────────────────────────────────────
+    private async Task SubmitForm()
+    {
+        if (FormService.State.AllMandatoryComplete)
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authenticationState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                _submissionError = "Your session could not be verified. Please sign in again.";
+                return;
+            }
+
+            await ApplicationStore.SaveDraftAsync(userId, FormService.State);
+            _submissionError = "";
+            _submitted = true;
+        }
+    }
+}
+

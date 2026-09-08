@@ -1,0 +1,5708 @@
+{
+  "metadata": {
+    "institution": "Shah Abdul Latif University (SALU), Khairpur",
+    "system": "Postgraduate (PG) Admission System",
+    "description": "Clean, structured lookup dataset categorized from university setup master records for form integration, validation, and API consumption.",
+    "totalRawRecords": 895,
+    "totalMasterCategories": 91,
+    "generatedAt": "2026-09-08"
+  },
+  "admissionSetup": {
+    "academicYears": [
+      "2027",
+      "2026",
+      "2025",
+      "2024",
+      "2023",
+      "2022",
+      "2021",
+      "2020",
+      "2019",
+      "2018"
+    ],
+    "yearsForPG": [
+      "2026",
+      "2025",
+      "2024",
+      "2023",
+      "2022",
+      "2021",
+      "2020",
+      "2019",
+      "2018",
+      "2017",
+      "2016",
+      "2015",
+      "2014",
+      "2013",
+      "2012",
+      "2011",
+      "2010",
+      "2009",
+      "2008",
+      "2007",
+      "2006",
+      "2005",
+      "2004",
+      "2003",
+      "2002",
+      "2001",
+      "2000",
+      "1999",
+      "1998",
+      "1997",
+      "1996",
+      "1995",
+      "1994",
+      "1993",
+      "1992",
+      "1991",
+      "1990",
+      "1989",
+      "1988",
+      "1987",
+      "1986",
+      "1985",
+      "1984",
+      "1983",
+      "1982",
+      "1981",
+      "1980"
+    ],
+    "meritLists": [
+      {
+        "id": 3860,
+        "name": "1st Merit List",
+        "order": "0"
+      },
+      {
+        "id": 3861,
+        "name": "2nd Merit List",
+        "order": "1"
+      },
+      {
+        "id": 3862,
+        "name": "3rd Merit List",
+        "order": "2"
+      },
+      {
+        "id": 7103,
+        "name": "4th Merit List",
+        "order": "3"
+      },
+      {
+        "id": 9049,
+        "name": "5th Merit List",
+        "order": "4"
+      }
+    ],
+    "documentTypes": [
+      {
+        "id": 6884,
+        "name": "(Pas/Transcripts) (Attested).",
+        "master": "PG DocType"
+      },
+      {
+        "id": 6873,
+        "name": "Bachelors",
+        "master": "PG DocType"
+      },
+      {
+        "id": 3248,
+        "name": "Bachelor",
+        "master": "Document Type"
+      },
+      {
+        "id": 6639,
+        "name": "Attendance Certificate of 75% attendance",
+        "master": "EligibilityDocumentType"
+      }
+    ],
+    "checklistItems": [
+      {
+        "id": 5555,
+        "description": "Admission Fees Challan of PKR 2,200 to be deposited in HBL Branch or Online through HBL Connect",
+        "parentId": 3479
+      },
+      {
+        "id": 7157,
+        "description": "Admission Fees Challan of PKR 2,500 to be deposited in HBL Branch or Online through HBL Connect",
+        "parentId": 3479
+      },
+      {
+        "id": 7159,
+        "description": "Admission Fees Challan of PKR 2,500 to be deposited Online through HBL Connect",
+        "parentId": 3479
+      },
+      {
+        "id": 7158,
+        "description": "Admission Form Fees Challan of PKR.2500 to be deposited Online through HBL Konnect",
+        "parentId": 3479
+      },
+      {
+        "id": 5640,
+        "description": "Admission Test Minimum Cut Off Score",
+        "parentId": 3479
+      },
+      {
+        "id": 5639,
+        "description": "Admission Test Total Marks",
+        "parentId": 3479
+      },
+      {
+        "id": 5553,
+        "description": "Affidavit / Undertaking as prescribed",
+        "parentId": 3479
+      },
+      {
+        "id": 7007,
+        "description": "All documnt pics uploaded",
+        "parentId": 3480
+      },
+      {
+        "id": 6652,
+        "description": "Attendance Certificate of 75% Attendance (for regular students)",
+        "parentId": 6616
+      },
+      {
+        "id": 6558,
+        "description": "Attested copies (Pass/Transcripts) of all the certificates & degrees/CNIC/Domicile.",
+        "parentId": 3480
+      },
+      {
+        "id": 5550,
+        "description": "Attested Copy of Character Certificate from Principal of the College /Institute last attended",
+        "parentId": 3479
+      },
+      {
+        "id": 6647,
+        "description": "Attested Copy of CNIC",
+        "parentId": 0
+      },
+      {
+        "id": 6649,
+        "description": "Attested Copy of Graduation Marks Certificate",
+        "parentId": 6616
+      },
+      {
+        "id": 6648,
+        "description": "Attested Copy of Intermediate Marks Certificate",
+        "parentId": 6616
+      },
+      {
+        "id": 5548,
+        "description": "Attested Copy of Pass/Marks Certificate of the last Qualifying Examination",
+        "parentId": 3479
+      },
+      {
+        "id": 5549,
+        "description": "Attested Copy of Transfer Certificate from Principal of the College /Institute last attended",
+        "parentId": 3479
+      },
+      {
+        "id": 6656,
+        "description": "Attested Photo Copy of CNIC (Original for Justification)",
+        "parentId": 6616
+      },
+      {
+        "id": 6653,
+        "description": "Attested Photo Copy of Domicile Certificate of Sukkur/latkana Division (Original for Justification)",
+        "parentId": 6616
+      },
+      {
+        "id": 6654,
+        "description": "Attested Photo Copy of Pass/Marks Certificates (Issued by the Board/University). (Original for Justification)",
+        "parentId": 6616
+      },
+      {
+        "id": 6657,
+        "description": "Attested Photo Copy SSC (Pacca Degree) Certificate (Issued by the Board) (Original for Justification)",
+        "parentId": 6616
+      },
+      {
+        "id": 6650,
+        "description": "Attested Recent Passport Size Photographs",
+        "parentId": 6616
+      },
+      {
+        "id": 5547,
+        "description": "Attested recent Photographs (2 Passport size and 1 having dimension 1'x 1. ½”)",
+        "parentId": 3479
+      }
+    ],
+    "feeParticulars": [
+      {
+        "id": 3618,
+        "name": "Admission Fee"
+      },
+      {
+        "id": 7017,
+        "name": "Admission Fee/Registration/Tuition etc"
+      },
+      {
+        "id": 6051,
+        "name": "1st year Registration/Tuition Fee"
+      },
+      {
+        "id": 6064,
+        "name": "2nd year Registration/Tuition Fee"
+      },
+      {
+        "id": 6065,
+        "name": "3rd year Registration/Tuition Fee"
+      }
+    ],
+    "semesterParts": [
+      {
+        "id": 6091,
+        "name": "1st Semester"
+      },
+      {
+        "id": 6083,
+        "name": "1st Year"
+      },
+      {
+        "id": 6092,
+        "name": "2nd Semester"
+      },
+      {
+        "id": 6088,
+        "name": "2nd Year"
+      },
+      {
+        "id": 6093,
+        "name": "3rd Semester"
+      },
+      {
+        "id": 6089,
+        "name": "3rd Year"
+      },
+      {
+        "id": 6094,
+        "name": "4th Semester"
+      },
+      {
+        "id": 6090,
+        "name": "4th Year"
+      }
+    ]
+  },
+  "programsAndAcademics": {
+    "degrees": [
+      {
+        "id": 8583,
+        "name": "(CIT) Certificate in Information Technology",
+        "masterId": 1035
+      },
+      {
+        "id": 8582,
+        "name": "(DIT) Diploma in Information Technology",
+        "masterId": 1035
+      },
+      {
+        "id": 8585,
+        "name": "(OAT) Office Automation Training",
+        "masterId": 1035
+      },
+      {
+        "id": 8388,
+        "name": "B.Com (02 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8389,
+        "name": "B.Com (Hon) 3 years",
+        "masterId": 1035
+      },
+      {
+        "id": 8407,
+        "name": "B.E",
+        "masterId": 1035
+      },
+      {
+        "id": 8633,
+        "name": "B.Ed (01 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8634,
+        "name": "B.Ed (1.5)",
+        "masterId": 1035
+      },
+      {
+        "id": 8635,
+        "name": "B.Ed (2.5 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8502,
+        "name": "B.Pharm (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8378,
+        "name": "B.Sc (2 Years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8381,
+        "name": "B.Sc (Hon) 3 years",
+        "masterId": 1035
+      },
+      {
+        "id": 8379,
+        "name": "B.Sc (Honors) 3 Years",
+        "masterId": 1035
+      },
+      {
+        "id": 8406,
+        "name": "B.Tech",
+        "masterId": 1035
+      },
+      {
+        "id": 8627,
+        "name": "BA (05 years) in Law",
+        "masterId": 1035
+      },
+      {
+        "id": 8384,
+        "name": "BA (Pass) 2 years",
+        "masterId": 1035
+      },
+      {
+        "id": 8408,
+        "name": "Bachelor Degree",
+        "masterId": 1035
+      },
+      {
+        "id": 8385,
+        "name": "Bachelor of Art (Hon) 3 years",
+        "masterId": 1035
+      },
+      {
+        "id": 8587,
+        "name": "Bachelor of Arts Media and Communication (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8574,
+        "name": "Bachelor of Arts in Economics (02 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8609,
+        "name": "Bachelor of Arts in English (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8429,
+        "name": "Bachelor of Arts in International Relations (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8478,
+        "name": "Bachelor of Arts in International Relations (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8469,
+        "name": "Bachelor of Arts in Islamic Studies (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8593,
+        "name": "Bachelor of Arts in Pakistan Studies (02 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8598,
+        "name": "Bachelor of Arts in Physical Education (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8543,
+        "name": "Bachelor of Arts in Political Sciences (2 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8545,
+        "name": "Bachelor of Arts in Political Sciences (3 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8566,
+        "name": "Bachelor of Arts in Public Administration",
+        "masterId": 1035
+      },
+      {
+        "id": 8620,
+        "name": "Bachelor of Arts in Sindhi",
+        "masterId": 1035
+      },
+      {
+        "id": 8623,
+        "name": "Bachelor of Arts in Sindhi (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8605,
+        "name": "Bachelor of Arts in Sociology (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8464,
+        "name": "Bachelor of Arts in Urdu (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8424,
+        "name": "Bachelor of Business Administration (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8425,
+        "name": "Bachelor of Business Administration (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8423,
+        "name": "Bachelor of Business Administration (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8314,
+        "name": "Bachelor of Commerce (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8413,
+        "name": "Bachelor of Commerce (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8454,
+        "name": "Bachelor of Computer Science (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8455,
+        "name": "Bachelor of Computer Science (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 2003,
+        "name": "Bachelor of Education (B.Ed.)",
+        "masterId": 1035
+      },
+      {
+        "id": 8568,
+        "name": "Bachelor of Public Administration (03 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8569,
+        "name": "Bachelor of Public Administration (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8567,
+        "name": "Bachelor of Public Administration (2 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8417,
+        "name": "Bachelor of Science In Microbiology (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8418,
+        "name": "Bachelor of Science In Microbiology (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8456,
+        "name": "Bachelor of Science in Computer Science",
+        "masterId": 1035
+      },
+      {
+        "id": 2004,
+        "name": "Bachelor of Science in Education (B.S.Ed.)",
+        "masterId": 1035
+      },
+      {
+        "id": 8460,
+        "name": "Bachelor of Science in Information Technology",
+        "masterId": 1035
+      },
+      {
+        "id": 8554,
+        "name": "Bachelor of Science in Statistics (2 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8555,
+        "name": "Bachelor of Science in Statistics (3 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8556,
+        "name": "Bachelor of Science in Statistics BS (4 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8505,
+        "name": "Bachelor of Science in Zoology (04 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8579,
+        "name": "Bachelor of Sciences BS in Gender Studies",
+        "masterId": 1035
+      },
+      {
+        "id": 8510,
+        "name": "Bachelor of Sciences in Archaeology (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8511,
+        "name": "Bachelor of Sciences in Archaeology (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8513,
+        "name": "Bachelor of Sciences in Archaeology (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8537,
+        "name": "Bachelor of Sciences in Bachelor of Sciences in Physics (3 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8538,
+        "name": "Bachelor of Sciences in Bachelor of Sciences in Physics BS (4 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8476,
+        "name": "Bachelor of Sciences in Biochemistry (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8479,
+        "name": "Bachelor of Sciences in Biochemistry (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8471,
+        "name": "Bachelor of Sciences in Botany (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8472,
+        "name": "Bachelor of Sciences in Botany (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8477,
+        "name": "Bachelor of Sciences in Botany (04 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8485,
+        "name": "Bachelor of Sciences in Chemistry (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8486,
+        "name": "Bachelor of Sciences in Chemistry (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8487,
+        "name": "Bachelor of Sciences in Chemistry (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8470,
+        "name": "Bachelor of Sciences in Commerce",
+        "masterId": 1035
+      },
+      {
+        "id": 8576,
+        "name": "Bachelor of Sciences in Economics (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8517,
+        "name": "Bachelor of Sciences in Geography (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8518,
+        "name": "Bachelor of Sciences in Geography (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8523,
+        "name": "Bachelor of Sciences in Geography (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8527,
+        "name": "Bachelor of Sciences in Mathematics (2 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8528,
+        "name": "Bachelor of Sciences in Mathematics (3 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8529,
+        "name": "Bachelor of Sciences in Mathematics (4 year)",
+        "masterId": 1035
+      },
+      {
+        "id": 8492,
+        "name": "Bachelor of Sciences in Microbiology (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8493,
+        "name": "Bachelor of Sciences in Microbiology (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8494,
+        "name": "Bachelor of Sciences in Microbiology (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8536,
+        "name": "Bachelor of Sciences in Physics (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8641,
+        "name": "Bachelor of Sciences in Special Education (BS 04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8465,
+        "name": "Bachelor of Sciences in Urdu (BS- 04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8503,
+        "name": "Bachelor of Sciences in Zoology (02 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8504,
+        "name": "Bachelor of Sciences in Zoology (03 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8507,
+        "name": "Bachelor of Sciences in Zoology (04 years)",
+        "masterId": 1035
+      },
+      {
+        "id": 8412,
+        "name": "Bachelor or Equivalent",
+        "masterId": 1035
+      }
+    ],
+    "lastDegrees": [
+      {
+        "id": 5664,
+        "name": "B.E",
+        "masterId": 1159
+      },
+      {
+        "id": 9107,
+        "name": "B.E.",
+        "masterId": 1159
+      },
+      {
+        "id": 9110,
+        "name": "B.Ed(Honors) 4 year",
+        "masterId": 1159
+      },
+      {
+        "id": 9108,
+        "name": "B.Ed.(1.5)",
+        "masterId": 1159
+      },
+      {
+        "id": 9109,
+        "name": "B.Ed.(2.5)",
+        "masterId": 1159
+      }
+    ],
+    "examinations": [
+      {
+        "id": 6143,
+        "name": "ADA",
+        "flex1": "5"
+      },
+      {
+        "id": 6145,
+        "name": "ADC",
+        "flex1": "5"
+      },
+      {
+        "id": 6144,
+        "name": "ADS",
+        "flex1": "5"
+      },
+      {
+        "id": 9119,
+        "name": "B.E",
+        "flex1": null
+      },
+      {
+        "id": 9115,
+        "name": "B.Ed(Honors) 4 year",
+        "flex1": null
+      },
+      {
+        "id": 9101,
+        "name": "B.Ed.(1.5)",
+        "flex1": null
+      },
+      {
+        "id": 9103,
+        "name": "B.Ed.(2.5)",
+        "flex1": null
+      },
+      {
+        "id": 5833,
+        "name": "BA",
+        "flex1": "5"
+      }
+    ],
+    "faculties": [
+      {
+        "id": 6866,
+        "name": "All of These",
+        "code": "0"
+      },
+      {
+        "id": 6869,
+        "name": "All of these",
+        "code": "2"
+      },
+      {
+        "id": 5861,
+        "name": "Arts & Languages",
+        "code": "7"
+      }
+    ],
+    "departments": [
+      {
+        "id": 6998,
+        "name": "All of these",
+        "code": "0"
+      },
+      {
+        "id": 4738,
+        "name": "Arabic",
+        "code": "35"
+      },
+      {
+        "id": 4790,
+        "name": "Archaeology",
+        "code": "01"
+      }
+    ],
+    "eligibleMajors": [
+      {
+        "id": 5184,
+        "name": "16 years Business education",
+        "parentId": 4015
+      },
+      {
+        "id": 4186,
+        "name": "Arts",
+        "parentId": 4012
+      },
+      {
+        "id": 5193,
+        "name": "B. Pharmacy",
+        "parentId": 4016
+      },
+      {
+        "id": 5216,
+        "name": "B.Com (Part-II)",
+        "parentId": 4013
+      },
+      {
+        "id": 5191,
+        "name": "B.E",
+        "parentId": 4016
+      },
+      {
+        "id": 5370,
+        "name": "B.Sc (Part-II) in Archaeology with Anthropology",
+        "parentId": 4013
+      },
+      {
+        "id": 5372,
+        "name": "B.Sc (Part-II) in Archaeology with Biochemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5371,
+        "name": "B.Sc (Part-II) in Archaeology with Botany",
+        "parentId": 4013
+      },
+      {
+        "id": 5373,
+        "name": "B.Sc (Part-II) in Archaeology with Chemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5375,
+        "name": "B.Sc (Part-II) in Archaeology with Computer Science",
+        "parentId": 4013
+      },
+      {
+        "id": 5374,
+        "name": "B.Sc (Part-II) in Archaeology with Geography",
+        "parentId": 4013
+      },
+      {
+        "id": 5376,
+        "name": "B.Sc (Part-II) in Archaeology with Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5377,
+        "name": "B.Sc (Part-II) in Archaeology with Microbiology",
+        "parentId": 4013
+      },
+      {
+        "id": 5378,
+        "name": "B.Sc (Part-II) in Archaeology with Physics",
+        "parentId": 4013
+      },
+      {
+        "id": 5379,
+        "name": "B.Sc (Part-II) in Archaeology with Statictics",
+        "parentId": 4013
+      },
+      {
+        "id": 5380,
+        "name": "B.Sc (Part-II) in Archaeology with Zoology",
+        "parentId": 4013
+      },
+      {
+        "id": 5217,
+        "name": "B.Sc (Part-II) in Biochemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5219,
+        "name": "B.Sc (Part-II) in Botany",
+        "parentId": 4013
+      },
+      {
+        "id": 5482,
+        "name": "B.Sc (Part-II) in Botany with Biochemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5480,
+        "name": "B.Sc (Part-II) in Botany with Chemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5481,
+        "name": "B.Sc (Part-II) in Botany with Functional Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5483,
+        "name": "B.Sc (Part-II) in Botany with Microbiology",
+        "parentId": 4013
+      },
+      {
+        "id": 5225,
+        "name": "B.Sc (Part-II) in Botany with Zoology",
+        "parentId": 4013
+      },
+      {
+        "id": 5226,
+        "name": "B.Sc (Part-II) in Chemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5476,
+        "name": "B.Sc (Part-II) in Chemistry with Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5227,
+        "name": "B.Sc (Part-II) in Chemistry with Physics",
+        "parentId": 4013
+      },
+      {
+        "id": 5218,
+        "name": "B.Sc (Part-II) in Chemistry with Zoology",
+        "parentId": 4013
+      },
+      {
+        "id": 5220,
+        "name": "B.Sc (Part-II) in Functional Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5234,
+        "name": "B.Sc (Part-II) in Functional Mathematics with Statistics",
+        "parentId": 4013
+      },
+      {
+        "id": 5224,
+        "name": "B.Sc (Part-II) in Geography",
+        "parentId": 4013
+      },
+      {
+        "id": 5223,
+        "name": "B.Sc (Part-II) in Microbiology",
+        "parentId": 4013
+      },
+      {
+        "id": 5463,
+        "name": "B.Sc (Part-II) in Microbiology with Biochemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5461,
+        "name": "B.Sc (Part-II) in Microbiology with Botany",
+        "parentId": 4013
+      },
+      {
+        "id": 5460,
+        "name": "B.Sc (Part-II) in Microbiology with Chemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5462,
+        "name": "B.Sc (Part-II) in Microbiology with Functional Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5229,
+        "name": "B.Sc (Part-II) in Microbiology with Zoology",
+        "parentId": 4013
+      },
+      {
+        "id": 5232,
+        "name": "B.Sc (Part-II) in Physics",
+        "parentId": 4013
+      },
+      {
+        "id": 5430,
+        "name": "B.Sc (Part-II) in Physics with Chemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5428,
+        "name": "B.Sc (Part-II) in Physics with Functional Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5231,
+        "name": "B.Sc (Part-II) in Physics with Pure Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5429,
+        "name": "B.Sc (Part-II) in Physics with Statistics",
+        "parentId": 4013
+      },
+      {
+        "id": 5221,
+        "name": "B.Sc (Part-II) in Pure Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5363,
+        "name": "B.Sc (Part-II) in Pure Mathematics with Statistics",
+        "parentId": 4013
+      },
+      {
+        "id": 5222,
+        "name": "B.Sc (Part-II) in Statistics",
+        "parentId": 4013
+      },
+      {
+        "id": 5233,
+        "name": "B.Sc (Part-II) in Statistics with Pure Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5443,
+        "name": "B.Sc (Part-II) in Zoology with Biochemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5441,
+        "name": "B.Sc (Part-II) in Zoology with Botany",
+        "parentId": 4013
+      },
+      {
+        "id": 5440,
+        "name": "B.Sc (Part-II) in Zoology with Chemistry",
+        "parentId": 4013
+      },
+      {
+        "id": 5442,
+        "name": "B.Sc (Part-II) in Zoology with Functional Mathematics",
+        "parentId": 4013
+      },
+      {
+        "id": 5444,
+        "name": "B.Sc (Part-II) in Zoology with Microbiology",
+        "parentId": 4013
+      }
+    ],
+    "boards": [
+      {
+        "id": 3576,
+        "name": "AIOU, Islamabad"
+      },
+      {
+        "id": 3573,
+        "name": "AKU-EB (Karachi)"
+      }
+    ],
+    "affiliatedColleges": [
+      {
+        "id": 6913,
+        "name": "(SMBB) Govt. Girls College, Nau Dero",
+        "parentId": 0
+      },
+      {
+        "id": 7177,
+        "name": "Abdul Fattah Samejo Law College Daharki",
+        "parentId": 5586
+      },
+      {
+        "id": 6997,
+        "name": "Abdul Wahid Soomro Degree Collage (Private)",
+        "parentId": 5594
+      },
+      {
+        "id": 6976,
+        "name": "Aghaz Educational College, Pano Akil (Private)",
+        "parentId": 5609
+      },
+      {
+        "id": 6986,
+        "name": "Al- Saleh College of Education, Gari Khario (Private)",
+        "parentId": 5588
+      },
+      {
+        "id": 6974,
+        "name": "Al-Falah College of Education Kashmore (Private)",
+        "parentId": 5594
+      },
+      {
+        "id": 6095,
+        "name": "Al-Falah Degree College, Kashmore (Private)",
+        "parentId": 0
+      },
+      {
+        "id": 6993,
+        "name": "All Colleges",
+        "parentId": 5596
+      },
+      {
+        "id": 6984,
+        "name": "Alma College of Education, Ranipur (Private)",
+        "parentId": 5596
+      },
+      {
+        "id": 6970,
+        "name": "Amara College of Education Ghotki (Private)",
+        "parentId": 5586
+      },
+      {
+        "id": 6969,
+        "name": "Amrat College of Education Sukkur (Private)",
+        "parentId": 5609
+      }
+    ],
+    "affiliatedPrograms": [
+      {
+        "id": 6594,
+        "name": "ADA (Associate Degree of Arts)",
+        "note": null
+      },
+      {
+        "id": 7169,
+        "name": "ADA (External)",
+        "note": null
+      },
+      {
+        "id": 6595,
+        "name": "ADC (Associate Degree of Commerce)",
+        "note": null
+      },
+      {
+        "id": 6596,
+        "name": "ADE (Associate Degree in Education)",
+        "note": null
+      },
+      {
+        "id": 6597,
+        "name": "ADS (Associate Degree of Science)",
+        "note": null
+      },
+      {
+        "id": 6598,
+        "name": "ADS(H.E) (Associate Degree of Science (Home Economics))",
+        "note": null
+      },
+      {
+        "id": 6995,
+        "name": "All Programs",
+        "note": null
+      },
+      {
+        "id": 6599,
+        "name": "B.A (Bachelor of Arts)",
+        "note": null
+      },
+      {
+        "id": 6991,
+        "name": "B.A LL.B",
+        "note": null
+      },
+      {
+        "id": 6601,
+        "name": "B.ED (Bachelor of Education (1 Year))",
+        "note": "One Year of Program"
+      },
+      {
+        "id": 6625,
+        "name": "B.Ed (1.5) (Bachelor of Education (1.5 Years))",
+        "note": null
+      },
+      {
+        "id": 6937,
+        "name": "B.Ed (2.5) (Bachelor of Education (2.5 Years))",
+        "note": null
+      },
+      {
+        "id": 6938,
+        "name": "B.Ed (2.5) ECE",
+        "note": null
+      },
+      {
+        "id": 6939,
+        "name": "B.Ed (HONS) (Bachelor of Education (4 Years))",
+        "note": null
+      },
+      {
+        "id": 6940,
+        "name": "B.P.Ed (Bachelor of Physical Education)",
+        "note": null
+      }
+    ]
+  },
+  "demographics": {
+    "provinces": [
+      {
+        "id": 6622,
+        "name": "All"
+      },
+      {
+        "id": 3724,
+        "name": "Azad Jammu and Kashmir"
+      }
+    ],
+    "cities": [
+      {
+        "id": 2925,
+        "name": "Abbotabad"
+      },
+      {
+        "id": 2954,
+        "name": "Ahmedpur East"
+      },
+      {
+        "id": 2973,
+        "name": "Arif Wala"
+      },
+      {
+        "id": 8666,
+        "name": "Astore"
+      },
+      {
+        "id": 2946,
+        "name": "Attock"
+      },
+      {
+        "id": 2972,
+        "name": "Badin"
+      }
+    ],
+    "countries": [
+      {
+        "id": 2691,
+        "name": "Afghanistan"
+      },
+      {
+        "id": 2692,
+        "name": "Albania"
+      },
+      {
+        "id": 2693,
+        "name": "Algeria"
+      },
+      {
+        "id": 2694,
+        "name": "Andorra"
+      },
+      {
+        "id": 2695,
+        "name": "Angola"
+      },
+      {
+        "id": 2696,
+        "name": "Antigua and Barbuda"
+      },
+      {
+        "id": 2697,
+        "name": "Argentina"
+      },
+      {
+        "id": 2698,
+        "name": "Armenia"
+      },
+      {
+        "id": 2699,
+        "name": "Australia"
+      },
+      {
+        "id": 2700,
+        "name": "Austria"
+      },
+      {
+        "id": 2701,
+        "name": "Azerbaijan"
+      },
+      {
+        "id": 2702,
+        "name": "Bahamas"
+      }
+    ],
+    "nationalities": [
+      {
+        "id": 2455,
+        "name": "Afghan"
+      },
+      {
+        "id": 2456,
+        "name": "Albanian"
+      },
+      {
+        "id": 2457,
+        "name": "Algerian"
+      },
+      {
+        "id": 2558,
+        "name": "American"
+      },
+      {
+        "id": 2458,
+        "name": "Argentine"
+      },
+      {
+        "id": 2459,
+        "name": "Argentinian"
+      },
+      {
+        "id": 1041,
+        "name": "Australian"
+      },
+      {
+        "id": 2460,
+        "name": "Austrian"
+      }
+    ]
+  },
+  "allMastersMap": {
+    "CheckList": [
+      {
+        "id": 5982,
+        "name": "1",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 8652,
+        "name": "3757715469",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 5555,
+        "name": "Admission Fees Challan of PKR 2,200 to be deposited in HBL Branch or Online through HBL Connect",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 7157,
+        "name": "Admission Fees Challan of PKR 2,500 to be deposited in HBL Branch or Online through HBL Connect",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 7159,
+        "name": "Admission Fees Challan of PKR 2,500 to be deposited Online through HBL Connect",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 7158,
+        "name": "Admission Form Fees Challan of PKR.2500 to be deposited Online through HBL Konnect",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 5640,
+        "name": "Admission Test Minimum Cut Off Score",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 5639,
+        "name": "Admission Test Total Marks",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 5553,
+        "name": "Affidavit / Undertaking as prescribed",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 7007,
+        "name": "All documnt pics uploaded",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6652,
+        "name": "Attendance Certificate of 75% Attendance (for regular students)",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 6558,
+        "name": "Attested copies (Pass/Transcripts) of all the certificates & degrees/CNIC/Domicile.",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 5550,
+        "name": "Attested Copy of Character Certificate from Principal of the College /Institute last attended",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 6647,
+        "name": "Attested Copy of CNIC",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6649,
+        "name": "Attested Copy of Graduation Marks Certificate",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 6648,
+        "name": "Attested Copy of Intermediate Marks Certificate",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 5548,
+        "name": "Attested Copy of Pass/Marks Certificate of the last Qualifying Examination",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 5549,
+        "name": "Attested Copy of Transfer Certificate from Principal of the College /Institute last attended",
+        "parentId": 3479,
+        "flex1": null
+      },
+      {
+        "id": 6656,
+        "name": "Attested Photo Copy of CNIC (Original for Justification)",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 6653,
+        "name": "Attested Photo Copy of Domicile Certificate of Sukkur/latkana Division (Original for Justification)",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 6654,
+        "name": "Attested Photo Copy of Pass/Marks Certificates (Issued by the Board/University). (Original for Justification)",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 6657,
+        "name": "Attested Photo Copy SSC (Pacca Degree) Certificate (Issued by the Board) (Original for Justification)",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 6650,
+        "name": "Attested Recent Passport Size Photographs",
+        "parentId": 6616,
+        "flex1": null
+      },
+      {
+        "id": 5547,
+        "name": "Attested recent Photographs (2 Passport size and 1 having dimension 1'x 1. ½”)",
+        "parentId": 3479,
+        "flex1": null
+      }
+    ],
+    "Affilcated Collages": [
+      {
+        "id": 6913,
+        "name": "(SMBB) Govt. Girls College, Nau Dero",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7177,
+        "name": "Abdul Fattah Samejo Law College Daharki",
+        "parentId": 5586,
+        "flex1": null
+      },
+      {
+        "id": 6997,
+        "name": "Abdul Wahid Soomro Degree Collage (Private)",
+        "parentId": 5594,
+        "flex1": null
+      },
+      {
+        "id": 6976,
+        "name": "Aghaz Educational College, Pano Akil (Private)",
+        "parentId": 5609,
+        "flex1": null
+      },
+      {
+        "id": 6986,
+        "name": "Al- Saleh College of Education, Gari Khario (Private)",
+        "parentId": 5588,
+        "flex1": null
+      },
+      {
+        "id": 6974,
+        "name": "Al-Falah College of Education Kashmore (Private)",
+        "parentId": 5594,
+        "flex1": null
+      },
+      {
+        "id": 6095,
+        "name": "Al-Falah Degree College, Kashmore (Private)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6993,
+        "name": "All Colleges",
+        "parentId": 5596,
+        "flex1": null
+      },
+      {
+        "id": 6984,
+        "name": "Alma College of Education, Ranipur (Private)",
+        "parentId": 5596,
+        "flex1": null
+      },
+      {
+        "id": 6970,
+        "name": "Amara College of Education Ghotki (Private)",
+        "parentId": 5586,
+        "flex1": null
+      },
+      {
+        "id": 6969,
+        "name": "Amrat College of Education Sukkur (Private)",
+        "parentId": 5609,
+        "flex1": null
+      }
+    ],
+    "Degree": [
+      {
+        "id": 8583,
+        "name": "(CIT) Certificate in Information Technology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8582,
+        "name": "(DIT) Diploma in Information Technology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8585,
+        "name": "(OAT) Office Automation Training",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8388,
+        "name": "B.Com (02 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8389,
+        "name": "B.Com (Hon) 3 years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8407,
+        "name": "B.E",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8633,
+        "name": "B.Ed (01 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8634,
+        "name": "B.Ed (1.5)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8635,
+        "name": "B.Ed (2.5 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8502,
+        "name": "B.Pharm (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8378,
+        "name": "B.Sc (2 Years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8381,
+        "name": "B.Sc (Hon) 3 years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8379,
+        "name": "B.Sc (Honors) 3 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8406,
+        "name": "B.Tech",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8627,
+        "name": "BA (05 years) in Law",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8384,
+        "name": "BA (Pass) 2 years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8408,
+        "name": "Bachelor Degree",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8385,
+        "name": "Bachelor of Art (Hon) 3 years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8574,
+        "name": "Bachelor of Arts in Economics (02 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8609,
+        "name": "Bachelor of Arts in English (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8429,
+        "name": "Bachelor of Arts in International Relations (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8478,
+        "name": "Bachelor of Arts in International Relations (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8469,
+        "name": "Bachelor of Arts in Islamic Studies (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8593,
+        "name": "Bachelor of Arts in Pakistan Studies (02 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8598,
+        "name": "Bachelor of Arts in Physical Education (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8543,
+        "name": "Bachelor of Arts in Political Sciences (2 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8545,
+        "name": "Bachelor of Arts in Political Sciences (3 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8566,
+        "name": "Bachelor of Arts in Public Administration",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8620,
+        "name": "Bachelor of Arts in Sindhi",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8623,
+        "name": "Bachelor of Arts in Sindhi (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8605,
+        "name": "Bachelor of Arts in Sociology (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8464,
+        "name": "Bachelor of Arts in Urdu (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8587,
+        "name": "Bachelor of Arts Media and Communication (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8424,
+        "name": "Bachelor of Business Administration (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8425,
+        "name": "Bachelor of Business Administration (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8423,
+        "name": "Bachelor of Business Administration (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8314,
+        "name": "Bachelor of Commerce (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8413,
+        "name": "Bachelor of Commerce (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8454,
+        "name": "Bachelor of Computer Science (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8455,
+        "name": "Bachelor of Computer Science (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2003,
+        "name": "Bachelor of Education (B.Ed.)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8568,
+        "name": "Bachelor of Public Administration (03 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8569,
+        "name": "Bachelor of Public Administration (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8567,
+        "name": "Bachelor of Public Administration (2 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8456,
+        "name": "Bachelor of Science in Computer Science",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8460,
+        "name": "Bachelor of Science in Information Technology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2004,
+        "name": "Bachelor of Science in Education (B.S.Ed.)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8417,
+        "name": "Bachelor of Science In Microbiology (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8418,
+        "name": "Bachelor of Science In Microbiology (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8554,
+        "name": "Bachelor of Science in Statistics (2 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8555,
+        "name": "Bachelor of Science in Statistics (3 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8556,
+        "name": "Bachelor of Science in Statistics BS (4 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8505,
+        "name": "Bachelor of Science in Zoology (04 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8579,
+        "name": "Bachelor of Sciences BS in Gender Studies",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8510,
+        "name": "Bachelor of Sciences in Archaeology (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8511,
+        "name": "Bachelor of Sciences in Archaeology (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8513,
+        "name": "Bachelor of Sciences in Archaeology (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8537,
+        "name": "Bachelor of Sciences in Bachelor of Sciences in Physics (3 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8538,
+        "name": "Bachelor of Sciences in Bachelor of Sciences in Physics BS (4 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8476,
+        "name": "Bachelor of Sciences in Biochemistry (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8479,
+        "name": "Bachelor of Sciences in Biochemistry (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8471,
+        "name": "Bachelor of Sciences in Botany (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8472,
+        "name": "Bachelor of Sciences in Botany (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8477,
+        "name": "Bachelor of Sciences in Botany (04 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8485,
+        "name": "Bachelor of Sciences in Chemistry (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8486,
+        "name": "Bachelor of Sciences in Chemistry (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8487,
+        "name": "Bachelor of Sciences in Chemistry (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8470,
+        "name": "Bachelor of Sciences in Commerce",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8576,
+        "name": "Bachelor of Sciences in Economics (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8517,
+        "name": "Bachelor of Sciences in Geography (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8518,
+        "name": "Bachelor of Sciences in Geography (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8523,
+        "name": "Bachelor of Sciences in Geography (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8527,
+        "name": "Bachelor of Sciences in Mathematics (2 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8528,
+        "name": "Bachelor of Sciences in Mathematics (3 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8529,
+        "name": "Bachelor of Sciences in Mathematics (4 year)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8492,
+        "name": "Bachelor of Sciences in Microbiology (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8493,
+        "name": "Bachelor of Sciences in Microbiology (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8494,
+        "name": "Bachelor of Sciences in Microbiology (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8536,
+        "name": "Bachelor of Sciences in Physics (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8641,
+        "name": "Bachelor of Sciences in Special Education (BS 04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8465,
+        "name": "Bachelor of Sciences in Urdu (BS- 04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8503,
+        "name": "Bachelor of Sciences in Zoology (02 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8504,
+        "name": "Bachelor of Sciences in Zoology (03 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8507,
+        "name": "Bachelor of Sciences in Zoology (04 years)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8412,
+        "name": "Bachelor or Equivalent",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Designation_Profession": [
+      {
+        "id": 3438,
+        "name": "(On Lien)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8687,
+        "name": "AC Mechanic",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3263,
+        "name": "Accessionist",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3264,
+        "name": "Accountant",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3265,
+        "name": "Accounts Officer",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 10194,
+        "name": "Additional Controller Semester",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 10193,
+        "name": "Additional Registrar",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 10204,
+        "name": "Additional Registrar Admin",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 10205,
+        "name": "Additional Registrar M and G",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 10195,
+        "name": "Additoinal Control Conduct",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3266,
+        "name": "Administrative Officer",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3267,
+        "name": "Administrative Officer (Admin.)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3268,
+        "name": "Administrative Officer (Colony)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3269,
+        "name": "Administrative Officer (Hostels)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3270,
+        "name": "Administrative Officer-I (Buildings)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3271,
+        "name": "Administrative Officer-Ii (Buildings)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3272,
+        "name": "Arabic Teacher",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3273,
+        "name": "Artist",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8192,
+        "name": "Artist Botanical Illustrations",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3274,
+        "name": "Artist-Cum-Painter",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3275,
+        "name": "Assistant",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3276,
+        "name": "Assistant Controller",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3277,
+        "name": "Assistant Director",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3278,
+        "name": "Assistant Engineer (Civil)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3279,
+        "name": "Assistant Land Development Officer",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8646,
+        "name": "Assistant Librarian",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3280,
+        "name": "Assistant Planning Officer",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3281,
+        "name": "Assistant Professor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3282,
+        "name": "Assistant Public Relations Officer",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8675,
+        "name": "Assistant Purchase Store Officer",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3283,
+        "name": "Assistant Registrar",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3284,
+        "name": "Assistant Security Officer",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3285,
+        "name": "Assistant Store Keeper",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8662,
+        "name": "Assistant Student Welfare Officer ASWO",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3287,
+        "name": "Assistant To Driver",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3288,
+        "name": "Associate Professor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3289,
+        "name": "Attendant",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "PG DocType": [
+      {
+        "id": 6884,
+        "name": "(Pas/Transcripts) (Attested).",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6873,
+        "name": "Bachelors",
+        "parentId": 0,
+        "flex1": "NULL"
+      }
+    ],
+    "Shift Timing": [
+      {
+        "id": 2233,
+        "name": "07:30 To 17:00 (Sat 9-1)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2234,
+        "name": "08:00 To 17:00 (Sat 11-15)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2235,
+        "name": "08:00 To 17:00 (Sat 9-1)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2236,
+        "name": "08:00 To 17:30 (Sat 11-15)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2237,
+        "name": "08:00 To 17:30 (Sat 12-16)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2238,
+        "name": "08:00 To 17:30 (Sat 9-1)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2239,
+        "name": "08:00 To 18:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2240,
+        "name": "08:00 To 19:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2241,
+        "name": "09:00 To 17:30 (Sat 9-1)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2242,
+        "name": "09:00 To 18:00 (Fri & Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2243,
+        "name": "09:00 To 18:00 (Mon & Tues Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2244,
+        "name": "09:00 To 18:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2245,
+        "name": "09:00 To 18:00 (Sat Off)1",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2246,
+        "name": "09:00 To 18:00 (Sun & Mon Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2247,
+        "name": "09:00 To 18:30 (Sat 9-1)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2248,
+        "name": "10:00 To 17:00 (Sat Half Day)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2249,
+        "name": "10:00 To 18:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2250,
+        "name": "10:00 To 19:00 (Fri & Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2251,
+        "name": "10:00 To 19:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2252,
+        "name": "10:00 To 19:00 (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2253,
+        "name": "10:30 To 19:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2254,
+        "name": "10:30 To 19:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2255,
+        "name": "11:00 To 17:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2256,
+        "name": "11:00 To 19:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2257,
+        "name": "12 Am To 08 Am (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2258,
+        "name": "14:00 To 22:00 (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2259,
+        "name": "14:00 To 23:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2260,
+        "name": "15:00 To 23:00 (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2261,
+        "name": "17:30 To 19:30 (Sat Off) No Flexi",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2262,
+        "name": "18:00 To 03:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2263,
+        "name": "18:00 To 22:00 (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2264,
+        "name": "22:00 To 06:30 (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2265,
+        "name": "7:00 To 16:00 (Sat 8 To 12)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2266,
+        "name": "7:00 To 16:30 (Sat 9 To 13)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2267,
+        "name": "7:30 To 16:00 (Sat 8 To 16) Flexi 15 Min.",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2268,
+        "name": "7:30 To 16:00 (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2269,
+        "name": "7:30 To 16:30 (Sat 11 To 15)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2270,
+        "name": "7:30 To 16:30 (Sat 8 To 12)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2271,
+        "name": "7:30 To 16:30 (Sat 9 To 13)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2272,
+        "name": "8:00 To 16:00 (Sat Half Day)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2273,
+        "name": "8:00 To 16:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2274,
+        "name": "8:00 To 16:30 (Sat On)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2275,
+        "name": "8:00 To 17:00 (Sat 11 To 15)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2276,
+        "name": "8:00 To 17:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2277,
+        "name": "8:00 To 17:30 (Sat 11 To 15)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2278,
+        "name": "8:00 To 17:30 (Sat 9 To 13)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2279,
+        "name": "8:00 To 17:30 (Sat Half Day)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2280,
+        "name": "8:00 To 17:45 (Sat Half Day)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2281,
+        "name": "8:00 To 17:45 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2282,
+        "name": "8:00 To 20:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2283,
+        "name": "8:15 To 17:15 (Rsrch-Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2284,
+        "name": "8:30 To 13:00 (Half Days & Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2285,
+        "name": "8:30 To 15:00 (Sat Off) Flexi 45 Min",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2286,
+        "name": "8:30 To 17:00 (Sat Full)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2287,
+        "name": "8:30 To 17:00 (Sat Half Day)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2288,
+        "name": "8:30 To 17:30 (Flexi 30)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2289,
+        "name": "8:30 To 17:30 (Invest2-Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2290,
+        "name": "8:30 To 17:30 (No Flexi)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2291,
+        "name": "8:30 To 17:30 (Sat Half Day)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2292,
+        "name": "8:45 To 17:45 (Invest-Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2293,
+        "name": "9 Hours Flexible - Sat Off",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2294,
+        "name": "9:00 To 13:00 (Half Days & Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2295,
+        "name": "9:00 To 13:00 (Sat Off) No Flexi",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2296,
+        "name": "9:00 To 16:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2297,
+        "name": "9:00 To 17:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2298,
+        "name": "9:00 To 18:00 (No Flexi-Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2299,
+        "name": "9:00 To 18:00 (Sat 9 To 13)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2300,
+        "name": "9:00 To 18:00 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2301,
+        "name": "9:15 To 18:15 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2302,
+        "name": "9:30 To 16:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2303,
+        "name": "9:30 To 17:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2304,
+        "name": "9:30 To 18:30 (Sat Off)",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "YearWithName": [
+      {
+        "id": 3054,
+        "name": "1 Year",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3063,
+        "name": "10 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3064,
+        "name": "11 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3065,
+        "name": "12 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3066,
+        "name": "13 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3067,
+        "name": "14 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3068,
+        "name": "15 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3069,
+        "name": "16 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3070,
+        "name": "17 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3071,
+        "name": "18 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3072,
+        "name": "19 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3055,
+        "name": "2 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3073,
+        "name": "20 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3074,
+        "name": "21 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3075,
+        "name": "22 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3076,
+        "name": "23 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3077,
+        "name": "24 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3078,
+        "name": "25 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3079,
+        "name": "26 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3080,
+        "name": "27 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3081,
+        "name": "28 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3082,
+        "name": "29 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3056,
+        "name": "3 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3083,
+        "name": "30 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3084,
+        "name": "31 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3085,
+        "name": "32 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3086,
+        "name": "33 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3087,
+        "name": "34 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3088,
+        "name": "35 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3089,
+        "name": "36 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3090,
+        "name": "37 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3091,
+        "name": "38 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3092,
+        "name": "39 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3057,
+        "name": "4 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3093,
+        "name": "40 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3094,
+        "name": "41 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3095,
+        "name": "42 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3096,
+        "name": "43 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3097,
+        "name": "44 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3098,
+        "name": "45 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3099,
+        "name": "46 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3100,
+        "name": "47 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3101,
+        "name": "48 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3102,
+        "name": "49 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3058,
+        "name": "5 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3103,
+        "name": "50 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3104,
+        "name": "51 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3105,
+        "name": "52 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3106,
+        "name": "53 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3107,
+        "name": "54 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3108,
+        "name": "55 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3109,
+        "name": "56 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3110,
+        "name": "57 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3111,
+        "name": "58 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3112,
+        "name": "59 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3059,
+        "name": "6 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3113,
+        "name": "60 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3060,
+        "name": "7 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3061,
+        "name": "8 Years",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3062,
+        "name": "9 Years",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Four wheeler Vehicle": [
+      {
+        "id": 8775,
+        "name": "1.3",
+        "parentId": 8744,
+        "flex1": null
+      },
+      {
+        "id": 8817,
+        "name": "ALSVIN",
+        "parentId": 8754,
+        "flex1": null
+      },
+      {
+        "id": 8765,
+        "name": "ALTIS",
+        "parentId": 8744,
+        "flex1": null
+      },
+      {
+        "id": 8772,
+        "name": "Altis 1.6 AT",
+        "parentId": 8744,
+        "flex1": null
+      },
+      {
+        "id": 8773,
+        "name": "ALTIS GRANDE 1.8",
+        "parentId": 8744,
+        "flex1": null
+      },
+      {
+        "id": 8790,
+        "name": "ALTO AGS",
+        "parentId": 8747,
+        "flex1": null
+      },
+      {
+        "id": 8789,
+        "name": "ALTO VXL AGS",
+        "parentId": 8747,
+        "flex1": null
+      },
+      {
+        "id": 8783,
+        "name": "ALTO",
+        "parentId": 8747,
+        "flex1": null
+      }
+    ],
+    "Vehicle Variant": [
+      {
+        "id": 8982,
+        "name": "1.6 AT",
+        "parentId": 8765,
+        "flex1": null
+      },
+      {
+        "id": 8984,
+        "name": "ALTIS G",
+        "parentId": 8766,
+        "flex1": null
+      },
+      {
+        "id": 8980,
+        "name": "ALTIS GRANDE",
+        "parentId": 8765,
+        "flex1": null
+      },
+      {
+        "id": 8992,
+        "name": "ALTIS GRANDE 1.I",
+        "parentId": 8773,
+        "flex1": null
+      }
+    ],
+    "DateFormats": [
+      {
+        "id": 2380,
+        "name": "100",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Interest Rate": [
+      {
+        "id": 9052,
+        "name": "15",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9053,
+        "name": "16",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9054,
+        "name": "17",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9055,
+        "name": "18",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Eligible Majors": [
+      {
+        "id": 5184,
+        "name": "16 years Business education",
+        "parentId": 4015,
+        "flex1": null
+      },
+      {
+        "id": 4186,
+        "name": "Arts",
+        "parentId": 4012,
+        "flex1": null
+      },
+      {
+        "id": 5193,
+        "name": "B. Pharmacy",
+        "parentId": 4016,
+        "flex1": null
+      },
+      {
+        "id": 5216,
+        "name": "B.Com (Part-II)",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5191,
+        "name": "B.E",
+        "parentId": 4016,
+        "flex1": null
+      },
+      {
+        "id": 5370,
+        "name": "B.Sc (Part-II) in Archaeology with Anthropology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5372,
+        "name": "B.Sc (Part-II) in Archaeology with Biochemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5371,
+        "name": "B.Sc (Part-II) in Archaeology with Botany",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5373,
+        "name": "B.Sc (Part-II) in Archaeology with Chemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5375,
+        "name": "B.Sc (Part-II) in Archaeology with Computer Science",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5374,
+        "name": "B.Sc (Part-II) in Archaeology with Geography",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5376,
+        "name": "B.Sc (Part-II) in Archaeology with Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5377,
+        "name": "B.Sc (Part-II) in Archaeology with Microbiology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5378,
+        "name": "B.Sc (Part-II) in Archaeology with Physics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5379,
+        "name": "B.Sc (Part-II) in Archaeology with Statictics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5380,
+        "name": "B.Sc (Part-II) in Archaeology with Zoology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5217,
+        "name": "B.Sc (Part-II) in Biochemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5219,
+        "name": "B.Sc (Part-II) in Botany",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5225,
+        "name": "B.Sc (Part-II) in Botany with Zoology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5482,
+        "name": "B.Sc (Part-II) in Botany with Biochemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5480,
+        "name": "B.Sc (Part-II) in Botany with Chemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5481,
+        "name": "B.Sc (Part-II) in Botany with Functional Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5483,
+        "name": "B.Sc (Part-II) in Botany with Microbiology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5226,
+        "name": "B.Sc (Part-II) in Chemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5476,
+        "name": "B.Sc (Part-II) in Chemistry with Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5227,
+        "name": "B.Sc (Part-II) in Chemistry with Physics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5218,
+        "name": "B.Sc (Part-II) in Chemistry with Zoology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5220,
+        "name": "B.Sc (Part-II) in Functional Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5234,
+        "name": "B.Sc (Part-II) in Functional Mathematics with Statistics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5224,
+        "name": "B.Sc (Part-II) in Geography",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5223,
+        "name": "B.Sc (Part-II) in Microbiology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5229,
+        "name": "B.Sc (Part-II) in Microbiology with Zoology",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5463,
+        "name": "B.Sc (Part-II) in Microbiology with Biochemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5461,
+        "name": "B.Sc (Part-II) in Microbiology with Botany",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5460,
+        "name": "B.Sc (Part-II) in Microbiology with Chemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5462,
+        "name": "B.Sc (Part-II) in Microbiology with Functional Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5232,
+        "name": "B.Sc (Part-II) in Physics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5430,
+        "name": "B.Sc (Part-II) in Physics with Chemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5428,
+        "name": "B.Sc (Part-II) in Physics with Functional Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5231,
+        "name": "B.Sc (Part-II) in Physics with Pure Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5429,
+        "name": "B.Sc (Part-II) in Physics with Statistics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5221,
+        "name": "B.Sc (Part-II) in Pure Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5363,
+        "name": "B.Sc (Part-II) in Pure Mathematics with Statistics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5222,
+        "name": "B.Sc (Part-II) in Statistics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5233,
+        "name": "B.Sc (Part-II) in Statistics with Pure Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5443,
+        "name": "B.Sc (Part-II) in Zoology with Biochemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5441,
+        "name": "B.Sc (Part-II) in Zoology with Botany",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5440,
+        "name": "B.Sc (Part-II) in Zoology with Chemistry",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5442,
+        "name": "B.Sc (Part-II) in Zoology with Functional Mathematics",
+        "parentId": 4013,
+        "flex1": null
+      },
+      {
+        "id": 5444,
+        "name": "B.Sc (Part-II) in Zoology with Microbiology",
+        "parentId": 4013,
+        "flex1": null
+      }
+    ],
+    "Eligible Majors Test": [
+      {
+        "id": 6681,
+        "name": "16 years Business education",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6676,
+        "name": "Arts",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6684,
+        "name": "B. Pharmacy",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6686,
+        "name": "B.Com (Part-II)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6682,
+        "name": "B.E",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6704,
+        "name": "B.Sc (Part-II) in Archaeology with Anthropology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6706,
+        "name": "B.Sc (Part-II) in Archaeology with Biochemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6705,
+        "name": "B.Sc (Part-II) in Archaeology with Botany",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6707,
+        "name": "B.Sc (Part-II) in Archaeology with Chemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6709,
+        "name": "B.Sc (Part-II) in Archaeology with Computer Science",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6708,
+        "name": "B.Sc (Part-II) in Archaeology with Geography",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6710,
+        "name": "B.Sc (Part-II) in Archaeology with Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6711,
+        "name": "B.Sc (Part-II) in Archaeology with Microbiology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6712,
+        "name": "B.Sc (Part-II) in Archaeology with Physics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6713,
+        "name": "B.Sc (Part-II) in Archaeology with Statictics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6714,
+        "name": "B.Sc (Part-II) in Archaeology with Zoology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6687,
+        "name": "B.Sc (Part-II) in Biochemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6689,
+        "name": "B.Sc (Part-II) in Botany",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6695,
+        "name": "B.Sc (Part-II) in Botany with Zoology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6730,
+        "name": "B.Sc (Part-II) in Botany with Biochemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6728,
+        "name": "B.Sc (Part-II) in Botany with Chemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6729,
+        "name": "B.Sc (Part-II) in Botany with Functional Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6731,
+        "name": "B.Sc (Part-II) in Botany with Microbiology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6696,
+        "name": "B.Sc (Part-II) in Chemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6727,
+        "name": "B.Sc (Part-II) in Chemistry with Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6697,
+        "name": "B.Sc (Part-II) in Chemistry with Physics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6688,
+        "name": "B.Sc (Part-II) in Chemistry with Zoology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6690,
+        "name": "B.Sc (Part-II) in Functional Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6702,
+        "name": "B.Sc (Part-II) in Functional Mathematics with Statistics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6694,
+        "name": "B.Sc (Part-II) in Geography",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6693,
+        "name": "B.Sc (Part-II) in Microbiology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6698,
+        "name": "B.Sc (Part-II) in Microbiology with Zoology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6726,
+        "name": "B.Sc (Part-II) in Microbiology with Biochemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6724,
+        "name": "B.Sc (Part-II) in Microbiology with Botany",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6723,
+        "name": "B.Sc (Part-II) in Microbiology with Chemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6725,
+        "name": "B.Sc (Part-II) in Microbiology with Functional Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6700,
+        "name": "B.Sc (Part-II) in Physics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6717,
+        "name": "B.Sc (Part-II) in Physics with Chemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6715,
+        "name": "B.Sc (Part-II) in Physics with Functional Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6699,
+        "name": "B.Sc (Part-II) in Physics with Pure Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6716,
+        "name": "B.Sc (Part-II) in Physics with Statistics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6691,
+        "name": "B.Sc (Part-II) in Pure Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6703,
+        "name": "B.Sc (Part-II) in Pure Mathematics with Statistics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6692,
+        "name": "B.Sc (Part-II) in Statistics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6701,
+        "name": "B.Sc (Part-II) in Statistics with Pure Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6721,
+        "name": "B.Sc (Part-II) in Zoology with Biochemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6719,
+        "name": "B.Sc (Part-II) in Zoology with Botany",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6718,
+        "name": "B.Sc (Part-II) in Zoology with Chemistry",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6720,
+        "name": "B.Sc (Part-II) in Zoology with Functional Mathematics",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6722,
+        "name": "B.Sc (Part-II) in Zoology with Microbiology",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "YearForPG": [
+      {
+        "id": 5782,
+        "name": "1980",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5783,
+        "name": "1981",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5784,
+        "name": "1982",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5785,
+        "name": "1983",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5786,
+        "name": "1984",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5787,
+        "name": "1985",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5788,
+        "name": "1986",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5789,
+        "name": "1987",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5790,
+        "name": "1988",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5791,
+        "name": "1989",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5792,
+        "name": "1990",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5793,
+        "name": "1991",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5794,
+        "name": "1992",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5795,
+        "name": "1993",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5796,
+        "name": "1994",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5797,
+        "name": "1995",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5798,
+        "name": "1996",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5799,
+        "name": "1997",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5800,
+        "name": "1998",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5801,
+        "name": "1999",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5802,
+        "name": "2000",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5803,
+        "name": "2001",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5804,
+        "name": "2002",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5805,
+        "name": "2003",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5806,
+        "name": "2004",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5807,
+        "name": "2005",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5808,
+        "name": "2006",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5809,
+        "name": "2007",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5810,
+        "name": "2008",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5811,
+        "name": "2009",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5812,
+        "name": "2010",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5813,
+        "name": "2011",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5814,
+        "name": "2012",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5815,
+        "name": "2013",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5816,
+        "name": "2014",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5817,
+        "name": "2015",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5818,
+        "name": "2016",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5819,
+        "name": "2017",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5820,
+        "name": "2018",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5821,
+        "name": "2019",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5822,
+        "name": "2020",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5823,
+        "name": "2021",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5824,
+        "name": "2022",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3591,
+        "name": "2023",
+        "parentId": 0,
+        "flex1": "1"
+      },
+      {
+        "id": 8661,
+        "name": "2024",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9133,
+        "name": "2025",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9168,
+        "name": "2026",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Division": [
+      {
+        "id": 6116,
+        "name": "1st Division",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Floor": [
+      {
+        "id": 5579,
+        "name": "1st Floor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5580,
+        "name": "2nd Floor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5581,
+        "name": "3rd Floor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5582,
+        "name": "4th Floor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 1053,
+        "name": "5th Floor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 1049,
+        "name": "6th Floor New",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 1050,
+        "name": "6th Floor Old",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 1051,
+        "name": "7th Floor",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 1052,
+        "name": "8th Floor",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Merit List": [
+      {
+        "id": 3860,
+        "name": "1st Merit List",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 3861,
+        "name": "2nd Merit List",
+        "parentId": 0,
+        "flex1": "1"
+      },
+      {
+        "id": 3862,
+        "name": "3rd Merit List",
+        "parentId": 0,
+        "flex1": "2"
+      },
+      {
+        "id": 7103,
+        "name": "4th Merit List",
+        "parentId": 0,
+        "flex1": "3"
+      },
+      {
+        "id": 9049,
+        "name": "5th Merit List",
+        "parentId": 0,
+        "flex1": "4"
+      }
+    ],
+    "Semester Parts (Fee Structure)": [
+      {
+        "id": 6091,
+        "name": "1st Semester",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6083,
+        "name": "1st Year",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6092,
+        "name": "2nd Semester",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6088,
+        "name": "2nd Year",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6093,
+        "name": "3rd Semester",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6089,
+        "name": "3rd Year",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6094,
+        "name": "4th Semester",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6090,
+        "name": "4th Year",
+        "parentId": 3480,
+        "flex1": null
+      }
+    ],
+    "Fee Type": [
+      {
+        "id": 6051,
+        "name": "1st year Registration/Tuition Fee",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6064,
+        "name": "2nd year Registration/Tuition Fee",
+        "parentId": 3480,
+        "flex1": null
+      },
+      {
+        "id": 6065,
+        "name": "3rd year Registration/Tuition Fee",
+        "parentId": 3480,
+        "flex1": null
+      }
+    ],
+    "YearForTMS": [
+      {
+        "id": 6132,
+        "name": "2005",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6133,
+        "name": "2006",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6134,
+        "name": "2007",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6135,
+        "name": "2008",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6136,
+        "name": "2009",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6137,
+        "name": "2010",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6138,
+        "name": "2011",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6139,
+        "name": "2012",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6140,
+        "name": "2013",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6141,
+        "name": "2014",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7144,
+        "name": "2015",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7145,
+        "name": "2016",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7146,
+        "name": "2017",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7147,
+        "name": "2018",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7148,
+        "name": "2019",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7149,
+        "name": "2020",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7150,
+        "name": "2021",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7151,
+        "name": "2022",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7152,
+        "name": "2023",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7153,
+        "name": "2024",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7154,
+        "name": "2025",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9158,
+        "name": "2026",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9159,
+        "name": "2027",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9160,
+        "name": "2028",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Year": [
+      {
+        "id": 5738,
+        "name": "2010",
+        "parentId": 3703,
+        "flex1": null
+      },
+      {
+        "id": 5707,
+        "name": "2011",
+        "parentId": 3589,
+        "flex1": null
+      },
+      {
+        "id": 5740,
+        "name": "2012",
+        "parentId": 3703,
+        "flex1": null
+      },
+      {
+        "id": 5709,
+        "name": "2013",
+        "parentId": 3589,
+        "flex1": null
+      },
+      {
+        "id": 5742,
+        "name": "2014",
+        "parentId": 3703,
+        "flex1": null
+      },
+      {
+        "id": 5711,
+        "name": "2015",
+        "parentId": 3589,
+        "flex1": null
+      },
+      {
+        "id": 5744,
+        "name": "2016",
+        "parentId": 3703,
+        "flex1": null
+      },
+      {
+        "id": 5713,
+        "name": "2017",
+        "parentId": 3589,
+        "flex1": null
+      },
+      {
+        "id": 5842,
+        "name": "2018",
+        "parentId": 5833,
+        "flex1": null
+      },
+      {
+        "id": 5698,
+        "name": "2019",
+        "parentId": 3701,
+        "flex1": null
+      },
+      {
+        "id": 5844,
+        "name": "2020",
+        "parentId": 5833,
+        "flex1": null
+      },
+      {
+        "id": 5700,
+        "name": "2021",
+        "parentId": 3701,
+        "flex1": null
+      },
+      {
+        "id": 5846,
+        "name": "2022",
+        "parentId": 5833,
+        "flex1": null
+      },
+      {
+        "id": 7120,
+        "name": "2023",
+        "parentId": 3591,
+        "flex1": null
+      }
+    ],
+    "Academic Year": [
+      {
+        "id": 7114,
+        "name": "2018",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 7113,
+        "name": "2019",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 7112,
+        "name": "2020",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 7111,
+        "name": "2021",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 7110,
+        "name": "2022",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 5511,
+        "name": "2023",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 6106,
+        "name": "2024",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 7156,
+        "name": "2025",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 9128,
+        "name": "2026",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 10191,
+        "name": "2027",
+        "parentId": 0,
+        "flex1": "1"
+      }
+    ],
+    "PasswordAttemptDuring10Mins": [
+      {
+        "id": 1068,
+        "name": "3",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Item Dimension": [
+      {
+        "id": 7033,
+        "name": "3/3",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Item Size": [
+      {
+        "id": 7030,
+        "name": "50cn",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Item Weight": [
+      {
+        "id": 7032,
+        "name": "50KG",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "PasswordAttempt": [
+      {
+        "id": 1066,
+        "name": "6",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "SixMonthPasswordChange": [
+      {
+        "id": 1067,
+        "name": "6",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "TMS Shift": [
+      {
+        "id": 1062,
+        "name": "8:00 AM - 3:00 PM",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "IOC Groups": [
+      {
+        "id": 6067,
+        "name": "A.D.A (Pass)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6068,
+        "name": "A.D.C (Pass)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6071,
+        "name": "A.D.S (Home Economics)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6072,
+        "name": "A.D.S (Pass)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6073,
+        "name": "Arabic",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6074,
+        "name": "B.A (Pass)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6075,
+        "name": "B.Com (Pass)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6076,
+        "name": "B.Ed.",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6077,
+        "name": "B.P.Ed",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6078,
+        "name": "B.Sc (Pass)",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Additional Charge": [
+      {
+        "id": 8260,
+        "name": "A.O Buildings I",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8261,
+        "name": "A.O Buildings II",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8262,
+        "name": "A.O Colony",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Item": [
+      {
+        "id": 7024,
+        "name": "A4 Paper",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "City": [
+      {
+        "id": 2925,
+        "name": "Abbotabad",
+        "parentId": 2822,
+        "flex1": null
+      },
+      {
+        "id": 2954,
+        "name": "Ahmedpur East",
+        "parentId": 2822,
+        "flex1": null
+      },
+      {
+        "id": 2973,
+        "name": "Arif Wala",
+        "parentId": 2822,
+        "flex1": null
+      },
+      {
+        "id": 8666,
+        "name": "Astore",
+        "parentId": 2822,
+        "flex1": null
+      },
+      {
+        "id": 2946,
+        "name": "Attock",
+        "parentId": 2822,
+        "flex1": null
+      },
+      {
+        "id": 2972,
+        "name": "Badin",
+        "parentId": 2822,
+        "flex1": null
+      }
+    ],
+    "Bank": [
+      {
+        "id": 8716,
+        "name": "ABL",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Upload Type": [
+      {
+        "id": 9073,
+        "name": "AbsentLog",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9076,
+        "name": "Allowance",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Room Category": [
+      {
+        "id": 5561,
+        "name": "AC",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5576,
+        "name": "Ac Wala Room",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Log Status": [
+      {
+        "id": 6849,
+        "name": "Academic Record Submitted",
+        "parentId": 0,
+        "flex1": "NULL"
+      }
+    ],
+    "Department": [
+      {
+        "id": 2123,
+        "name": "Academic-I Meetings",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3651,
+        "name": "Academic-II General Section",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3439,
+        "name": "Administration (Teaching)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2201,
+        "name": "Administration Section",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3123,
+        "name": "Administrative Officer (Colony)",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3124,
+        "name": "Administrative Officer (Hostels)",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3126,
+        "name": "Administrative Officer-I (Buildings)",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3128,
+        "name": "Administrative Officer-II (Buildings)",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3131,
+        "name": "Archaeology & Anthropology Museum",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 3132,
+        "name": "Atta Muhammad Hami Hostel",
+        "parentId": 2117,
+        "flex1": null
+      },
+      {
+        "id": 2121,
+        "name": "Attendance Cell",
+        "parentId": 2117,
+        "flex1": "3"
+      }
+    ],
+    "Adjustment Reason": [
+      {
+        "id": 2451,
+        "name": "Accident",
+        "parentId": 1083,
+        "flex1": null
+      }
+    ],
+    "IOC Subjects": [
+      {
+        "id": 7063,
+        "name": "Accounting",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7064,
+        "name": "Al-Hadis",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7065,
+        "name": "Al-Quran",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7066,
+        "name": "Arabic",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7067,
+        "name": "Autobiography & Biographies (سوانح عمريون ۽ اتم ڪھاڻيون)",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "ID Status": [
+      {
+        "id": 2382,
+        "name": "Active",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Examination": [
+      {
+        "id": 6143,
+        "name": "ADA",
+        "parentId": 0,
+        "flex1": "5"
+      },
+      {
+        "id": 6145,
+        "name": "ADC",
+        "parentId": 0,
+        "flex1": "5"
+      },
+      {
+        "id": 6144,
+        "name": "ADS",
+        "parentId": 0,
+        "flex1": "5"
+      },
+      {
+        "id": 9119,
+        "name": "B.E",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9115,
+        "name": "B.Ed(Honors) 4 year",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9101,
+        "name": "B.Ed.(1.5)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9103,
+        "name": "B.Ed.(2.5)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 5833,
+        "name": "BA",
+        "parentId": 0,
+        "flex1": "5"
+      }
+    ],
+    "Affilcated Collage Programs": [
+      {
+        "id": 7169,
+        "name": "ADA (External)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6594,
+        "name": "ADA (Associate Degree of Arts)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6595,
+        "name": "ADC (Associate Degree of Commerce)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6596,
+        "name": "ADE (Associate Degree in Education)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6597,
+        "name": "ADS (Associate Degree of Science)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6598,
+        "name": "ADS(H.E) (Associate Degree of Science (Home Economics))",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6995,
+        "name": "All Programs",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6599,
+        "name": "B.A (Bachelor of Arts)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6991,
+        "name": "B.A LL.B",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6625,
+        "name": "B.Ed (1.5) (Bachelor of Education (1.5 Years))",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6937,
+        "name": "B.Ed (2.5) (Bachelor of Education (2.5 Years))",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6938,
+        "name": "B.Ed (2.5) ECE",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6601,
+        "name": "B.ED (Bachelor of Education (1 Year))",
+        "parentId": 0,
+        "flex1": "One Year of Program"
+      },
+      {
+        "id": 6939,
+        "name": "B.Ed (HONS) (Bachelor of Education (4 Years))",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 6940,
+        "name": "B.P.Ed (Bachelor of Physical Education)",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "PayRoll Type": [
+      {
+        "id": 1979,
+        "name": "Adhoc",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Leave Approval Workflow": [
+      {
+        "id": 9089,
+        "name": "Admin Officer Approval",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9091,
+        "name": "Admin Teaching Approval",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Admission Particulars": [
+      {
+        "id": 3618,
+        "name": "Admission Fee",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7017,
+        "name": "Admission Fee/Registration/Tuition etc",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "What is Next (Admission)": [
+      {
+        "id": 3739,
+        "name": "Admission Office is waiting for your documents and application processing fee. Please submit all required documents as listed in the checklist along with the processing fee proof before the deadline date.",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Merit Scores": [
+      {
+        "id": 7002,
+        "name": "Admission Test Minimum Cut Off Score",
+        "parentId": 1223,
+        "flex1": null
+      },
+      {
+        "id": 7003,
+        "name": "Admission Test Score",
+        "parentId": 1223,
+        "flex1": null
+      },
+      {
+        "id": 7001,
+        "name": "Admission Test Total Marks",
+        "parentId": 1223,
+        "flex1": null
+      }
+    ],
+    "Card Type": [
+      {
+        "id": 5529,
+        "name": "Admit Card",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Majors": [
+      {
+        "id": 8672,
+        "name": "Advertising",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8327,
+        "name": "Archaeology",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 8698,
+        "name": "Arts",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Nationality": [
+      {
+        "id": 2455,
+        "name": "Afghan",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2456,
+        "name": "Albanian",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2457,
+        "name": "Algerian",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2558,
+        "name": "American",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2458,
+        "name": "Argentine",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2459,
+        "name": "Argentinian",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 1041,
+        "name": "Australian",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2460,
+        "name": "Austrian",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Country": [
+      {
+        "id": 2691,
+        "name": "Afghanistan",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2692,
+        "name": "Albania",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2693,
+        "name": "Algeria",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2694,
+        "name": "Andorra",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2695,
+        "name": "Angola",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2696,
+        "name": "Antigua and Barbuda",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2697,
+        "name": "Argentina",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2698,
+        "name": "Armenia",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2699,
+        "name": "Australia",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2700,
+        "name": "Austria",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2701,
+        "name": "Azerbaijan",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2702,
+        "name": "Bahamas",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Currency": [
+      {
+        "id": 6447,
+        "name": "Afghanistan Afghani",
+        "parentId": 0,
+        "flex1": "AFN"
+      },
+      {
+        "id": 6446,
+        "name": "Albania Lek",
+        "parentId": 0,
+        "flex1": "ALL"
+      },
+      {
+        "id": 6448,
+        "name": "Argentina Peso",
+        "parentId": 0,
+        "flex1": "ARS"
+      },
+      {
+        "id": 6449,
+        "name": "Aruba Guilder",
+        "parentId": 0,
+        "flex1": "AWG"
+      },
+      {
+        "id": 6450,
+        "name": "Australia Dollar",
+        "parentId": 0,
+        "flex1": "AUD"
+      },
+      {
+        "id": 6451,
+        "name": "Azerbaijan Manat",
+        "parentId": 0,
+        "flex1": "AZN"
+      },
+      {
+        "id": 6452,
+        "name": "Bahamas Dollar",
+        "parentId": 0,
+        "flex1": "BSD"
+      }
+    ],
+    "Program Type Mapping Test": [
+      {
+        "id": 6665,
+        "name": "Afternoon",
+        "parentId": 1644,
+        "flex1": null
+      }
+    ],
+    "Program Type Mapping": [
+      {
+        "id": 5854,
+        "name": "Afternoon",
+        "parentId": 1644,
+        "flex1": null
+      }
+    ],
+    "Program Type_old": [
+      {
+        "id": 3698,
+        "name": "Afternoon",
+        "parentId": 1644,
+        "flex1": null
+      }
+    ],
+    "Supplier Category": [
+      {
+        "id": 7027,
+        "name": "Agend",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Board": [
+      {
+        "id": 3576,
+        "name": "AIOU, Islamabad",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3573,
+        "name": "AKU-EB (Karachi)",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Domicile Province": [
+      {
+        "id": 6622,
+        "name": "All",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3724,
+        "name": "Azad Jammu and Kashmir",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Parts / Year": [
+      {
+        "id": 6954,
+        "name": "All Classes",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 7137,
+        "name": "Annual",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Eligible Departments Test": [
+      {
+        "id": 6998,
+        "name": "All of these",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 6733,
+        "name": "Arabic",
+        "parentId": 0,
+        "flex1": "35"
+      },
+      {
+        "id": 6748,
+        "name": "Archaeology",
+        "parentId": 0,
+        "flex1": "01"
+      }
+    ],
+    "Eligible Faculties Test": [
+      {
+        "id": 6866,
+        "name": "All of These",
+        "parentId": 0,
+        "flex1": "0"
+      },
+      {
+        "id": 6835,
+        "name": "Arts & Languages",
+        "parentId": 0,
+        "flex1": "7"
+      }
+    ],
+    "Eligible Departments Programs Test": [
+      {
+        "id": 6867,
+        "name": "All of These",
+        "parentId": 0,
+        "flex1": "MBA"
+      },
+      {
+        "id": 6804,
+        "name": "B.Ed(Hons) Elementary",
+        "parentId": 0,
+        "flex1": "TE"
+      }
+    ],
+    "Faculty Type": [
+      {
+        "id": 6869,
+        "name": "All of these",
+        "parentId": 0,
+        "flex1": "2"
+      },
+      {
+        "id": 2435,
+        "name": "Arts & Languages",
+        "parentId": 1002,
+        "flex1": "7"
+      }
+    ],
+    "ProgramAndExpertise": [
+      {
+        "id": 1179,
+        "name": "Applied Statistics /EMS",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 1180,
+        "name": "Archaeology",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Status": [
+      {
+        "id": 2420,
+        "name": "Approved",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Month": [
+      {
+        "id": 2414,
+        "name": "April",
+        "parentId": 1002,
+        "flex1": "4"
+      },
+      {
+        "id": 2429,
+        "name": "August",
+        "parentId": 1002,
+        "flex1": "8"
+      }
+    ],
+    "FacultyDepartment_old": [
+      {
+        "id": 3967,
+        "name": "Arabic",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 3968,
+        "name": "Archaeology",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Faculty Department Mapping": [
+      {
+        "id": 4044,
+        "name": "Arabic",
+        "parentId": 4023,
+        "flex1": null
+      },
+      {
+        "id": 4045,
+        "name": "Archaeology",
+        "parentId": 4038,
+        "flex1": null
+      }
+    ],
+    "Eligible Departments": [
+      {
+        "id": 4738,
+        "name": "Arabic",
+        "parentId": 4426,
+        "flex1": "35"
+      },
+      {
+        "id": 4790,
+        "name": "Archaeology",
+        "parentId": 4431,
+        "flex1": "01"
+      }
+    ],
+    "Area of Expertise/Competencies": [
+      {
+        "id": 8277,
+        "name": "Archaeology",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Eligible Faculties": [
+      {
+        "id": 5861,
+        "name": "Arts & Languages",
+        "parentId": 5858,
+        "flex1": "7"
+      }
+    ],
+    "Faculty Type Mapping": [
+      {
+        "id": 4023,
+        "name": "Arts & Languages",
+        "parentId": 4012,
+        "flex1": null
+      }
+    ],
+    "AdmissionFacultyType_old": [
+      {
+        "id": 3517,
+        "name": "Arts & Languages",
+        "parentId": 3501,
+        "flex1": "7"
+      }
+    ],
+    "Faculty": [
+      {
+        "id": 1135,
+        "name": "Arts & Languages",
+        "parentId": 0,
+        "flex1": "7"
+      }
+    ],
+    "Groups": [
+      {
+        "id": 2168,
+        "name": "asaaa",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2167,
+        "name": "asdasdasd",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 2169,
+        "name": "asdasdasdasdsad",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Area": [
+      {
+        "id": 1055,
+        "name": "Astore",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Special Type": [
+      {
+        "id": 9036,
+        "name": "Attendance Allowance",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "EligibilityDocumentType": [
+      {
+        "id": 6639,
+        "name": "Attendance Certificate of 75% attendance",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Organization Type": [
+      {
+        "id": 3660,
+        "name": "Autonomous",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Degree Status": [
+      {
+        "id": 3245,
+        "name": "Awaiting Result",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Faculty Department": [
+      {
+        "id": 5285,
+        "name": "aweq",
+        "parentId": 2435,
+        "flex1": null
+      }
+    ],
+    "Last Degree": [
+      {
+        "id": 5664,
+        "name": "B.E",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9107,
+        "name": "B.E.",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9110,
+        "name": "B.Ed(Honors) 4 year",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9108,
+        "name": "B.Ed.(1.5)",
+        "parentId": 0,
+        "flex1": null
+      },
+      {
+        "id": 9109,
+        "name": "B.Ed.(2.5)",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Faculty Department Programs_old": [
+      {
+        "id": 3896,
+        "name": "B.Ed(Hons) Elementary",
+        "parentId": 3994,
+        "flex1": null
+      }
+    ],
+    "Faculty Department Programs Mapping": [
+      {
+        "id": 4163,
+        "name": "B.Ed(Hons) Elementary",
+        "parentId": 4097,
+        "flex1": null
+      }
+    ],
+    "Eligible Departments Programs": [
+      {
+        "id": 4890,
+        "name": "B.Ed(Hons) Elementary",
+        "parentId": 4758,
+        "flex1": "TE"
+      }
+    ],
+    "University": [
+      {
+        "id": 1807,
+        "name": "B.Z. University, Multan",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Document Type": [
+      {
+        "id": 3248,
+        "name": "Bachelor",
+        "parentId": 0,
+        "flex1": null
+      }
+    ],
+    "Domicile District": [
+      {
+        "id": 5584,
+        "name": "Badin",
+        "parentId": 3603,
+        "flex1": null
+      }
+    ]
+  }
+}

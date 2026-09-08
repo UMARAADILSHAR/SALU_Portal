@@ -1,0 +1,240 @@
+@page "/Account/UniversityRegister"
+
+@using System.ComponentModel.DataAnnotations
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.EntityFrameworkCore
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IEmailSender<ApplicationUser> EmailSender
+@inject ILogger<UniversityRegister> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>University Regular Admission – SALU</PageTitle>
+
+<div class="salu-university-register salu-auth-wrapper salu-auth-board">
+    <div class="salu-card-container">
+        <div class="salu-login-card salu-auth-card salu-auth-card-register">
+            <div class="salu-crest-holder">
+                <div class="salu-logo-wrapper">
+                    <img src="images/salu-logo.png" alt="Shah Abdul Latif University Crest" class="salu-crest-img" />
+                </div>
+            </div>
+
+            <div class="salu-security-badge">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>University Regular Admission</span>
+            </div>
+
+            <h2 class="salu-heading-main">Create University Account</h2>
+            <p class="salu-heading-sub">Register for regular admission at Shah Abdul Latif University</p>
+
+            <StatusMessage Message="@Message" />
+            <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="university-register">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger small mb-3 text-start" role="alert" />
+
+                <div class="salu-form-group">
+                    <label for="Input.FullName" class="salu-form-label"><i class="bi bi-person-fill"></i> Full Name <span class="text-danger">*</span></label>
+                    <div class="salu-input-box">
+                        <i class="bi bi-person-fill salu-field-icon"></i>
+                        <InputText @bind-Value="Input.FullName" id="Input.FullName" class="salu-text-input" autocomplete="name" aria-required="true" placeholder="Candidate full name" />
+                    </div>
+                    <ValidationMessage For="() => Input.FullName" class="text-danger small mt-1 text-start" />
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-6 salu-form-group">
+                        <label for="Input.Cnic" class="salu-form-label"><i class="bi bi-person-vcard-fill"></i> CNIC / B-Form <span class="text-danger">*</span></label>
+                        <div class="salu-input-box">
+                            <i class="bi bi-person-vcard-fill salu-field-icon"></i>
+                            <input value="@Input.Cnic" @oninput="FormatCnicInput" id="Input.Cnic" name="Input.Cnic" class="salu-text-input" inputmode="numeric" maxlength="15" autocomplete="off" aria-required="true" placeholder="00000-0000000-0" />
+                        </div>
+                        <ValidationMessage For="() => Input.Cnic" class="text-danger small mt-1 text-start" />
+                    </div>
+                    <div class="col-md-6 salu-form-group">
+                        <label for="Input.Phone" class="salu-form-label"><i class="bi bi-phone-fill"></i> Mobile Number <span class="text-danger">*</span></label>
+                        <div class="salu-input-box">
+                            <i class="bi bi-phone-fill salu-field-icon"></i>
+                            <input value="@Input.Phone" @oninput="FormatPhoneInput" id="Input.Phone" name="Input.Phone" class="salu-text-input" inputmode="tel" maxlength="12" autocomplete="tel" aria-required="true" placeholder="0300-0000000" />
+                        </div>
+                        <ValidationMessage For="() => Input.Phone" class="text-danger small mt-1 text-start" />
+                    </div>
+                </div>
+
+                <div class="salu-form-group">
+                    <label for="Input.Email" class="salu-form-label"><i class="bi bi-envelope-fill"></i> Email Address <span class="text-danger">*</span></label>
+                    <div class="salu-input-box">
+                        <i class="bi bi-envelope-fill salu-field-icon"></i>
+                        <InputText @bind-Value="Input.Email" id="Input.Email" class="salu-text-input" autocomplete="username" aria-required="true" placeholder="student@example.com" />
+                    </div>
+                    <ValidationMessage For="() => Input.Email" class="text-danger small mt-1 text-start" />
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-6 salu-form-group">
+                        <label for="Input.Password" class="salu-form-label"><i class="bi bi-lock-fill"></i> Password <span class="text-danger">*</span></label>
+                        <div class="salu-input-box">
+                            <i class="bi bi-lock-fill salu-field-icon"></i>
+                            <InputText type="@(showPassword ? "text" : "password")" @bind-Value="Input.Password" @oninput="UpdatePassword" id="Input.Password" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Min 8 characters" />
+                            <button type="button" class="salu-eye-btn" @onclick="() => showPassword = !showPassword" title="@(showPassword ? "Hide password" : "Show password")"><i class="bi @(showPassword ? "bi-eye-slash-fill" : "bi-eye-fill")"></i></button>
+                        </div>
+                        <ValidationMessage For="() => Input.Password" class="text-danger small mt-1 text-start" />
+                    </div>
+                    <div class="col-md-6 salu-form-group">
+                        <label for="Input.ConfirmPassword" class="salu-form-label"><i class="bi bi-lock-fill"></i> Confirm Password <span class="text-danger">*</span></label>
+                        <div class="salu-input-box">
+                            <i class="bi bi-lock-fill salu-field-icon"></i>
+                            <InputText type="@(showConfirmPassword ? "text" : "password")" @bind-Value="Input.ConfirmPassword" @oninput="UpdateConfirmPassword" id="Input.ConfirmPassword" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Repeat password" />
+                            <button type="button" class="salu-eye-btn" @onclick="() => showConfirmPassword = !showConfirmPassword" title="@(showConfirmPassword ? "Hide password" : "Show password")"><i class="bi @(showConfirmPassword ? "bi-eye-slash-fill" : "bi-eye-fill")"></i></button>
+                        </div>
+                        <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger small mt-1 text-start" />
+                        @if (!string.IsNullOrEmpty(Input.ConfirmPassword))
+                        {
+                            <div class="@(Input.Password == Input.ConfirmPassword ? "text-success" : "text-danger") small mt-1"><i class="bi @(Input.Password == Input.ConfirmPassword ? "bi-check-circle-fill" : "bi-x-circle-fill")"></i> @(Input.Password == Input.ConfirmPassword ? "Passwords match" : "Passwords do not match")</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="university-password-help">
+                    <strong><i class="bi bi-info-circle"></i> Password requirements</strong>
+                    <span class="@(Input.Password.Length >= 8 ? "met" : "")"><i class="bi @(Input.Password.Length >= 8 ? "bi-check-circle-fill" : "bi-circle")"></i> 8+ characters</span>
+                    <span class="@(Input.Password.Any(char.IsUpper) ? "met" : "")"><i class="bi @(Input.Password.Any(char.IsUpper) ? "bi-check-circle-fill" : "bi-circle")"></i> Uppercase letter</span>
+                    <span class="@(Input.Password.Any(char.IsLower) ? "met" : "")"><i class="bi @(Input.Password.Any(char.IsLower) ? "bi-check-circle-fill" : "bi-circle")"></i> Lowercase letter</span>
+                    <span class="@(Input.Password.Any(char.IsDigit) ? "met" : "")"><i class="bi @(Input.Password.Any(char.IsDigit) ? "bi-check-circle-fill" : "bi-circle")"></i> Number</span>
+                </div>
+
+                <div class="salu-action-row mt-3 mb-2">
+                    <button type="submit" class="salu-login-btn" disabled="@isRegistering">
+                        @if (isRegistering) { <span class="btn-spinner"></span><span>Creating Account...</span> } else { <i class="bi bi-person-check-fill"></i><span>Create University Account</span> }
+                    </button>
+                </div>
+            </EditForm>
+
+            <div class="salu-footer-box">
+                <div class="salu-copy-label"><i class="bi bi-c-circle"></i> @DateTime.Now.Year SALU. All rights reserved.</div>
+                <a href="/Account/Login" class="salu-reg-link"><i class="bi bi-box-arrow-in-left"></i> Already registered? Login here</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .salu-university-register { min-height: 100vh; width: 100%; position: relative; background: url('images/salu-login-bg.jpg') no-repeat center / cover; background-attachment: fixed; display: flex; align-items: center; justify-content: flex-start; padding: 24px 24px 24px clamp(2.5rem, 7vw, 7.5rem); overflow-x: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .salu-university-register .salu-card-container { position: relative; z-index: 2; max-width: 520px; width: 100%; animation: universityRegisterFlip .65s cubic-bezier(.22,1,.36,1) both; }
+    @@keyframes universityRegisterFlip { from { opacity: 0; transform: perspective(1000px) rotateY(14deg) translateX(-24px); } to { opacity: 1; transform: perspective(1000px) rotateY(0) translateX(0); } }
+    .university-password-help { display: grid; gap: 4px; margin: 2px 0 8px; padding: 10px 12px; border: 1px solid rgba(148,163,184,.25); border-radius: 10px; color: #cbd5e1; font-size: .7rem; text-align: left; }
+    .university-password-help strong { color: #e2e8f0; margin-bottom: 2px; }
+    .university-password-help span.met { color: #86efac; }
+    @@media (max-width: 768px) { .salu-university-register { justify-content: center; padding: 16px; } .salu-university-register .salu-card-container { max-width: 100%; } }
+</style>
+
+@code {
+    private InputModel Input { get; set; } = new();
+    private bool showPassword;
+    private bool showConfirmPassword;
+    private bool isRegistering;
+    private IEnumerable<IdentityError>? identityErrors;
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    private async Task RegisterUser()
+    {
+        isRegistering = true;
+        identityErrors = null;
+        var normalizedCnic = FormatCnic(Input.Cnic);
+        var normalizedPhone = FormatPhone(Input.Phone);
+        var email = Input.Email.Trim();
+
+        if (await UserManager.Users.AnyAsync(u => u.Cnic == normalizedCnic))
+        {
+            identityErrors = new[] { new IdentityError { Description = $"An account with CNIC '{normalizedCnic}' already exists." } };
+            isRegistering = false;
+            return;
+        }
+
+        if (await UserManager.FindByEmailAsync(email) is not null)
+        {
+            identityErrors = new[] { new IdentityError { Description = $"An account with email '{email}' already exists." } };
+            isRegistering = false;
+            return;
+        }
+
+        var user = Activator.CreateInstance<ApplicationUser>();
+        user.FullName = Input.FullName.Trim();
+        user.Cnic = normalizedCnic;
+        user.PhoneNumber = normalizedPhone;
+        user.IsVerified = true;
+        user.AdmissionType = AdmissionType.UniversityRegular;
+        await UserStore.SetUserNameAsync(user, email, CancellationToken.None);
+        await ((IUserEmailStore<ApplicationUser>)UserStore).SetEmailAsync(user, email, CancellationToken.None);
+
+        var result = await UserManager.CreateAsync(user, Input.Password);
+        if (!result.Succeeded)
+        {
+            identityErrors = result.Errors;
+            isRegistering = false;
+            return;
+        }
+
+        await UserManager.AddToRoleAsync(user, "Student");
+        var userId = await UserManager.GetUserIdAsync(user);
+        var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await UserManager.GenerateEmailConfirmationTokenAsync(user)));
+        var callbackUrl = NavigationManager.GetUriWithQueryParameters(NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri, new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+        await EmailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(callbackUrl));
+
+        Logger.LogInformation("University regular student account created for {Email}.", email);
+        if (UserManager.Options.SignIn.RequireConfirmedAccount)
+        {
+            RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = email, ["returnUrl"] = ReturnUrl });
+            return;
+        }
+
+        await SignInManager.SignInAsync(user, isPersistent: false);
+        RedirectManager.RedirectTo("Student/UniversityAdmission");
+    }
+
+    private void FormatCnicInput(ChangeEventArgs args) => Input.Cnic = FormatCnic(args.Value?.ToString() ?? "");
+    private void FormatPhoneInput(ChangeEventArgs args) => Input.Phone = FormatPhone(args.Value?.ToString() ?? "");
+    private void UpdatePassword(ChangeEventArgs args) => Input.Password = args.Value?.ToString() ?? "";
+    private void UpdateConfirmPassword(ChangeEventArgs args) => Input.ConfirmPassword = args.Value?.ToString() ?? "";
+
+    private static string FormatCnic(string value)
+    {
+        var digits = new string((value ?? "").Where(char.IsDigit).Take(13).ToArray());
+        return digits.Length switch { <= 5 => digits, <= 12 => $"{digits[..5]}-{digits[5..]}", _ => $"{digits[..5]}-{digits.Substring(5, 7)}-{digits[12]}" };
+    }
+
+    private static string FormatPhone(string value)
+    {
+        var digits = new string((value ?? "").Where(char.IsDigit).ToArray());
+        if (digits.StartsWith("923") && digits.Length >= 12) digits = "0" + digits[2..];
+        if (digits.Length > 11) digits = digits[..11];
+        return digits.Length <= 4 ? digits : $"{digits[..4]}-{digits[4..]}";
+    }
+
+    private sealed class InputModel : IValidatableObject
+    {
+        [Required, StringLength(255, MinimumLength = 2)] public string FullName { get; set; } = "";
+        [Required, RegularExpression(@"^(\d{5}-\d{7}-\d|\d{13})$", ErrorMessage = "CNIC must be 13 digits (format: 00000-0000000-0).")] public string Cnic { get; set; } = "";
+        [Required, RegularExpression(@"^(03\d{2}-\d{7}|03\d{9}|(\+92|92)3\d{9})$", ErrorMessage = "Mobile number must be 11 digits (format: 0300-0000000).") ] public string Phone { get; set; } = "";
+        [Required, EmailAddress] public string Email { get; set; } = "";
+        [Required, StringLength(100, MinimumLength = 8), DataType(DataType.Password)] public string Password { get; set; } = "";
+        [Required, Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match."), DataType(DataType.Password)] public string ConfirmPassword { get; set; } = "";
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!Password.Any(char.IsUpper)) yield return new ValidationResult("Password must contain at least one uppercase letter.", new[] { nameof(Password) });
+            if (!Password.Any(char.IsLower)) yield return new ValidationResult("Password must contain at least one lowercase letter.", new[] { nameof(Password) });
+            if (!Password.Any(char.IsDigit)) yield return new ValidationResult("Password must contain at least one number.", new[] { nameof(Password) });
+        }
+    }
+}

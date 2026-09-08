@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using SaluExamPortal.Domain.Entities;
+using SaluExamPortal.Domain.Enums;
 
 namespace SaluExamPortal.Infrastructure.Persistence
 {
@@ -9,6 +10,7 @@ namespace SaluExamPortal.Infrastructure.Persistence
         public string? FatherName { get; set; }
         public string? Cnic { get; set; }
         public bool IsVerified { get; set; } = true;
+        public AdmissionType AdmissionType { get; set; } = AdmissionType.AffiliatedCollege;
         public bool MustChangePassword { get; set; }
         public DateTime? PasswordChangedAt { get; set; }
         public Guid? CollegeId { get; set; }

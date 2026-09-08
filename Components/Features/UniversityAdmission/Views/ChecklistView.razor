@@ -1,0 +1,41 @@
+@inject SetupDataService SetupData
+
+<div class="panel">
+    <div class="panel-title-bar">
+        <span>Checklist Requirements</span>
+        <span class="badge badge-blue">Mandatory Submission Items</span>
+    </div>
+    <div class="banner-note">
+        Lists all documents that you must submit to the Admission Office before the deadline date mentioned in admission schedule as well as details about application processing fee.
+    </div>
+
+    @if (_items.Count == 0)
+    {
+        <div class="prompt-box">Loading checklist items...</div>
+    }
+    else
+    {
+        @foreach (var item in _items)
+        {
+            <div class="cl-item">
+                <input type="checkbox" id="cl_@item.Id" @bind="_checked[item.Id]" />
+                <div class="cl-content">
+                    <label for="cl_@item.Id" style="font-weight:600; cursor:pointer;">@item.Description</label>
+                    <div class="cl-meta">Verification ID: #@item.Id &bull; Directorate of Admissions, SALU</div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<ChecklistItem> _items = [];
+    private Dictionary<int, bool> _checked = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await SetupData.GetChecklistItemsAsync();
+        _checked = _items.ToDictionary(x => x.Id, _ => false);
+    }
+}
+
