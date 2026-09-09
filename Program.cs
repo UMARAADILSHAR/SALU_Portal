@@ -254,10 +254,16 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
+    if (app.Configuration.GetValue<bool>("Security:EnforceHttps", false))
+    {
+        app.UseHsts();
+    }
 }
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Security:EnforceHttps", false))
+{
+    app.UseHttpsRedirection();
+}
 
 // Enterprise Security Headers
 app.Use(async (context, next) =>
