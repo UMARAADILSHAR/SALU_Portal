@@ -39,6 +39,15 @@ builder.Services.AddHsts(options =>
     options.MaxAge = TimeSpan.FromDays(365);
 });
 
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.HttpsPort = 7043;
+    options.RedirectStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status307TemporaryRedirect;
+});
+
+// Configure QuestPDF Community license
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
@@ -84,6 +93,8 @@ builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddScoped<SaluExamPortal.Application.UniversityAdmission.Services.AdmissionFormService>();
 builder.Services.AddScoped<SaluExamPortal.Application.UniversityAdmission.Services.SetupDataService>();
 builder.Services.AddScoped<SaluExamPortal.Application.UniversityAdmission.Services.UniversityAdmissionApplicationStore>();
+builder.Services.AddSingleton<SaluExamPortal.Application.UniversityAdmission.Services.IQrCodeService, SaluExamPortal.Application.UniversityAdmission.Services.QrCodeService>();
+builder.Services.AddScoped<SaluExamPortal.Application.UniversityAdmission.Services.IAdmissionPdfService, SaluExamPortal.Application.UniversityAdmission.Services.AdmissionPdfService>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 

@@ -30,14 +30,14 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 
-<PageTitle>SALU – PG Admission Portal</PageTitle>
+<PageTitle>SALU – University Admission Portal</PageTitle>
 
 <!-- TOP HEADER -->
 <header class="top-header">
     <div class="header-left">
         <div class="salu-logo">SALU</div>
         <button class="nav-toggle-btn" @onclick="ToggleSidebar" title="Toggle Menu">☰</button>
-        <span class="header-title-text">PG Admissions Portal</span>
+        <span class="header-title-text">Regular University Admission</span>
     </div>
     <div class="header-right">
         <div class="user-badge" title="@StudentEmail">
@@ -61,22 +61,12 @@
 <!-- LAYOUT -->
 <div class="portal-layout">
 
-    <!-- PRIMARY NAV STRIP (NAVY) -->
-    <div class="sidebar-strip">
-        <div class="module-btn @(_activeView == "instructions" ? "active" : "")" @onclick='() => SetView("instructions")' title="SALU PG Admissions">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 6h16M4 12h16M4 18h16" />
-                <circle cx="9" cy="6" r="2" fill="currentColor"/>
-                <circle cx="15" cy="12" r="2" fill="currentColor"/>
-                <circle cx="7" cy="18" r="2" fill="currentColor"/>
-            </svg>
-            <span>PG -<br>ADMISSION</span>
-            <span class="arrow">&#9654;</span>
-        </div>
-    </div>
-
-    <!-- SECONDARY SUBMENU -->
+    <!-- SIDEBAR -->
     <div class="sidebar-submenu @(_sidebarOpen ? "" : "collapsed")">
+        <div class="sidebar-menu-header">
+            <i class="bi bi-mortarboard-fill"></i>
+            <span>ADMISSION MENU</span>
+        </div>
         <ul class="submenu-list">
             @foreach (var item in _menuItems)
             {

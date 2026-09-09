@@ -29,6 +29,27 @@
         </div>
     </div>
 
+    <!-- OFFICIAL DOCUMENTS & QR CODE BAR -->
+    <div style="background: linear-gradient(135deg, #1b2a6b 0%, #2e4482 100%); border-radius: 8px; padding: 20px; color: #fff; margin-bottom: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="background: #fff; padding: 4px; border-radius: 6px; display: flex;">
+                <img src="/api/university-admission/qr-code?code=@(_application?.ApplicationNumber ?? _currentUser?.Cnic ?? "SALU-VERIFY")" alt="QR Code" style="width: 72px; height: 72px;" />
+            </div>
+            <div>
+                <div style="font-size: 16px; font-weight: bold; letter-spacing: 0.5px;">Application Documents &amp; Verification</div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px;">Official verified PDF application form and 3-copy bank fee challan</div>
+            </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <a href="/api/university-admission/download-form/@(_application?.ApplicationNumber ?? "")" target="_blank" class="btn" style="background: #dc2626; color: #fff; padding: 8px 18px; font-weight: 600; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-file-earmark-pdf-fill"></i> Download Form (PDF)
+            </a>
+            <a href="/api/university-admission/download-challan/@(_application?.ApplicationNumber ?? "")" target="_blank" class="btn" style="background: #16a34a; color: #fff; padding: 8px 18px; font-weight: 600; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-receipt"></i> Download Challan
+            </a>
+        </div>
+    </div>
+
     <div class="section-title">Application Status Timeline</div>
     <table>
         <thead>

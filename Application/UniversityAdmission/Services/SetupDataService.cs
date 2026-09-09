@@ -123,6 +123,8 @@ public class SetupDataService
         ],
     };
 
+    public static List<string> Faculties => [.. FacultyDepartmentsMap.Keys];
+
     // ── Faculty → Departments map ─────────────────────────────────
     public static readonly Dictionary<string, List<string>> FacultyDepartmentsMap = new()
     {

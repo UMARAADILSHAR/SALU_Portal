@@ -30,4 +30,14 @@ public sealed class UniversityAdmissionApplicationStore(UniversityAdmissionDbCon
         await db.SaveChangesAsync(cancellationToken);
         return application;
     }
+
+    public async Task<UniversityAdmissionApplication?> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        return await db.Applications.SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+    }
+
+    public async Task<UniversityAdmissionApplication?> GetByApplicationNumberAsync(string appNumber, CancellationToken cancellationToken = default)
+    {
+        return await db.Applications.SingleOrDefaultAsync(item => item.ApplicationNumber == appNumber, cancellationToken);
+    }
 }

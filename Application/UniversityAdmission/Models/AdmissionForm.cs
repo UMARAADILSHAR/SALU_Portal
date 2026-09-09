@@ -5,8 +5,10 @@ namespace SaluExamPortal.Application.UniversityAdmission.Models;
 // ── Personal Info ────────────────────────────────────────────────
 public class PersonalInfoModel
 {
+    public string PhotoUrl { get; set; } = "";
+
     [Required(ErrorMessage = "Name is required.")]
-    public string Name { get; set; } = "Zaffar Mutti";
+    public string Name { get; set; } = "";
 
     [Required(ErrorMessage = "Father's name is required.")]
     public string FatherName { get; set; } = "";
@@ -14,16 +16,16 @@ public class PersonalInfoModel
     public string Surname { get; set; } = "";
 
     [Required(ErrorMessage = "Gender is required.")]
-    public string Gender { get; set; } = "";
+    public string Gender { get; set; } = "Male";
 
     public string GuardianName { get; set; } = "";
 
     [Required(ErrorMessage = "CNIC is required.")]
     [RegularExpression(@"^\d{5}-\d{7}-\d{1}$", ErrorMessage = "CNIC format should be 12345-1234567-1.")]
-    public string Cnic { get; set; } = "45203-1234567-1";
+    public string Cnic { get; set; } = "";
 
     [Required(ErrorMessage = "Date of birth is required.")]
-    public DateTime? DateOfBirth { get; set; } = new DateTime(1998, 5, 14);
+    public DateTime? DateOfBirth { get; set; } = new DateTime(2003, 1, 1);
 
     [Required(ErrorMessage = "Current address is required.")]
     public string CurrentAddress { get; set; } = "";
@@ -37,24 +39,24 @@ public class PersonalInfoModel
     public string Nationality { get; set; } = "Pakistani";
 
     [Required(ErrorMessage = "Religion is required.")]
-    public string Religion { get; set; } = "";
+    public string Religion { get; set; } = "Islam";
 
     [Required(ErrorMessage = "Domicile province is required.")]
     public string DomicileProvince { get; set; } = "Sindh";
 
     [Required(ErrorMessage = "Domicile district is required.")]
-    public string DomicileDistrict { get; set; } = "";
+    public string DomicileDistrict { get; set; } = "Khairpur";
 
     public string Tehsil { get; set; } = "";
     public string ResidenceNumber { get; set; } = "";
 
     [Required(ErrorMessage = "Mobile number is required.")]
     [Phone(ErrorMessage = "Please enter a valid phone number.")]
-    public string MobileNo { get; set; } = "0300-1234567";
+    public string MobileNo { get; set; } = "";
 
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-    public string Email { get; set; } = "zaffarmutti@gmail.com";
+    public string Email { get; set; } = "";
 
     public bool IsEmployed { get; set; } = false;
     public bool SelfFinance { get; set; } = false;

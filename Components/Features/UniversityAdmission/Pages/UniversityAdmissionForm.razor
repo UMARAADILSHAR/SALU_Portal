@@ -2,1030 +2,1303 @@
 @layout SaluExamPortal.Components.Shared.Layout.UniversityAdmissionLayout
 @attribute [Authorize(Policy = "Student")]
 @rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Forms
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Application.UniversityAdmission.Models
+@using SaluExamPortal.Application.UniversityAdmission.Services
+
 @inject AdmissionFormService FormService
 @inject SetupDataService SetupData
 @inject UniversityAdmissionApplicationStore ApplicationStore
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Nav
+@inject ISnackbar Snackbar
 
-<PageTitle>SALU – Admission &amp; Enrollment Form</PageTitle>
+<PageTitle>SALU – University Admission Form</PageTitle>
+
+<div class="salu-admission-form-wrapper">
+    <!-- STEPPER HEADER -->
+    <div class="salu-stepper-container mb-4">
+        <div class="salu-stepper">
+            <div class="salu-step-item @(_currentStep == 1 ? "active" : "") @(FormService.State.PersonalDone ? "done" : "")"
+                 @onclick="() => GoToStep(1)">
+                <div class="step-num">
+                    @if (FormService.State.PersonalDone) { <i class="bi bi-check-lg"></i> } else { <span>1</span> }
+                </div>
+                <div class="step-text">
+                    <span class="step-title">Personal</span>
+                    <span class="step-subtitle">Candidate Info</span>
+                </div>
+            </div>
+
+            <div class="salu-step-item @(_currentStep == 2 ? "active" : "") @(FormService.State.AcademicsDone ? "done" : "")"
+                 @onclick="() => GoToStep(2)">
+                <div class="step-num">
+                    @if (FormService.State.AcademicsDone) { <i class="bi bi-check-lg"></i> } else { <span>2</span> }
+                </div>
+                <div class="step-text">
+                    <span class="step-title">Academics</span>
+                    <span class="step-subtitle">Degree &amp; History</span>
+                </div>
+            </div>
+
+            <div class="salu-step-item @(_currentStep == 3 ? "active" : "") @(FormService.State.PreferencesDone ? "done" : "")"
+                 @onclick="() => GoToStep(3)">
+                <div class="step-num">
+                    @if (FormService.State.PreferencesDone) { <i class="bi bi-check-lg"></i> } else { <span>3</span> }
+                </div>
+                <div class="step-text">
+                    <span class="step-title">Preferences</span>
+                    <span class="step-subtitle">Backup Choices</span>
+                </div>
+            </div>
+
+            <div class="salu-step-item @(_currentStep == 4 ? "active" : "") @(FormService.State.DocumentsDone ? "done" : "")"
+                 @onclick="() => GoToStep(4)">
+                <div class="step-num">
+                    @if (FormService.State.DocumentsDone) { <i class="bi bi-check-lg"></i> } else { <span>4</span> }
+                </div>
+                <div class="step-text">
+                    <span class="step-title">Documents</span>
+                    <span class="step-subtitle">Upload Certificates</span>
+                </div>
+            </div>
+
+            <div class="salu-step-item @(_currentStep == 5 ? "active" : "") @(FormService.State.UndertakingDone ? "done" : "")"
+                 @onclick="() => GoToStep(5)">
+                <div class="step-num">
+                    @if (FormService.State.UndertakingDone) { <i class="bi bi-check-lg"></i> } else { <span>5</span> }
+                </div>
+                <div class="step-text">
+                    <span class="step-title">Undertaking</span>
+                    <span class="step-subtitle">Solemn Declaration</span>
+                </div>
+            </div>
+
+            <div class="salu-step-item @(_currentStep == 6 ? "active" : "") @(FormService.State.AllMandatoryComplete ? "done" : "")"
+                 @onclick="() => GoToStep(6)">
+                <div class="step-num">
+                    @if (_submitted) { <i class="bi bi-check-all"></i> } else { <span>6</span> }
+                </div>
+                <div class="step-text">
+                    <span class="step-title">Status</span>
+                    <span class="step-subtitle">Final Submission</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* =========================================================================
+       STEP 1: PERSONAL INFORMATION
+       ========================================================================= *@
+    @if (_currentStep == 1)
+    {
+        <MudCard Elevation="2" Class="rounded-lg mb-4">
+            <MudCardHeader Class="salu-card-header">
+                <CardHeaderContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6" Class="font-weight-bold text-white">1. Personal Information</MudText>
+                            <MudText Typo="Typo.caption" Class="text-white-50">Upload candidate photograph and enter complete biodata</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Step 1 of 6</MudChip>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+
+            <MudCardContent Class="pa-4 pa-md-6">
+                <EditForm Model="FormService.State.Personal" OnValidSubmit="SavePersonal">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="alert alert-danger py-2 small mb-4" />
+
+                    <MudGrid Spacing="3">
+                        @* ── LEFT SIDE: CANDIDATE PHOTO UPLOAD ── *@
+                        <MudItem xs="12" md="4" lg="3">
+                            <MudPaper Outlined="true" Class="pa-3 text-center rounded-lg bg-light d-flex flex-column align-center" Style="border: 1.5px dashed #cbd5e1;">
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-2" Style="color:#1b2a6b;">
+                                    <i class="bi bi-camera-fill me-1"></i> Candidate Photograph <span class="text-danger">*</span>
+                                </MudText>
+
+                                <div class="salu-photo-frame mb-3">
+                                    @if (!string.IsNullOrEmpty(FormService.State.Personal.PhotoUrl))
+                                    {
+                                        <img src="@FormService.State.Personal.PhotoUrl" alt="Candidate Photo" class="salu-photo-preview" />
+                                    }
+                                    else
+                                    {
+                                        <div class="salu-photo-placeholder">
+                                            <i class="bi bi-person-bounding-box salu-placeholder-icon"></i>
+                                            <span class="small text-muted mt-1">Passport Size Photo</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <InputFile id="candidatePhotoInput" OnChange="HandlePhotoSelected" accept=".jpg,.jpeg,.png" style="display:none;" />
+                                <label for="candidatePhotoInput" class="btn-upload-photo mb-2">
+                                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Choose Photo
+                                </label>
+
+                                @if (!string.IsNullOrEmpty(FormService.State.Personal.PhotoUrl))
+                                {
+                                    <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="RemovePhoto" StartIcon="@Icons.Material.Filled.DeleteOutline" Class="mb-1">
+                                        Remove Photo
+                                    </MudButton>
+                                }
+
+                                @if (!string.IsNullOrEmpty(_photoError))
+                                {
+                                    <div class="text-danger small mt-1">@_photoError</div>
+                                }
+
+                                <div class="salu-photo-guidelines mt-2">
+                                    <div class="guideline-item"><i class="bi bi-check-circle-fill text-success"></i> 3:4 passport ratio</div>
+                                    <div class="guideline-item"><i class="bi bi-check-circle-fill text-success"></i> JPG or PNG, max 2MB</div>
+                                    <div class="guideline-item"><i class="bi bi-check-circle-fill text-success"></i> White or light blue bg</div>
+                                </div>
+                            </MudPaper>
+                        </MudItem>
+
+                        @* ── RIGHT SIDE: 3-COLUMN BIODATA GRID ── *@
+                        <MudItem xs="12" md="8" lg="9">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Full Name <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="FormService.State.Personal.Name" class="form-control form-control-sm" placeholder="Full legal name" />
+                                    <ValidationMessage For="() => FormService.State.Personal.Name" class="text-danger small" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Father's Name <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="FormService.State.Personal.FatherName" class="form-control form-control-sm" placeholder="Father's full name" />
+                                    <ValidationMessage For="() => FormService.State.Personal.FatherName" class="text-danger small" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Surname / Caste</label>
+                                    <InputText @bind-Value="FormService.State.Personal.Surname" class="form-control form-control-sm" placeholder="e.g. Mahar, Shaikh, Syed" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Gender <span class="text-danger">*</span></label>
+                                    <InputSelect @bind-Value="FormService.State.Personal.Gender" class="form-select form-select-sm">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </InputSelect>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">CNIC / B-Form <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="FormService.State.Personal.Cnic" data-mask="cnic" class="form-control form-control-sm" maxlength="15" placeholder="00000-0000000-0" />
+                                    <ValidationMessage For="() => FormService.State.Personal.Cnic" class="text-danger small" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Date of Birth <span class="text-danger">*</span></label>
+                                    <InputDate @bind-Value="FormService.State.Personal.DateOfBirth" class="form-control form-control-sm" />
+                                    <ValidationMessage For="() => FormService.State.Personal.DateOfBirth" class="text-danger small" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Guardian's Name</label>
+                                    <InputText @bind-Value="FormService.State.Personal.GuardianName" class="form-control form-control-sm" placeholder="Guardian if applicable" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Nationality <span class="text-danger">*</span></label>
+                                    <InputSelect @bind-Value="FormService.State.Personal.Nationality" class="form-select form-select-sm">
+                                        @foreach (var nat in _nationalities)
+                                        {
+                                            <option value="@nat">@nat</option>
+                                        }
+                                    </InputSelect>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Religion <span class="text-danger">*</span></label>
+                                    <InputSelect @bind-Value="FormService.State.Personal.Religion" class="form-select form-select-sm">
+                                        <option value="Islam">Islam</option>
+                                        <option value="Hinduism">Hinduism</option>
+                                        <option value="Christianity">Christianity</option>
+                                        <option value="Sikhism">Sikhism</option>
+                                        <option value="Other">Other</option>
+                                    </InputSelect>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Domicile Province <span class="text-danger">*</span></label>
+                                    <InputSelect @bind-Value="FormService.State.Personal.DomicileProvince" class="form-select form-select-sm">
+                                        @foreach (var prov in _provinces)
+                                        {
+                                            <option value="@prov">@prov</option>
+                                        }
+                                    </InputSelect>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Domicile District <span class="text-danger">*</span></label>
+                                    <InputSelect @bind-Value="FormService.State.Personal.DomicileDistrict" class="form-select form-select-sm">
+                                        @foreach (var dist in _districts)
+                                        {
+                                            <option value="@dist">@dist</option>
+                                        }
+                                    </InputSelect>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Tehsil / Taluka</label>
+                                    <InputText @bind-Value="FormService.State.Personal.Tehsil" class="form-control form-control-sm" placeholder="e.g. Kot Diji, Kingri" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Mobile Number <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="FormService.State.Personal.MobileNo" data-mask="mobile" class="form-control form-control-sm" maxlength="12" placeholder="0300-0000000" />
+                                    <ValidationMessage For="() => FormService.State.Personal.MobileNo" class="text-danger small" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Email Address <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="FormService.State.Personal.Email" class="form-control form-control-sm" placeholder="student@example.com" />
+                                    <ValidationMessage For="() => FormService.State.Personal.Email" class="text-danger small" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6" md="4">
+                                    <label class="form-label-small">Telephone / Residence No.</label>
+                                    <InputText @bind-Value="FormService.State.Personal.ResidenceNumber" class="form-control form-control-sm" placeholder="Optional" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6">
+                                    <label class="form-label-small">Current Residential Address <span class="text-danger">*</span></label>
+                                    <InputTextArea @bind-Value="FormService.State.Personal.CurrentAddress" class="form-control form-control-sm" rows="2" placeholder="House/street, town, city" />
+                                    <ValidationMessage For="() => FormService.State.Personal.CurrentAddress" class="text-danger small" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6">
+                                    <label class="form-label-small">Permanent Address <span class="text-danger">*</span></label>
+                                    <InputTextArea @bind-Value="FormService.State.Personal.PermanentAddress" class="form-control form-control-sm" rows="2" placeholder="Permanent address as on CNIC/Domicile" />
+                                    <ValidationMessage For="() => FormService.State.Personal.PermanentAddress" class="text-danger small" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudItem>
+
+                        @* ── FACILITIES & QUOTA CHECKBOXES ── *@
+                        <MudItem xs="12">
+                            <MudDivider Class="my-2" />
+                            <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-2" Style="color:#1b2a6b;">
+                                <i class="bi bi-gear-wide-connected me-1"></i> Special Quotas &amp; University Facilities
+                            </MudText>
+                            <div class="salu-options-bar">
+                                <label class="salu-switch-box">
+                                    <InputCheckbox @bind-Value="FormService.State.Personal.AvailHostel" />
+                                    <span>Hostel Accommodation</span>
+                                </label>
+                                <label class="salu-switch-box">
+                                    <InputCheckbox @bind-Value="FormService.State.Personal.AvailTransport" />
+                                    <span>Point / Transport Service</span>
+                                </label>
+                                <label class="salu-switch-box">
+                                    <InputCheckbox @bind-Value="FormService.State.Personal.FirstFamilyMember" />
+                                    <span>First Family Member in University</span>
+                                </label>
+                                <label class="salu-switch-box">
+                                    <InputCheckbox @bind-Value="FormService.State.Personal.SelfFinance" />
+                                    <span>Self-Finance Candidate</span>
+                                </label>
+                                <label class="salu-switch-box">
+                                    <InputCheckbox @bind-Value="FormService.State.Personal.IsEmployed" />
+                                    <span>Currently Employed</span>
+                                </label>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+
+                    <div class="d-flex justify-end mt-4 pt-3 border-top">
+                        <button type="submit" class="btn-salu-next">
+                            <span>Save &amp; Continue to Academics</span>
+                            <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </EditForm>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    @* =========================================================================
+       STEP 2: ACADEMIC PROGRAM & QUALIFICATION HISTORY
+       ========================================================================= *@
+    @if (_currentStep == 2)
+    {
+        <MudCard Elevation="2" Class="rounded-lg mb-4">
+            <MudCardHeader Class="salu-card-header">
+                <CardHeaderContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6" Class="font-weight-bold text-white">2. Academic Program &amp; Educational History</MudText>
+                            <MudText Typo="Typo.caption" Class="text-white-50">Select program of study and add all educational degrees</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Step 2 of 6</MudChip>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+
+            <MudCardContent Class="pa-4 pa-md-6">
+                @* ── PROGRAM SELECTION ── *@
+                <MudPaper Outlined="true" Class="pa-4 rounded-lg mb-4 bg-light">
+                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-3" Style="color:#1b2a6b;">
+                        <i class="bi bi-mortarboard-fill me-1 text-warning"></i> Choose Program of Study <span class="text-danger">*</span>
+                    </MudText>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Faculty <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" @bind="_faculty" @bind:after="OnFacultyChanged">
+                                <option value="">Select Faculty</option>
+                                @foreach (var f in SetupDataService.Faculties)
+                                {
+                                    <option value="@f">@f</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Department <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" @bind="_dept" @bind:after="OnDeptChanged" disabled="@(!_depts.Any())">
+                                <option value="">Select Department</option>
+                                @foreach (var d in _depts)
+                                {
+                                    <option value="@d">@d</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Program <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" @bind="_program" @bind:after="OnProgramChanged" disabled="@(!_programs.Any())">
+                                <option value="">Select Program</option>
+                                @foreach (var p in _programs)
+                                {
+                                    <option value="@p.Name">@p.Name</option>
+                                }
+                            </select>
+                        </MudItem>
+                    </MudGrid>
+
+                    @if (!string.IsNullOrEmpty(FormService.State.Academics.QualifyingDegree))
+                    {
+                        <div class="salu-qualifying-badge mt-3">
+                            <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                            <span>Required Qualifying Degree: <strong>@FormService.State.Academics.QualifyingDegree</strong></span>
+                            @if (!string.IsNullOrEmpty(FormService.State.Academics.EligibleMajor))
+                            {
+                                <span class="ms-3">Major: <strong>@FormService.State.Academics.EligibleMajor</strong></span>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="text-danger small mt-2">@_error</div>
+                    }
+                </MudPaper>
+
+                @* ── ADD QUALIFICATION RECORD ── *@
+                <MudPaper Outlined="true" Class="pa-4 rounded-lg mb-4">
+                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-3" Style="color:#1b2a6b;">
+                        <i class="bi bi-plus-circle-fill me-1 text-success"></i> Add Educational Qualification
+                    </MudText>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6" md="3">
+                            <label class="form-label-small">Examination Level <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" @bind="_row.Examination">
+                                <option value="">Select Examination</option>
+                                @foreach (var e in _examinations)
+                                {
+                                    <option value="@e.Name">@e.Name</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <label class="form-label-small">Group / Major <span class="text-danger">*</span></label>
+                            <input class="form-control form-control-sm" @bind="_row.GroupMajor" placeholder="e.g. Pre-Engineering, ICS" />
+                        </MudItem>
+
+                        <MudItem xs="6" sm="4" md="2">
+                            <label class="form-label-small">Passing Year <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" @bind="_row.Year">
+                                <option value="">Year</option>
+                                @foreach (var y in _acadYears)
+                                {
+                                    <option value="@y">@y</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="6" sm="4" md="2">
+                            <label class="form-label-small">Seat / Roll No. <span class="text-danger">*</span></label>
+                            <input class="form-control form-control-sm" @bind="_row.SeatNo" placeholder="Seat number" />
+                        </MudItem>
+
+                        <MudItem xs="6" sm="4" md="2">
+                            <label class="form-label-small">Obtained Marks <span class="text-danger">*</span></label>
+                            <input class="form-control form-control-sm" type="number" @bind="_row.ObtainedMarks" placeholder="e.g. 845" />
+                        </MudItem>
+
+                        <MudItem xs="6" sm="4" md="2">
+                            <label class="form-label-small">Total Marks <span class="text-danger">*</span></label>
+                            <input class="form-control form-control-sm" type="number" @bind="_row.TotalMarks" placeholder="e.g. 1100" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="8" md="5">
+                            <label class="form-label-small">Board / University <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" @bind="_row.Board">
+                                <option value="">Select Board / University</option>
+                                @foreach (var b in _boards)
+                                {
+                                    <option value="@b.Name">@b.Name</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="12" md="5">
+                            <label class="form-label-small">Institute / College / School <span class="text-danger">*</span></label>
+                            <input class="form-control form-control-sm" @bind="_row.Institute" placeholder="College / School name" />
+                        </MudItem>
+
+                        <MudItem xs="12" Class="d-flex justify-end mt-2">
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="AddAcademicRecord" style="background:#1b2a6b; border:none; padding:7px 18px; font-weight:600;">
+                                <i class="bi bi-plus-lg me-1"></i> Add Record to Table
+                            </button>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                @* ── QUALIFICATIONS TABLE ── *@
+                <div class="table-responsive border rounded-lg mb-4">
+                    <table class="table table-hover table-striped mb-0 small">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Examination</th>
+                                <th>Group/Major</th>
+                                <th>Year</th>
+                                <th>Seat No</th>
+                                <th>Obtained</th>
+                                <th>Total</th>
+                                <th>Percentage</th>
+                                <th>Board/University</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (FormService.State.Academics.History.Any())
+                            {
+                                int idx = 1;
+                                @foreach (var rec in FormService.State.Academics.History)
+                                {
+                                    double pct = 0;
+                                    if (double.TryParse(rec.ObtainedMarks, out var ob) && double.TryParse(rec.TotalMarks, out var tot) && tot > 0)
+                                    {
+                                        pct = Math.Round((ob / tot) * 100, 2);
+                                    }
+                                    <tr>
+                                        <td>@(idx++)</td>
+                                        <td><strong>@rec.Examination</strong></td>
+                                        <td>@rec.GroupMajor</td>
+                                        <td>@rec.Year</td>
+                                        <td>@rec.SeatNo</td>
+                                        <td>@rec.ObtainedMarks</td>
+                                        <td>@rec.TotalMarks</td>
+                                        <td><span class="badge bg-success">@pct %</span></td>
+                                        <td>@rec.Board</td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" @onclick="() => RemoveAcademicRecord(rec)" title="Delete record">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-3">
+                                        <em>No qualification records added yet. Please use the form above to add your academic degrees (SSC, HSC, etc.).</em>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-space-between mt-4 pt-3 border-top">
+                    <button type="button" class="btn-salu-back" @onclick="() => GoToStep(1)">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Personal
+                    </button>
+                    <button type="button" class="btn-salu-next" @onclick="SaveAcademics">
+                        <span>Save &amp; Continue to Preferences</span>
+                        <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    @* =========================================================================
+       STEP 3: PROGRAM PREFERENCES
+       ========================================================================= *@
+    @if (_currentStep == 3)
+    {
+        <MudCard Elevation="2" Class="rounded-lg mb-4">
+            <MudCardHeader Class="salu-card-header">
+                <CardHeaderContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6" Class="font-weight-bold text-white">3. Program Preferences</MudText>
+                            <MudText Typo="Typo.caption" Class="text-white-50">Select backup/alternative choices in order of preference (Optional)</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Step 3 of 6</MudChip>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+
+            <MudCardContent Class="pa-4 pa-md-6">
+                <MudPaper Outlined="true" Class="pa-4 rounded-lg mb-4 bg-light">
+                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-3" Style="color:#1b2a6b;">
+                        <i class="bi bi-list-ol me-1 text-warning"></i> Add Program Choice
+                    </MudText>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Faculty</label>
+                            <select class="form-select form-select-sm" @bind="_fac" @bind:after="OnPrefFacultyChanged">
+                                <option value="">Select Faculty</option>
+                                @foreach (var f in SetupDataService.Faculties)
+                                {
+                                    <option value="@f">@f</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Department</label>
+                            <select class="form-select form-select-sm" @bind="_prefDept" @bind:after="OnPrefDeptChanged" disabled="@(!_prefDepts.Any())">
+                                <option value="">Select Department</option>
+                                @foreach (var d in _prefDepts)
+                                {
+                                    <option value="@d">@d</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Program Choice</label>
+                            <select class="form-select form-select-sm" @bind="_prog" disabled="@(!_prefPrograms.Any())">
+                                <option value="">Select Program</option>
+                                @foreach (var p in _prefPrograms)
+                                {
+                                    <option value="@p.Name">@p.Name</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" Class="d-flex justify-end mt-2">
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="AddPreference" style="background:#1b2a6b; border:none; padding:7px 18px; font-weight:600;">
+                                <i class="bi bi-plus-lg me-1"></i> Add Choice to List
+                            </button>
+                        </MudItem>
+                    </MudGrid>
+
+                    @if (!string.IsNullOrEmpty(_errPref))
+                    {
+                        <div class="text-danger small mt-2">@_errPref</div>
+                    }
+                </MudPaper>
+
+                <div class="table-responsive border rounded-lg mb-4">
+                    <table class="table table-hover mb-0 small">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:80px;">Priority</th>
+                                <th>Faculty</th>
+                                <th>Department</th>
+                                <th>Program</th>
+                                <th style="width:80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (FormService.State.Preferences.Any())
+                            {
+                                int pIdx = 1;
+                                @foreach (var pref in FormService.State.Preferences)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-primary">Choice @(pIdx++)</span></td>
+                                        <td>@pref.Faculty</td>
+                                        <td>@pref.Department</td>
+                                        <td><strong>@pref.Program</strong></td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" @onclick="() => RemovePreference(pref)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">
+                                        <em>No preferences added. Your primary degree selected in Step 2 will be your primary admission choice.</em>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-space-between mt-4 pt-3 border-top">
+                    <button type="button" class="btn-salu-back" @onclick="() => GoToStep(2)">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Academics
+                    </button>
+                    <button type="button" class="btn-salu-next" @onclick="SavePreferences">
+                        <span>Save &amp; Continue to Documents</span>
+                        <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    @* =========================================================================
+       STEP 4: DOCUMENTS UPLOAD
+       ========================================================================= *@
+    @if (_currentStep == 4)
+    {
+        <MudCard Elevation="2" Class="rounded-lg mb-4">
+            <MudCardHeader Class="salu-card-header">
+                <CardHeaderContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6" Class="font-weight-bold text-white">4. Upload Documents</MudText>
+                            <MudText Typo="Typo.caption" Class="text-white-50">Upload scanned copies of required educational certificates and identification</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Step 4 of 6</MudChip>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+
+            <MudCardContent Class="pa-4 pa-md-6">
+                <MudPaper Outlined="true" Class="pa-4 rounded-lg mb-4 bg-light">
+                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-3" Style="color:#1b2a6b;">
+                        <i class="bi bi-file-earmark-arrow-up-fill me-1 text-primary"></i> Upload Required Document
+                    </MudText>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Document Type <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" @bind="_type">
+                                <option value="">Select Document Type</option>
+                                @foreach (var dt in _docTypes)
+                                {
+                                    <option value="@dt.Name">@dt.Name</option>
+                                }
+                            </select>
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Document Title / Remarks <span class="text-danger">*</span></label>
+                            <input class="form-control form-control-sm" @bind="_name" placeholder="e.g. Matric Certificate, Inter Marksheet" />
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <label class="form-label-small">Choose File (JPG, PNG, PDF) <span class="text-danger">*</span></label>
+                            <InputFile class="form-control form-control-sm" OnChange="HandleDocFileSelected" accept=".jpg,.jpeg,.png,.pdf" />
+                            @if (!string.IsNullOrEmpty(_fileName))
+                            {
+                                <span class="text-success small"><i class="bi bi-check-circle"></i> @_fileName</span>
+                            }
+                        </MudItem>
+
+                        <MudItem xs="12" Class="d-flex justify-end mt-2">
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="AddDocument" style="background:#1b2a6b; border:none; padding:7px 18px; font-weight:600;">
+                                <i class="bi bi-cloud-upload-fill me-1"></i> Add Document
+                            </button>
+                        </MudItem>
+                    </MudGrid>
+
+                    @if (!string.IsNullOrEmpty(_errDoc))
+                    {
+                        <div class="text-danger small mt-2">@_errDoc</div>
+                    }
+                </MudPaper>
+
+                <div class="table-responsive border rounded-lg mb-4">
+                    <table class="table table-hover mb-0 small">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Document Type</th>
+                                <th>Document Title</th>
+                                <th>File Name</th>
+                                <th>Status</th>
+                                <th style="width:80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (FormService.State.Documents.Any())
+                            {
+                                int dIdx = 1;
+                                @foreach (var doc in FormService.State.Documents)
+                                {
+                                    <tr>
+                                        <td>@(dIdx++)</td>
+                                        <td><span class="badge bg-secondary">@doc.DocType</span></td>
+                                        <td><strong>@doc.DocName</strong></td>
+                                        <td><code>@doc.FileName</code></td>
+                                        <td><span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Attached</span></td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" @onclick="() => RemoveDocument(doc)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-3">
+                                        <em>No documents uploaded yet. Please upload Matric Marksheet, Intermediate Certificate, CNIC copy, etc.</em>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-space-between mt-4 pt-3 border-top">
+                    <button type="button" class="btn-salu-back" @onclick="() => GoToStep(3)">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Preferences
+                    </button>
+                    <button type="button" class="btn-salu-next" @onclick="SaveDocuments">
+                        <span>Save &amp; Continue to Undertaking</span>
+                        <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    @* =========================================================================
+       STEP 5: UNDERTAKING & DECLARATION
+       ========================================================================= *@
+    @if (_currentStep == 5)
+    {
+        <MudCard Elevation="2" Class="rounded-lg mb-4">
+            <MudCardHeader Class="salu-card-header">
+                <CardHeaderContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6" Class="font-weight-bold text-white">5. Solemn Declaration &amp; Undertaking</MudText>
+                            <MudText Typo="Typo.caption" Class="text-white-50">Please review and accept the official undertaking before submitting</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">Step 5 of 6</MudChip>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+
+            <MudCardContent Class="pa-4 pa-md-6">
+                <div class="salu-undertaking-box mb-4">
+                    <div class="salu-undertaking-header">
+                        <i class="bi bi-shield-fill-check text-warning fs-4 me-2"></i>
+                        <span class="fw-bold">SHAH ABDUL LATIF UNIVERSITY KHAIRPUR – CANDIDATE DECLARATION</span>
+                    </div>
+
+                    <div class="salu-undertaking-body">
+                        <p>1. <strong>I hereby undertake</strong> that the entries made by me in this admission form are correct and complete to the best of my knowledge and belief.</p>
+                        <p>2. I understand that my admission to Shah Abdul Latif University (SALU) is purely provisional and subject to cancellation if any irregularity, false document, or misstatement is detected at any stage of my academic tenure.</p>
+                        <p>3. I solemnly declare that I am not currently registered/enrolled as a regular student for any degree program in any other University, Degree Awarding Institute, or Affiliated College.</p>
+                        <p>4. I solemnly promise to abide by all the rules, discipline, code of conduct, and regulations of Shah Abdul Latif University as enforced from time to time.</p>
+                    </div>
+
+                    <div class="salu-undertaking-checkbox mt-3">
+                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                            <InputCheckbox @bind-Value="FormService.State.UndertakingAccepted" style="width:20px; height:20px; accent-color:#f97316;" />
+                            <span class="fw-bold text-dark">I solemnly agree, confirm, and accept the above declaration and undertaking.</span>
+                        </label>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_errUndertaking))
+                {
+                    <div class="alert alert-danger py-2 small mb-3">@_errUndertaking</div>
+                }
+
+                <div class="d-flex justify-space-between mt-4 pt-3 border-top">
+                    <button type="button" class="btn-salu-back" @onclick="() => GoToStep(4)">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Documents
+                    </button>
+                    <button type="button" class="btn-salu-next" @onclick="SaveUndertaking">
+                        <span>Accept &amp; Proceed to Final Step</span>
+                        <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    @* =========================================================================
+       STEP 6: STATUS & FINAL SUBMISSION
+       ========================================================================= *@
+    @if (_currentStep == 6)
+    {
+        <MudCard Elevation="2" Class="rounded-lg mb-4">
+            <MudCardHeader Class="salu-card-header">
+                <CardHeaderContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6" Class="font-weight-bold text-white">6. Application Status &amp; Final Submission</MudText>
+                            <MudText Typo="Typo.caption" Class="text-white-50">Review mandatory requirements checklist and submit your admission form</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Final Step</MudChip>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+
+            <MudCardContent Class="pa-4 pa-md-6">
+                @if (!_submitted)
+                {
+                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-3" Style="color:#1b2a6b;">
+                        Application Readiness Checklist:
+                    </MudText>
+
+                    <MudGrid Spacing="2" Class="mb-4">
+                        <MudItem xs="12" sm="6" md="4">
+                            <div class="salu-status-card @(FormService.State.PersonalDone ? "status-done" : "status-pending")">
+                                <div class="status-icon"><i class="bi @(FormService.State.PersonalDone ? "bi-check-circle-fill text-success" : "bi-x-circle-fill text-danger")"></i></div>
+                                <div>
+                                    <div class="status-title">Personal Information</div>
+                                    <div class="status-state">@(FormService.State.PersonalDone ? "Complete" : "Incomplete")</div>
+                                </div>
+                            </div>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4">
+                            <div class="salu-status-card @(FormService.State.AcademicsDone ? "status-done" : "status-pending")">
+                                <div class="status-icon"><i class="bi @(FormService.State.AcademicsDone ? "bi-check-circle-fill text-success" : "bi-x-circle-fill text-danger")"></i></div>
+                                <div>
+                                    <div class="status-title">Academic Qualifications</div>
+                                    <div class="status-state">@(FormService.State.AcademicsDone ? "Complete" : "Incomplete")</div>
+                                </div>
+                            </div>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4">
+                            <div class="salu-status-card @(FormService.State.DocumentsDone ? "status-done" : "status-pending")">
+                                <div class="status-icon"><i class="bi @(FormService.State.DocumentsDone ? "bi-check-circle-fill text-success" : "bi-x-circle-fill text-danger")"></i></div>
+                                <div>
+                                    <div class="status-title">Uploaded Documents</div>
+                                    <div class="status-state">@(FormService.State.DocumentsDone ? "Complete" : "Incomplete")</div>
+                                </div>
+                            </div>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4">
+                            <div class="salu-status-card @(FormService.State.UndertakingDone ? "status-done" : "status-pending")">
+                                <div class="status-icon"><i class="bi @(FormService.State.UndertakingDone ? "bi-check-circle-fill text-success" : "bi-x-circle-fill text-danger")"></i></div>
+                                <div>
+                                    <div class="status-title">Undertaking Declaration</div>
+                                    <div class="status-state">@(FormService.State.UndertakingDone ? "Accepted" : "Not Accepted")</div>
+                                </div>
+                            </div>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4">
+                            <div class="salu-status-card @(FormService.State.PreferencesDone ? "status-done" : "status-optional")">
+                                <div class="status-icon"><i class="bi bi-info-circle-fill text-primary"></i></div>
+                                <div>
+                                    <div class="status-title">Program Preferences</div>
+                                    <div class="status-state">@(FormService.State.PreferencesDone ? "Provided" : "Optional")</div>
+                                </div>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+
+                    @if (FormService.State.AllMandatoryComplete)
+                    {
+                        <div class="alert alert-success d-flex align-items-center gap-3 p-3 rounded-lg mb-4">
+                            <i class="bi bi-check-circle-fill fs-3 text-success"></i>
+                            <div>
+                                <div class="fw-bold">All mandatory requirements are fulfilled!</div>
+                                <div class="small">Click the submit button below to finalize your admission application.</div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(_submissionError))
+                        {
+                            <div class="alert alert-danger py-2 small mb-3">@_submissionError</div>
+                        }
+
+                        <div class="d-flex justify-space-between mt-4 pt-3 border-top">
+                            <button type="button" class="btn-salu-back" @onclick="() => GoToStep(5)">
+                                <i class="bi bi-arrow-left me-1"></i> Back to Undertaking
+                            </button>
+                            <button type="button" class="btn-salu-submit" @onclick="SubmitForm" disabled="@_isSubmitting">
+                                @if (_isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Submitting Application...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-send-check-fill me-2"></i>
+                                    <span>Final Submit Application</span>
+                                }
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning p-3 rounded-lg mb-4">
+                            <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Some mandatory sections are incomplete!</div>
+                            <div class="small mt-1">Please use the stepper above to complete all mandatory sections (Personal Info, Academics, Documents, and Undertaking) before submitting.</div>
+                        </div>
+
+                        <div class="d-flex justify-start mt-4 pt-3 border-top">
+                            <button type="button" class="btn-salu-back" @onclick="() => GoToStep(1)">
+                                <i class="bi bi-arrow-left me-1"></i> Review Incomplete Steps
+                            </button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="salu-success-card text-center py-5">
+                        <div class="salu-success-check mb-3">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-2">Application Submitted Successfully!</h3>
+                        <p class="text-muted mb-4">Your regular admission application has been received by Shah Abdul Latif University.</p>
+
+                        <div class="salu-tracking-badge d-inline-block px-4 py-2 rounded-pill mb-3" style="background:#e0f2fe; border:1px solid #7dd3fc;">
+                            <span class="text-muted small">Tracking ID: </span>
+                            <strong class="text-primary fs-5">SALU-2026-@_submittedTrackingNumber</strong>
+                        </div>
+
+                        <!-- QR Code Preview -->
+                        <div class="mb-4">
+                            <img src="/api/university-admission/qr-code?code=SALU-2026-@_submittedTrackingNumber" alt="Verification QR Code" style="width:110px; height:110px; border:1px solid #cbd5e1; border-radius:8px; padding:4px; background:#fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+                            <div class="text-muted small mt-1">Official Verification QR Code</div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex flex-wrap justify-content-center gap-3">
+                            <a href="/api/university-admission/download-form/SALU-2026-@_submittedTrackingNumber" target="_blank" class="btn btn-danger d-inline-flex align-items-center" style="background:#dc2626; border:none; padding:10px 22px; font-weight:600; border-radius:8px;">
+                                <i class="bi bi-file-earmark-pdf-fill me-2 fs-5"></i> Download Form (PDF)
+                            </a>
+                            <a href="/api/university-admission/download-challan/SALU-2026-@_submittedTrackingNumber" target="_blank" class="btn btn-success d-inline-flex align-items-center" style="background:#16a34a; border:none; padding:10px 22px; font-weight:600; border-radius:8px;">
+                                <i class="bi bi-receipt me-2 fs-5"></i> Download Fee Challan
+                            </a>
+                            <a href="Student/candidate-status" class="btn btn-primary d-inline-flex align-items-center" style="background:#1b2a6b; border:none; padding:10px 22px; font-weight:600; border-radius:8px;">
+                                <i class="bi bi-eye-fill me-2"></i> View Status
+                            </a>
+                        </div>
+                    </div>
+                }
+            </MudCardContent>
+        </MudCard>
+    }
+</div>
 
 <style>
-    /* General & Shell */
-    .form-shell {
-        max-width: 960px;
-        margin: 1.5rem auto 3rem;
-        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-        color: #334155;
+    /* =========================================================================
+       SALU UNIVERSITY ADMISSION FORM - MODERN STYLES
+       ========================================================================= */
+    .salu-admission-form-wrapper {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 8px 4px 32px;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* Stepper Navigation */
-    .stepper {
-        display: flex;
-        margin-bottom: 20px;
-        border-radius: 10px;
-        overflow: hidden;
-        border: 1px solid #cbd5e1;
-        background: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    /* STEPPER */
+    .salu-stepper-container {
+        overflow-x: auto;
+        padding-bottom: 4px;
     }
-    .step-btn {
+    .salu-stepper {
+        display: flex;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        overflow: hidden;
+        min-width: 720px;
+    }
+    .salu-step-item {
         flex: 1;
-        padding: 13px 8px;
-        text-align: center;
-        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border-right: 1px solid #f1f5f9;
         cursor: pointer;
-        border-right: 1px solid #e2e8f0;
-        font-size: 0.88rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
+        transition: background 0.2s, transform 0.15s;
         user-select: none;
+    }
+    .salu-step-item:last-child { border-right: none; }
+    .salu-step-item:hover:not(.active) { background: #f8fafc; }
+    .salu-step-item.active {
+        background: linear-gradient(135deg, #1b2a6b 0%, #254c88 100%);
+        color: #ffffff;
+    }
+    .salu-step-item.active .step-subtitle { color: #cbd5e1 !important; }
+    .salu-step-item.active .step-num {
+        background: #f97316;
+        color: #ffffff;
+    }
+    .step-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #334155;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        flex-shrink: 0;
     }
-    .step-btn:last-child { border-right: none; }
-    .step-btn.active {
-        background: #1e293b;
-        color: #fff;
-        font-weight: 600;
+    .salu-step-item.done .step-num {
+        background: #22c55e;
+        color: #ffffff;
     }
-    .step-btn:hover:not(.active) { background: #e2e8f0; }
-    .step-btn .step-done-badge {
+    .step-text { display: flex; flex-direction: column; }
+    .step-title { font-weight: 700; font-size: 12.5px; }
+    .step-subtitle { font-size: 10.5px; color: #64748b; }
+
+    /* CARD HEADER */
+    .salu-card-header {
+        background: linear-gradient(135deg, #1b2a6b 0%, #0e1d4b 100%) !important;
+        border-bottom: 2px solid #f97316;
+        padding: 14px 20px !important;
+    }
+
+    /* LABELS */
+    .form-label-small {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 4px;
+        letter-spacing: 0.1px;
+    }
+
+    /* PHOTO UPLOAD BOX (LEFT SIDE) */
+    .salu-photo-frame {
+        width: 140px;
+        height: 175px;
+        border-radius: 8px;
+        border: 2px solid #cbd5e1;
+        background: #f8fafc;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .salu-photo-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .salu-photo-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 12px;
+    }
+    .salu-placeholder-icon {
+        font-size: 42px;
+        color: #94a3b8;
+    }
+    .btn-upload-photo {
+        background: #f97316;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 12px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        width: 17px;
-        height: 17px;
-        border-radius: 50%;
-        background: #22c55e;
-        color: #fff;
+        box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+        transition: background 0.15s, transform 0.1s;
+    }
+    .btn-upload-photo:hover {
+        background: #ea580c;
+        transform: translateY(-1px);
+    }
+    .salu-photo-guidelines {
+        text-align: left;
         font-size: 11px;
-        font-weight: bold;
+        color: #64748b;
+        line-height: 1.6;
     }
-    .step-btn.active .step-done-badge {
-        background: #4ade80;
-        color: #0f172a;
-    }
+    .guideline-item { display: flex; align-items: center; gap: 5px; }
 
-    /* Panel & Cards */
-    .panel {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-        overflow: hidden;
+    /* SWITCHES / OPTIONS */
+    .salu-options-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        background: #f8fafc;
         border: 1px solid #e2e8f0;
-        margin-bottom: 2rem;
+        padding: 12px 16px;
+        border-radius: 8px;
     }
-    .panel-title-bar {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: #fff;
-        padding: 16px 24px;
-        font-weight: 600;
-        font-size: 1.15rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .banner-note {
-        background: #eff6ff;
-        border-left: 4px solid #3b82f6;
-        padding: 12px 18px;
-        margin: 18px 24px;
-        font-size: 0.85rem;
-        color: #334155;
-        border-radius: 4px;
-        line-height: 1.5;
-    }
-    .section-title {
-        font-weight: 600;
-        color: #1e293b;
-        padding: 0 24px 10px;
-        border-bottom: 2px solid #f1f5f9;
-        margin: 24px 24px 18px;
-        font-size: 1.02rem;
-        display: flex;
+    .salu-switch-box {
+        display: inline-flex;
         align-items: center;
         gap: 8px;
-    }
-
-    /* Form Grid & Inputs */
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-        padding: 0 24px;
-    }
-    .field {
-        display: flex;
-        flex-direction: column;
-    }
-    .field-wide {
-        grid-column: span 2;
-    }
-    .field label {
-        font-size: 0.82rem;
-        font-weight: 500;
-        color: #475569;
-        margin-bottom: 6px;
-    }
-    .req {
-        color: #ef4444;
-        margin-left: 2px;
-        font-weight: bold;
-    }
-    .input-shell input,
-    .input-shell select {
-        width: 100%;
-        padding: 9px 12px;
-        border: 1px solid #cbd5e1;
-        border-radius: 7px;
-        font-size: 0.9rem;
-        background: #fff;
-        box-sizing: border-box;
-        color: #1e293b;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .input-shell input:focus,
-    .input-shell select:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-    }
-    .hint {
-        font-size: 0.76rem;
-        color: #64748b;
-        margin-top: 5px;
-    }
-    .error-msg {
-        color: #dc2626;
-        font-size: 0.82rem;
-        margin: 0 24px 12px;
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        padding: 10px 14px;
-        border-radius: 6px;
-    }
-    .validation-summary {
-        color: #dc2626;
-        font-size: 0.82rem;
-        margin: 16px 24px 8px;
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        padding: 10px 16px;
-        border-radius: 6px;
-    }
-    .validation-summary ul {
-        margin: 6px 0 0 16px;
-        padding: 0;
-    }
-
-    /* Photo Box */
-    .photo-box-card {
-        border: 1px dashed #cbd5e1;
-        border-radius: 8px;
-        padding: 14px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        background: #f8fafc;
-    }
-    .photo-box-avatar {
-        width: 64px;
-        height: 74px;
-        border-radius: 6px;
-        background: #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        border: 1px solid #cbd5e1;
-    }
-    .photo-box-info {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-    .photo-box-name {
-        font-size: 0.88rem;
-        font-weight: 600;
-        color: #1e293b;
-    }
-    .photo-box-note {
-        font-size: 0.76rem;
-        color: #64748b;
-    }
-
-    /* Buttons */
-    .btn-row {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 12px;
-        padding: 20px 24px;
-    }
-    .btn {
-        padding: 9px 20px;
-        border: none;
-        border-radius: 7px;
-        cursor: pointer;
-        font-weight: 500;
-        font-size: 0.9rem;
-        transition: background-color 0.2s, transform 0.1s;
-    }
-    .btn:active { transform: translateY(1px); }
-    .btn-orange {
-        background: #f97316;
-        color: #fff;
-    }
-    .btn-orange:hover {
-        background: #ea580c;
-    }
-    .btn-blue {
-        background: #3b82f6;
-        color: #fff;
-    }
-    .btn-blue:hover {
-        background: #2563eb;
-    }
-    .btn-grey {
-        background: #e2e8f0;
-        color: #334155;
-    }
-    .btn-grey:hover {
-        background: #cbd5e1;
-    }
-    .btn-disabled {
-        background: #cbd5e1;
-        color: #94a3b8;
-        cursor: not-allowed;
-    }
-    .del-link {
-        color: #ef4444;
-        cursor: pointer;
-        font-size: 0.85rem;
-        text-decoration: underline;
-        font-weight: 500;
-    }
-    .del-link:hover { color: #b91c1c; }
-
-    /* Tables */
-    .table-shell {
-        overflow-x: auto;
-        margin: 0 24px 20px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.86rem;
-    }
-    th, td {
-        border: 1px solid #e2e8f0;
-        padding: 9px 12px;
-        text-align: left;
-    }
-    th {
-        background: #f8fafc;
+        font-size: 12.5px;
         font-weight: 600;
         color: #334155;
-    }
-    .empty-row td {
-        text-align: center;
-        color: #94a3b8;
-        padding: 16px;
-    }
-
-    /* Segmented Choice */
-    .segmented-choice {
-        display: flex;
-        border: 1px solid #cbd5e1;
-        border-radius: 7px;
-        overflow: hidden;
-    }
-    .segmented-option {
-        flex: 1;
-        text-align: center;
-        padding: 9px;
         cursor: pointer;
         user-select: none;
+    }
+    .salu-switch-box input {
+        accent-color: #f97316;
+        width: 17px;
+        height: 17px;
+    }
+
+    /* BADGES */
+    .salu-qualifying-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #1e3a8a;
+    }
+
+    /* UNDERTAKING BOX */
+    .salu-undertaking-box {
+        background: #fff8f0;
+        border: 1.5px solid #fed7aa;
+        border-radius: 10px;
+        padding: 18px 22px;
+    }
+    .salu-undertaking-header {
         display: flex;
         align-items: center;
-        justify-content: center;
+        border-bottom: 1px solid #fed7aa;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #9a3412;
+    }
+    .salu-undertaking-body {
+        font-size: 13px;
+        line-height: 1.7;
+        color: #334155;
+    }
+
+    /* STATUS CARDS */
+    .salu-status-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+    }
+    .salu-status-card.status-done {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+    .salu-status-card.status-pending {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+    .salu-status-card.status-optional {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+    .status-icon { font-size: 20px; }
+    .status-title { font-size: 12.5px; font-weight: 700; color: #1e293b; }
+    .status-state { font-size: 11px; font-weight: 600; color: #64748b; }
+
+    /* BUTTONS */
+    .btn-salu-next {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 13px;
+        padding: 9px 24px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
         gap: 6px;
-        font-size: 0.88rem;
-        background: #fff;
-        transition: background 0.15s, color 0.15s;
+        box-shadow: 0 3px 10px rgba(234, 88, 12, 0.3);
+        transition: all 0.2s;
     }
-    .segmented-option:first-child { border-right: 1px solid #cbd5e1; }
-    .segmented-option input { display: none; }
-    .segmented-option.selected {
-        background: #f97316;
-        color: white;
+    .btn-salu-next:hover {
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 5px 14px rgba(234, 88, 12, 0.4);
+    }
+    .btn-salu-back {
+        background: #f1f5f9;
+        color: #334155;
         font-weight: 600;
+        font-size: 13px;
+        padding: 9px 20px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s;
     }
+    .btn-salu-back:hover { background: #e2e8f0; }
 
-    /* Status Table */
-    .status-table th, .status-table td {
-        text-align: center;
-        padding: 16px 12px;
-        font-weight: 600;
+    .btn-salu-submit {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 14px;
+        padding: 10px 28px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+        transition: all 0.2s;
     }
-    .status-ok {
-        color: #15803d;
-        background: #dcfce7;
-    }
-    .status-incomplete {
-        color: #dc2626;
-        background: #fee2e2;
-    }
-
-    @@media (max-width: 768px) {
-        .form-grid { grid-template-columns: 1fr; }
-        .field-wide { grid-column: span 1; }
-        .stepper { flex-wrap: wrap; }
-        .step-btn { flex: 1 1 30%; border-bottom: 1px solid #e2e8f0; }
+    .btn-salu-submit:hover:not(:disabled) {
+        background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(22, 163, 74, 0.45);
     }
 </style>
-
-<div class="form-shell">
-    <!-- Step Navigation (Stepper Bar) -->
-    <div class="stepper">
-        <div class="step-btn @(_currentStep == 1 ? "active" : "")" @onclick="() => GoToStep(1)">
-            <span>1. Personal</span>
-            @if (FormService.State.PersonalDone) { <span class="step-done-badge">✓</span> }
-        </div>
-        <div class="step-btn @(_currentStep == 2 ? "active" : "")" @onclick="() => GoToStep(2)">
-            <span>2. Academic</span>
-            @if (FormService.State.AcademicsDone) { <span class="step-done-badge">✓</span> }
-        </div>
-        <div class="step-btn @(_currentStep == 3 ? "active" : "")" @onclick="() => GoToStep(3)">
-            <span>3. Preferences</span>
-            @if (FormService.State.PreferencesDone) { <span class="step-done-badge">✓</span> }
-        </div>
-        <div class="step-btn @(_currentStep == 4 ? "active" : "")" @onclick="() => GoToStep(4)">
-            <span>4. Documents</span>
-            @if (FormService.State.DocumentsDone) { <span class="step-done-badge">✓</span> }
-        </div>
-        <div class="step-btn @(_currentStep == 5 ? "active" : "")" @onclick="() => GoToStep(5)">
-            <span>5. Undertaking</span>
-            @if (FormService.State.UndertakingDone) { <span class="step-done-badge">✓</span> }
-        </div>
-        <div class="step-btn @(_currentStep == 6 ? "active" : "")" @onclick="() => GoToStep(6)">
-            <span>6. Status</span>
-            @if (FormService.State.AllMandatoryComplete) { <span class="step-done-badge">✓</span> }
-        </div>
-    </div>
-
-    <div class="panel">
-
-        @* ═══════════════════════════════════════════════════════════════
-           STEP 1: PERSONAL INFORMATION
-           ═══════════════════════════════════════════════════════════════ *@
-        @if (_currentStep == 1)
-        {
-            <div class="panel-title-bar">
-                <span>Personal Information</span>
-                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 1 of 6</span>
-            </div>
-
-            <EditForm Model="FormService.State.Personal" OnValidSubmit="SavePersonal">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="validation-summary" />
-
-                <div class="form-grid" style="margin-top: 15px;">
-                    <div class="field field-wide">
-                        <label>Name<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputText id="p_name" @bind-Value="FormService.State.Personal.Name" placeholder="Full name" />
-                        </div>
-                    </div>
-                    <div class="field field-wide">
-                        <label>Father's Name<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputText id="p_father" @bind-Value="FormService.State.Personal.FatherName" placeholder="Father's name" />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Surname</label>
-                        <div class="input-shell">
-                            <InputText id="p_surname" @bind-Value="FormService.State.Personal.Surname" placeholder="Surname" />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Gender<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputSelect id="p_gender" @bind-Value="FormService.State.Personal.Gender">
-                                <option value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Guardian's Name</label>
-                        <div class="input-shell">
-                            <InputText id="p_guardian" @bind-Value="FormService.State.Personal.GuardianName" placeholder="Optional" />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>CNIC Number<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputText id="p_cnic" @bind-Value="FormService.State.Personal.Cnic" maxlength="15" placeholder="45203-1234567-1" />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Date of Birth<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputDate id="p_dob" @bind-Value="FormService.State.Personal.DateOfBirth" />
-                        </div>
-                    </div>
-                    <div class="field field-wide">
-                        <label>Current Address<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputText id="p_curr_addr" @bind-Value="FormService.State.Personal.CurrentAddress" placeholder="Current residential address" />
-                        </div>
-                    </div>
-                    <div class="field field-wide">
-                        <label>Permanent Address<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputText id="p_perm_addr" @bind-Value="FormService.State.Personal.PermanentAddress" placeholder="Permanent address" />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Correspondence Address</label>
-                        <div class="input-shell">
-                            <InputSelect id="p_corr_addr" @bind-Value="FormService.State.Personal.CorrespondenceAddress">
-                                <option value="">Select Correspondence Address</option>
-                                <option value="Same as Current">Same as Current</option>
-                                <option value="Same as Permanent">Same as Permanent</option>
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Nationality<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputSelect id="p_nat" @bind-Value="FormService.State.Personal.Nationality">
-                                <option value="">Select Nationality</option>
-                                @foreach (var n in _nationalities) { <option value="@n">@n</option> }
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Religion<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputSelect id="p_rel" @bind-Value="FormService.State.Personal.Religion">
-                                <option value="">Select Religion</option>
-                                <option value="Islam">Islam</option>
-                                <option value="Christianity">Christianity</option>
-                                <option value="Hinduism">Hinduism</option>
-                                <option value="Other">Other</option>
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Domicile Province<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputSelect id="p_prov" @bind-Value="FormService.State.Personal.DomicileProvince">
-                                <option value="">Select Province</option>
-                                @foreach (var p in _provinces) { <option value="@p">@p</option> }
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Domicile District<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputSelect id="p_dist" @bind-Value="FormService.State.Personal.DomicileDistrict">
-                                <option value="">Select District</option>
-                                @foreach (var d in _districts) { <option value="@d">@d</option> }
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Mobile No<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputText id="p_mobile" @bind-Value="FormService.State.Personal.MobileNo" placeholder="03xx-xxxxxxx" />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Email Address<span class="req">*</span></label>
-                        <div class="input-shell">
-                            <InputText id="p_email" @bind-Value="FormService.State.Personal.Email" placeholder="name@example.com" />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Are You Employed Anywhere?<span class="req">*</span></label>
-                        <div class="segmented-choice">
-                            <label class="segmented-option @(FormService.State.Personal.IsEmployed ? "selected" : "")" @onclick="() => FormService.State.Personal.IsEmployed = true">
-                                <span>Yes</span>
-                            </label>
-                            <label class="segmented-option @(!FormService.State.Personal.IsEmployed ? "selected" : "")" @onclick="() => FormService.State.Personal.IsEmployed = false">
-                                <span>No</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Self-Finance Base</label>
-                        <div class="segmented-choice">
-                            <label class="segmented-option @(FormService.State.Personal.SelfFinance ? "selected" : "")" @onclick="() => FormService.State.Personal.SelfFinance = true">
-                                <span>Yes</span>
-                            </label>
-                            <label class="segmented-option @(!FormService.State.Personal.SelfFinance ? "selected" : "")" @onclick="() => FormService.State.Personal.SelfFinance = false">
-                                <span>No</span>
-                            </label>
-                        </div>
-                        <div class="hint">Considered on Self-Finance basis if not selected on merit quota.</div>
-                    </div>
-                    <div class="field">
-                        <label>Avail University Hostel?</label>
-                        <div class="segmented-choice">
-                            <label class="segmented-option @(FormService.State.Personal.AvailHostel ? "selected" : "")" @onclick="() => FormService.State.Personal.AvailHostel = true">
-                                <span>Yes</span>
-                            </label>
-                            <label class="segmented-option @(!FormService.State.Personal.AvailHostel ? "selected" : "")" @onclick="() => FormService.State.Personal.AvailHostel = false">
-                                <span>No</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="field field-wide">
-                        <div class="photo-box-card">
-                            <div class="photo-box-avatar">
-                                <svg width="34" height="42" viewBox="0 0 24 28" fill="#94a3b8">
-                                    <circle cx="12" cy="7" r="5" />
-                                    <path d="M2 24c0-5 4-8 10-8s10 3 10 8z" />
-                                </svg>
-                            </div>
-                            <div class="photo-box-info">
-                                <div class="photo-box-name">Applicant Photo: @(string.IsNullOrWhiteSpace(FormService.State.Personal.Name) ? "Candidate" : FormService.State.Personal.Name)</div>
-                                <div class="photo-box-note">Passport-size color photograph with white background (size &lt; 200KB)</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="btn-row">
-                    <button type="submit" class="btn btn-orange">Save &amp; Continue</button>
-                </div>
-            </EditForm>
-        }
-
-        @* ═══════════════════════════════════════════════════════════════
-           STEP 2: ACADEMIC INFORMATION
-           ═══════════════════════════════════════════════════════════════ *@
-        @if (_currentStep == 2)
-        {
-            <div class="panel-title-bar">
-                <span>Academic Information</span>
-                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 2 of 6</span>
-            </div>
-            <div class="banner-note">Select your faculty, department, program, and qualifying degree. Then add all academic records from Matriculation through your final qualification.</div>
-
-            <div class="section-title">Program Selection</div>
-            <div class="form-grid" style="margin-bottom: 15px;">
-                <div class="field">
-                    <label>Admission Faculty Type<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="a_faculty" @bind="_faculty" @bind:after="OnFacultyChanged">
-                            <option value="">Select Faculty</option>
-                            @foreach (var f in SetupDataService.FacultyDepartmentsMap.Keys) { <option value="@f">@f</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Faculty Department<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="a_dept" @bind="_dept" @bind:after="OnDeptChanged">
-                            <option value="">Select Department</option>
-                            @foreach (var d in _depts) { <option value="@d">@d</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Program Name<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="a_program" @bind="_program" @bind:after="OnProgramChanged">
-                            <option value="">Select Program</option>
-                            @foreach (var p in _programs) { <option value="@p.Name">@p.Name</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Qualifying / Last Degree<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="a_degree" @bind="FormService.State.Academics.QualifyingDegree">
-                            <option value="">Select Last Degree</option>
-                            @foreach (var d in _lastDegrees) { <option value="@d">@d</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Eligible Major<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="a_major" @bind="FormService.State.Academics.EligibleMajor">
-                            <option value="">Select Eligible Major</option>
-                            @foreach (var m in _majors) { <option value="@m">@m</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Academic Year<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="a_year" @bind="FormService.State.Academics.AcademicYear">
-                            <option value="">Select Academic Year</option>
-                            @foreach (var y in _acadYears) { <option value="@y">@y</option> }
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-title" style="margin-top:20px;">Academic Details</div>
-            <div class="banner-note">It is mandatory to provide complete qualifications history from Matriculation through the qualifying degree.</div>
-
-            <div class="form-grid" style="margin-bottom: 15px;">
-                <div class="field">
-                    <label>Examination<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="r_exam" @bind="_row.Examination">
-                            <option value="">Select Examination</option>
-                            @foreach (var e in _examinations) { <option value="@e.Name">@e.Name</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Group / Major Subject<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <input type="text" id="r_group" @bind="_row.GroupMajor" placeholder="Major subject" />
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Year<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="r_year" @bind="_row.Year">
-                            <option value="">Select Year</option>
-                            @foreach (var y in _pgYears) { <option value="@y">@y</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Seat No / Roll No<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <input type="text" id="r_seat" @bind="_row.SeatNo" placeholder="Seat No" />
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Obtained Marks<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <input type="text" id="r_obt" @bind="_row.ObtainedMarks" placeholder="Obtained marks" />
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Total Marks<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <input type="text" id="r_tot" @bind="_row.TotalMarks" placeholder="Total marks" />
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Board / University<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="r_board" @bind="_row.Board">
-                            <option value="">Select Board / University</option>
-                            @foreach (var b in _boards) { <option value="@b.Name">@b.Name</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field field-wide">
-                    <label>School / College / Institute<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <input type="text" id="r_inst" @bind="_row.Institute" placeholder="Institute name" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="btn-row" style="padding-top: 0;">
-                <button class="btn btn-blue" @onclick="AddRecord">+ Add Record</button>
-                <button class="btn btn-grey" @onclick="ClearForm">Reset</button>
-            </div>
-            @if (!string.IsNullOrEmpty(_error)) { <div class="error-msg">@_error</div> }
-
-            <div class="section-title" style="margin-top:20px;">Recorded Academic History</div>
-            <div class="table-shell">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S.No.</th><th>Examination</th><th>Group/Major</th><th>Year</th>
-                            <th>Seat No</th><th>Obtained</th><th>Total</th><th>Board</th><th>Institute</th><th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!FormService.State.Academics.History.Any())
-                        {
-                            <tr class="empty-row"><td colspan="10">No Academic Records Added Yet</td></tr>
-                        }
-                        else
-                        {
-                            @for (int i = 0; i < FormService.State.Academics.History.Count; i++)
-                            {
-                                var r = FormService.State.Academics.History[i];
-                                var idx = i;
-                                <tr>
-                                    <td>@(idx + 1)</td>
-                                    <td><strong>@r.Examination</strong></td>
-                                    <td>@r.GroupMajor</td>
-                                    <td>@r.Year</td>
-                                    <td>@r.SeatNo</td>
-                                    <td>@r.ObtainedMarks</td>
-                                    <td>@r.TotalMarks</td>
-                                    <td>@r.Board</td>
-                                    <td>@r.Institute</td>
-                                    <td><span class="del-link" @onclick="() => RemoveRecord(idx)">Delete</span></td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="btn-row">
-                <button class="btn btn-grey" @onclick="() => GoToStep(1)">Back</button>
-                <button class="btn btn-orange" @onclick="SaveAcademics">Save &amp; Continue</button>
-            </div>
-        }
-
-        @* ═══════════════════════════════════════════════════════════════
-           STEP 3: PREFERENCES
-           ═══════════════════════════════════════════════════════════════ *@
-        @if (_currentStep == 3)
-        {
-            <div class="panel-title-bar">
-                <span>Preference Details</span>
-                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 3 of 6</span>
-            </div>
-            <div class="banner-note">Kindly choose at least three programs of your preference other than your primary applied program.</div>
-
-            <div class="form-grid">
-                <div class="field">
-                    <label>Admission Faculty Type<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="pref_fac" @bind="_fac" @bind:after="OnPrefFacultyChanged">
-                            <option value="">Select Faculty</option>
-                            @foreach (var f in SetupDataService.FacultyDepartmentsMap.Keys) { <option value="@f">@f</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Faculty Department<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="pref_dept" @bind="_prefDept" @bind:after="OnPrefDeptChanged">
-                            <option value="">Select Department</option>
-                            @foreach (var d in _prefDepts) { <option value="@d">@d</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Faculty Department Program<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="pref_prog" @bind="_prog">
-                            <option value="">Select Program</option>
-                            @foreach (var p in _prefPrograms) { <option value="@p.Name">@p.Name</option> }
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="btn-row" style="padding-top: 0; margin-top: 15px;">
-                <button class="btn btn-blue" @onclick="AddPreference">+ Add Preference</button>
-                <button class="btn btn-grey" @onclick="ClearPref">Reset</button>
-            </div>
-            @if (!string.IsNullOrEmpty(_errPref)) { <div class="error-msg">@_errPref</div> }
-
-            <div class="section-title" style="margin-top:20px;">Preference Records</div>
-            <div class="table-shell">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Preference #</th><th>Faculty Name</th><th>Department Name</th><th>Program Name</th><th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!FormService.State.Preferences.Any())
-                        {
-                            <tr class="empty-row"><td colspan="5">No Preferences Added (Optional, but recommended)</td></tr>
-                        }
-                        else
-                        {
-                            @for (int i = 0; i < FormService.State.Preferences.Count; i++)
-                            {
-                                var r = FormService.State.Preferences[i];
-                                var idx = i;
-                                <tr>
-                                    <td>Choice @(idx + 1)</td>
-                                    <td>@r.Faculty</td>
-                                    <td>@r.Department</td>
-                                    <td><strong>@r.Program</strong></td>
-                                    <td><span class="del-link" @onclick="() => FormService.State.Preferences.RemoveAt(idx)">Delete</span></td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="btn-row">
-                <button class="btn btn-grey" @onclick="() => GoToStep(2)">Back</button>
-                <button class="btn btn-orange" @onclick="SavePreferences">Save &amp; Continue</button>
-            </div>
-        }
-
-        @* ═══════════════════════════════════════════════════════════════
-           STEP 4: DOCUMENTS
-           ═══════════════════════════════════════════════════════════════ *@
-        @if (_currentStep == 4)
-        {
-            <div class="panel-title-bar">
-                <span>Document Information</span>
-                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 4 of 6</span>
-            </div>
-            <div class="banner-note">Kindly upload all relevant documents as mentioned in the academic records and admission checklist (CNIC, Transcripts, Certificates, Domicile).</div>
-
-            <div class="form-grid">
-                <div class="field">
-                    <label>Document Type<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <select id="d_type" @bind="_type" @bind:after="OnDocTypeSelected">
-                            <option value="">Select Document Type</option>
-                            @foreach (var d in _docTypes) { <option value="@d.Name">@d.Name</option> }
-                        </select>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Document Title / Name<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <input type="text" id="d_name" @bind="_name" placeholder="e.g. Matric Certificate, CNIC Front" />
-                    </div>
-                </div>
-                <div class="field field-wide">
-                    <label>Upload Attachment<span class="req">*</span></label>
-                    <div class="input-shell">
-                        <InputFile id="d_file" OnChange="OnFileSelected" style="padding: 7px 10px;" />
-                    </div>
-                    <div class="hint">Supported formats: PDF, JPG, PNG (Max 5MB each). @(!string.IsNullOrEmpty(_fileName) ? $"Selected: {_fileName}" : "")</div>
-                </div>
-            </div>
-
-            <div class="btn-row" style="padding-top: 0; margin-top: 15px;">
-                <button class="btn btn-blue" @onclick="AddDocument">+ Add Document</button>
-                <button class="btn btn-grey" @onclick="ClearDoc">Reset</button>
-            </div>
-            @if (!string.IsNullOrEmpty(_errDoc)) { <div class="error-msg">@_errDoc</div> }
-
-            <div class="section-title" style="margin-top:20px;">Uploaded Document List</div>
-            <div class="table-shell">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S.No.</th><th>File Name</th><th>Document Type</th><th>Title</th><th>Status</th><th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!FormService.State.Documents.Any())
-                        {
-                            <tr class="empty-row"><td colspan="6">No Documents Uploaded Yet</td></tr>
-                        }
-                        else
-                        {
-                            @for (int i = 0; i < FormService.State.Documents.Count; i++)
-                            {
-                                var r = FormService.State.Documents[i];
-                                var idx = i;
-                                <tr>
-                                    <td>@(idx + 1)</td>
-                                    <td><strong>@r.FileName</strong></td>
-                                    <td>@r.DocType</td>
-                                    <td>@r.DocName</td>
-                                    <td><span style="color: #15803d; font-weight: 500;">Ready</span></td>
-                                    <td><span class="del-link" @onclick="() => FormService.State.Documents.RemoveAt(idx)">Delete</span></td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="btn-row">
-                <button class="btn btn-grey" @onclick="() => GoToStep(3)">Back</button>
-                <button class="btn btn-orange" @onclick="SaveDocuments">Save &amp; Continue</button>
-            </div>
-        }
-
-        @* ═══════════════════════════════════════════════════════════════
-           STEP 5: UNDERTAKING
-           ═══════════════════════════════════════════════════════════════ *@
-        @if (_currentStep == 5)
-        {
-            <div class="panel-title-bar">
-                <span>Undertaking Details</span>
-                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 5 of 6</span>
-            </div>
-
-            <div style="background: #fff8f0; border: 1px solid #fed7aa; border-radius: 12px; padding: 22px; margin: 24px;">
-                <div style="display: flex; align-items: flex-start; gap: 14px;">
-                    <InputCheckbox id="u_check" @bind-Value="FormService.State.UndertakingAccepted"
-                                   style="width: 20px; height: 20px; margin-top: 3px; cursor: pointer; accent-color: #f97316; flex-shrink: 0;" />
-                    <label for="u_check" style="margin: 0; font-size: 13.5px; line-height: 1.75; color: #334155; cursor: pointer;">
-                        <strong>I hereby undertake</strong> that the entries made in this admission form are correct and complete to the best of my knowledge and belief, and that my admission to Shah Abdul Latif University (SALU) is provisional and subject to cancellation if any irregularity, misstatement, or false document is found at any stage.
-                        <br /><br />
-                        Further, I declare that I am not currently registered/enrolled as a regular student for any degree program in any other University/Institute. I solemnly undertake to abide by the rules, code of conduct, and regulations of Shah Abdul Latif University.
-                    </label>
-                </div>
-            </div>
-
-            @if (!string.IsNullOrEmpty(_errUndertaking)) { <div class="error-msg">@_errUndertaking</div> }
-
-            <div class="btn-row">
-                <button class="btn btn-grey" @onclick="() => GoToStep(4)">Back</button>
-                <button class="btn btn-orange" @onclick="SaveUndertaking">Accept &amp; Continue</button>
-            </div>
-        }
-
-        @* ═══════════════════════════════════════════════════════════════
-           STEP 6: STATUS & FINAL SUBMISSION
-           ═══════════════════════════════════════════════════════════════ *@
-        @if (_currentStep == 6)
-        {
-            <div class="panel-title-bar">
-                <span>Status &amp; Final Submission</span>
-                <span style="font-size: 0.85rem; font-weight: normal; color: #94a3b8;">Step 6 of 6</span>
-            </div>
-            <div class="banner-note">Please review the checklist below. All mandatory sections must be completed before you can finalize and submit your application.</div>
-
-            <div class="table-shell">
-                <table class="status-table">
-                    <thead>
-                        <tr>
-                            <th>Personal Info</th>
-                            <th>Academics</th>
-                            <th>Preferences (Optional)</th>
-                            <th>Documents</th>
-                            <th>Undertaking</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="@(FormService.State.PersonalDone ? "status-ok" : "status-incomplete")">
-                                @(FormService.State.PersonalDone ? "✓ Complete" : "⚠ Incomplete")
-                            </td>
-                            <td class="@(FormService.State.AcademicsDone ? "status-ok" : "status-incomplete")">
-                                @(FormService.State.AcademicsDone ? "✓ Complete" : "⚠ Incomplete")
-                            </td>
-                            <td class="@(FormService.State.PreferencesDone ? "status-ok" : "status-incomplete")">
-                                @(FormService.State.PreferencesDone ? "✓ Complete" : "Optional")
-                            </td>
-                            <td class="@(FormService.State.DocumentsDone ? "status-ok" : "status-incomplete")">
-                                @(FormService.State.DocumentsDone ? "✓ Complete" : "⚠ Incomplete")
-                            </td>
-                            <td class="@(FormService.State.UndertakingDone ? "status-ok" : "status-incomplete")">
-                                @(FormService.State.UndertakingDone ? "✓ Complete" : "⚠ Incomplete")
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="btn-row" style="justify-content: center; margin-top: 20px; flex-direction: column; gap: 14px;">
-                <button class="btn @(FormService.State.AllMandatoryComplete ? "btn-orange" : "btn-disabled")"
-                        disabled="@(!FormService.State.AllMandatoryComplete)"
-                        style="padding: 12px 36px; font-size: 1.05rem;"
-                        @onclick="SubmitForm">
-                    Finalize And Submit Application
-                </button>
-                @if (!FormService.State.AllMandatoryComplete)
-                {
-                    <div style="font-size: 0.82rem; color: #64748b;">Please complete all required sections to enable final submission.</div>
-                }
-            </div>
-
-            @if (!string.IsNullOrEmpty(_submissionError))
-            {
-                <div class="error-msg">@_submissionError</div>
-            }
-
-            @if (_submitted)
-            {
-                <div style="margin: 20px 24px 24px; padding: 24px; background: #dcfce7; border: 1px solid #86efac; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: bold; color: #15803d; margin-bottom: 8px;">
-                        🎉 Application Submitted Successfully!
-                    </div>
-                    <div style="font-size: 0.95rem; color: #166534; line-height: 1.6;">
-                        Your admission form has been received by Shah Abdul Latif University.<br />
-                        Your Candidate Tracking ID is: <strong style="font-size: 1.05rem; background: #bbf7d0; padding: 2px 8px; border-radius: 4px;">SALU-2026-08412</strong>
-                    </div>
-                </div>
-            }
-        }
-    </div>
-</div>
 
 @code {
     private int _currentStep = 1;
@@ -1034,6 +1307,7 @@
     private List<string> _nationalities = [];
     private List<string> _provinces = [];
     private readonly List<string> _districts = ["Khairpur", "Sukkur", "Larkana", "Ghotki", "Shikarpur", "Kashmore", "Badin", "Hyderabad", "Karachi", "Nawabshah (SBA)", "Naushahro Feroze", "Dadu", "Jacobabad", "Mirpurkhas"];
+    private string _photoError = "";
 
     // Step 2 Academic State
     private string _faculty = "", _dept = "", _program = "";
@@ -1057,7 +1331,9 @@
 
     // Step 6 Status State
     private bool _submitted = false;
+    private bool _isSubmitting = false;
     private string _submissionError = "";
+    private string _submittedTrackingNumber = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -1068,17 +1344,35 @@
             return;
         }
 
+        // Auto-fill logged in student profile details if empty
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var user = await UserManager.GetUserAsync(authState.User);
+            if (user != null)
+            {
+                if (string.IsNullOrWhiteSpace(FormService.State.Personal.Name))
+                    FormService.State.Personal.Name = user.FullName ?? "";
+                if (string.IsNullOrWhiteSpace(FormService.State.Personal.Email))
+                    FormService.State.Personal.Email = user.Email ?? "";
+                if (string.IsNullOrWhiteSpace(FormService.State.Personal.Cnic))
+                    FormService.State.Personal.Cnic = user.Cnic ?? "";
+                if (string.IsNullOrWhiteSpace(FormService.State.Personal.MobileNo))
+                    FormService.State.Personal.MobileNo = user.PhoneNumber ?? "";
+            }
+        }
+
         _nationalities = await SetupData.GetNationalitiesAsync();
         _provinces = await SetupData.GetProvincesAsync();
-        
+
         _examinations = await SetupData.GetExaminationsAsync();
         _boards = await SetupData.GetBoardsAsync();
         _acadYears = await SetupData.GetAcademicYearsAsync();
         _pgYears = await SetupData.GetYearsForPGAsync();
-        
+
         _docTypes = await SetupData.GetDocumentTypesAsync();
 
-        // Restore any existing state if user returns to this page
+        // Restore existing state
         if (!string.IsNullOrWhiteSpace(FormService.State.Academics.Faculty))
         {
             _faculty = FormService.State.Academics.Faculty;
@@ -1107,14 +1401,54 @@
             _currentStep++;
     }
 
-    // ─── Step 1 Methods ─────────────────────────────────────────────
+    // ─── Step 1 Methods: Photo & Personal ────────────────────────────
+    private async Task HandlePhotoSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        if (file.Size > 2 * 1024 * 1024)
+        {
+            _photoError = "Photograph size must not exceed 2 MB.";
+            return;
+        }
+
+        var ext = System.IO.Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext != ".jpg" && ext != ".jpeg" && ext != ".png")
+        {
+            _photoError = "Please select a valid JPG or PNG image.";
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(2 * 1024 * 1024);
+            using var ms = new System.IO.MemoryStream();
+            await stream.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            FormService.State.Personal.PhotoUrl = $"data:{file.ContentType};base64,{base64}";
+            _photoError = "";
+            Snackbar.Add("Candidate photograph uploaded successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _photoError = "Failed to upload photo: " + ex.Message;
+        }
+    }
+
+    private void RemovePhoto()
+    {
+        FormService.State.Personal.PhotoUrl = "";
+        _photoError = "";
+    }
+
     private void SavePersonal()
     {
         FormService.SavePersonal();
         NextStep();
     }
 
-    // ─── Step 2 Methods ─────────────────────────────────────────────
+    // ─── Step 2 Methods: Academic ────────────────────────────────────
     private void OnFacultyChanged()
     {
         _dept = "";
@@ -1145,47 +1479,63 @@
             FormService.State.Academics.Department = _dept;
             FormService.State.Academics.Program = _program;
         }
-        else
-        {
-            _lastDegrees = [];
-            _majors = [];
-        }
     }
 
-    private void AddRecord()
+    private void AddAcademicRecord()
     {
-        if (string.IsNullOrWhiteSpace(_row.Examination) || string.IsNullOrWhiteSpace(_row.Year) ||
-            string.IsNullOrWhiteSpace(_row.SeatNo) || string.IsNullOrWhiteSpace(_row.ObtainedMarks) ||
-            string.IsNullOrWhiteSpace(_row.TotalMarks) || string.IsNullOrWhiteSpace(_row.Board) ||
-            string.IsNullOrWhiteSpace(_row.Institute))
+        if (string.IsNullOrWhiteSpace(_row.Examination) || string.IsNullOrWhiteSpace(_row.GroupMajor) ||
+            string.IsNullOrWhiteSpace(_row.Year) || string.IsNullOrWhiteSpace(_row.SeatNo) ||
+            string.IsNullOrWhiteSpace(_row.ObtainedMarks) || string.IsNullOrWhiteSpace(_row.TotalMarks) ||
+            string.IsNullOrWhiteSpace(_row.Board) || string.IsNullOrWhiteSpace(_row.Institute))
         {
-            _error = "Please fill all required academic fields before adding a record.";
+            _error = "Please fill in all qualification fields before adding.";
             return;
         }
+
         _error = "";
-        FormService.State.Academics.History.Add(_row);
-        _row = new();
+        FormService.State.Academics.History.Add(new AcademicRecord
+        {
+            Examination = _row.Examination,
+            GroupMajor = _row.GroupMajor,
+            Year = _row.Year,
+            SeatNo = _row.SeatNo,
+            ObtainedMarks = _row.ObtainedMarks,
+            TotalMarks = _row.TotalMarks,
+            Board = _row.Board,
+            Institute = _row.Institute
+        });
+
+        _row = new AcademicRecord();
+        Snackbar.Add("Educational qualification added.", Severity.Info);
     }
 
-    private void ClearForm()
+    private void RemoveAcademicRecord(AcademicRecord rec)
     {
-        _row = new();
-        _error = "";
+        FormService.State.Academics.History.Remove(rec);
     }
 
-    private void RemoveRecord(int i)
-    {
-        if (i >= 0 && i < FormService.State.Academics.History.Count)
-            FormService.State.Academics.History.RemoveAt(i);
-    }
-    
     private void SaveAcademics()
     {
+        if (string.IsNullOrWhiteSpace(FormService.State.Academics.Faculty) ||
+            string.IsNullOrWhiteSpace(FormService.State.Academics.Department) ||
+            string.IsNullOrWhiteSpace(FormService.State.Academics.Program))
+        {
+            _error = "Please select Faculty, Department, and Program.";
+            return;
+        }
+
+        if (!FormService.State.Academics.History.Any())
+        {
+            _error = "Please add at least one qualification record (e.g. SSC/HSC) before proceeding.";
+            return;
+        }
+
+        _error = "";
         FormService.SaveAcademics();
         NextStep();
     }
 
-    // ─── Step 3 Methods ─────────────────────────────────────────────
+    // ─── Step 3 Methods: Preferences ─────────────────────────────────
     private void OnPrefFacultyChanged()
     {
         _prefDept = "";
@@ -1203,103 +1553,135 @@
     private void AddPreference()
     {
         if (string.IsNullOrWhiteSpace(_fac) || string.IsNullOrWhiteSpace(_prefDept) || string.IsNullOrWhiteSpace(_prog))
-        { 
-            _errPref = "Please select faculty, department, and program for your preference."; 
-            return; 
+        {
+            _errPref = "Please select Faculty, Department, and Program for your choice.";
+            return;
         }
+
+        if (FormService.State.Preferences.Any(p => p.Program == _prog))
+        {
+            _errPref = "This program choice is already added in your preferences list.";
+            return;
+        }
+
         _errPref = "";
-        FormService.State.Preferences.Add(new() { Faculty = _fac, Department = _prefDept, Program = _prog });
-        FormService.SavePreferences();
-        ClearPref();
+        FormService.State.Preferences.Add(new PreferenceRecord
+        {
+            Faculty = _fac,
+            Department = _prefDept,
+            Program = _prog
+        });
+
+        _fac = ""; _prefDept = ""; _prog = "";
+        _prefDepts = []; _prefPrograms = [];
+        Snackbar.Add("Program choice added.", Severity.Info);
     }
-    
-    private void ClearPref()
+
+    private void RemovePreference(PreferenceRecord pref)
     {
-        _fac = "";
-        _prefDept = "";
-        _prog = "";
-        _errPref = "";
-        _prefDepts = [];
-        _prefPrograms = [];
+        FormService.State.Preferences.Remove(pref);
     }
-    
+
     private void SavePreferences()
     {
         FormService.SavePreferences();
         NextStep();
     }
 
-    // ─── Step 4 Methods ─────────────────────────────────────────────
-    private void OnDocTypeSelected()
+    // ─── Step 4 Methods: Documents ───────────────────────────────────
+    private void HandleDocFileSelected(InputFileChangeEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(_name))
-            _name = _type;
-    }
-
-    private void OnFileSelected(InputFileChangeEventArgs e)
-    {
-        _fileName = e.File.Name;
-        if (string.IsNullOrWhiteSpace(_name))
-            _name = System.IO.Path.GetFileNameWithoutExtension(_fileName);
+        var file = e.File;
+        if (file != null)
+        {
+            _fileName = file.Name;
+            _errDoc = "";
+        }
     }
 
     private void AddDocument()
     {
         if (string.IsNullOrWhiteSpace(_type) || string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_fileName))
-        { 
-            _errDoc = "Please choose a document type, provide a name, and select an attachment file."; 
-            return; 
+        {
+            _errDoc = "Please select document type, enter document title, and choose a file.";
+            return;
         }
+
         _errDoc = "";
-        FormService.State.Documents.Add(new() { DocType = _type, DocName = _name, FileName = _fileName });
-        FormService.SaveDocuments();
-        ClearDoc();
+        FormService.State.Documents.Add(new DocumentRecord
+        {
+            DocType = _type,
+            DocName = _name,
+            FileName = _fileName
+        });
+
+        _type = ""; _name = ""; _fileName = "";
+        Snackbar.Add("Document attached successfully.", Severity.Info);
     }
-    
-    private void ClearDoc()
+
+    private void RemoveDocument(DocumentRecord doc)
     {
-        _type = "";
-        _name = "";
-        _fileName = "";
-        _errDoc = "";
+        FormService.State.Documents.Remove(doc);
     }
-    
+
     private void SaveDocuments()
     {
+        if (!FormService.State.Documents.Any())
+        {
+            _errDoc = "Please upload at least one required educational document.";
+            return;
+        }
+
+        _errDoc = "";
         FormService.SaveDocuments();
         NextStep();
     }
 
-    // ─── Step 5 Methods ─────────────────────────────────────────────
+    // ─── Step 5 Methods: Undertaking ─────────────────────────────────
     private void SaveUndertaking()
     {
         if (!FormService.State.UndertakingAccepted)
-        { 
-            _errUndertaking = "Please review and check the undertaking declaration box before proceeding."; 
-            return; 
+        {
+            _errUndertaking = "Please review and check the declaration box before proceeding.";
+            return;
         }
+
         _errUndertaking = "";
         FormService.SaveUndertaking();
         NextStep();
     }
 
-    // ─── Step 6 Methods ─────────────────────────────────────────────
+    // ─── Step 6 Methods: Final Submission ────────────────────────────
     private async Task SubmitForm()
     {
-        if (FormService.State.AllMandatoryComplete)
+        if (!FormService.State.AllMandatoryComplete) return;
+
+        _isSubmitting = true;
+        _submissionError = "";
+
+        try
         {
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var userId = authenticationState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(userId))
             {
                 _submissionError = "Your session could not be verified. Please sign in again.";
+                _isSubmitting = false;
                 return;
             }
 
             await ApplicationStore.SaveDraftAsync(userId, FormService.State);
-            _submissionError = "";
+            _submittedTrackingNumber = new Random().Next(10000, 99999).ToString();
             _submitted = true;
+            Snackbar.Add("Application submitted successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _submissionError = "An error occurred while submitting your application: " + ex.Message;
+        }
+        finally
+        {
+            _isSubmitting = false;
         }
     }
 }
-
