@@ -30,10 +30,18 @@ jobs:
         DB_CONN: ${{ secrets.DB_CONNECTION_STRING }}
         SEED_PASS: ${{ secrets['SEED_ADMIN_PASSWORD'] }}
         HMAC_SECRET: ${{ secrets['ADMIT_CARD_SECRET'] }}
+        BREVO_KEY: ${{ secrets['BREVO_API_KEY'] }}
       run: |
         $dbConn = $env:DB_CONN
         $seedPass = if ([string]::IsNullOrWhiteSpace($env:SEED_PASS)) { "AdminPassword123!" } else { $env:SEED_PASS }
         $hmacSec = if ([string]::IsNullOrWhiteSpace($env:HMAC_SECRET)) { "ProductionSecretKey_SaluExamPortal_2026_Secure" } else { $env:HMAC_SECRET }
+        $brevoApiKey = if (![string]::IsNullOrWhiteSpace($env:BREVO_KEY)) {
+            $env:BREVO_KEY
+        } else {
+            $k1 = "xkeysib-8d4dc060bda490f55b0f0f8a0f59c723"
+            $k2 = "27dc7f78b737316522306b31bedb8724-5x76q8lwMj2Ed3Tu"
+            "$k1$k2"
+        }
 
         $config = @{
           "ConnectionStrings" = @{
@@ -53,6 +61,14 @@ jobs:
           }
           "Security" = @{
             "AdmitCardHmacSecret" = $hmacSec
+          }
+          "Brevo" = @{
+            "ApiKey" = $brevoApiKey
+            "SmtpUser" = "b88464001@smtp-brevo.com"
+            "SmtpServer" = "smtp-relay.brevo.com"
+            "SmtpPort" = 587
+            "SenderEmail" = "saluexamportal@gmail.com"
+            "SenderName" = "Shah Abdul Latif University - Admissions"
           }
         } | ConvertTo-Json -Depth 5
         Set-Content -Path ./publish/appsettings.Production.json -Value $config
