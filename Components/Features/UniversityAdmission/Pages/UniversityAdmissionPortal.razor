@@ -1,7 +1,21 @@
 @page "/Student/UniversityAdmission"
 @page "/Student/UniversityAdmission/{ViewName}"
+@page "/Student/instructions"
+@page "/Student/submit-app"
+@page "/Student/eligibility-prgm"
+@page "/Student/candidate-status"
+@page "/Student/checklist"
+@page "/Student/admission-schedule"
+@page "/Student/sample-papers"
+@page "/Student/prospectus"
+@page "/Student/eligibility-general"
+@page "/Student/admission-procedure"
+@page "/Student/fee-structure"
+
+@layout SaluExamPortal.Components.Shared.Layout.UniversityAdmissionLayout
 @attribute [Authorize(Policy = "Student")]
 @rendermode InteractiveServer
+
 @using Microsoft.AspNetCore.Identity
 @using SaluExamPortal.Domain.Enums
 @using SaluExamPortal.Infrastructure.Persistence
@@ -49,7 +63,7 @@
 
     <!-- PRIMARY NAV STRIP (NAVY) -->
     <div class="sidebar-strip">
-        <div class="module-btn" @onclick='() => SetView("eligibility-prgm")' title="SALU PG Admissions">
+        <div class="module-btn @(_activeView == "instructions" ? "active" : "")" @onclick='() => SetView("instructions")' title="SALU PG Admissions">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 6h16M4 12h16M4 18h16" />
                 <circle cx="9" cy="6" r="2" fill="currentColor"/>
@@ -68,12 +82,13 @@
             {
                 var isItemActive = _activeView == item.ViewId;
                 <li>
-                    <NavLink href="@item.ViewId"
-                             class="@($"submenu-item {(isItemActive ? "active" : "")}")"
-                             @onclick="() => SetView(item.ViewId)">
+                    <a href="@($"Student/UniversityAdmission/{item.ViewId}")"
+                       class="@($"submenu-item {(isItemActive ? "active" : "")}")"
+                       @onclick="() => SetView(item.ViewId)"
+                       @onclick:preventDefault="true">
                         @((MarkupString)item.Icon)
                         <span>@item.Label</span>
-                    </NavLink>
+                    </a>
                 </li>
             }
         </ul>
@@ -92,14 +107,14 @@
             <!-- VIEWS -->
             @switch (_activeView)
             {
-                case "eligibility-prgm":
-                    <EligibilityProgramView OnApplyForProgram="GoToAcademicsStep" />
-                    break;
                 case "instructions":
-                    <InstructionsView />
+                    <InstructionsView OnStartApplication='() => SetView("submit-app")' />
                     break;
                 case "submit-app":
                     <SubmitApplicationView />
+                    break;
+                case "eligibility-prgm":
+                    <EligibilityProgramView OnApplyForProgram="GoToAcademicsStep" />
                     break;
                 case "candidate-status":
                     <CandidateStatusView />
@@ -126,7 +141,7 @@
                     <FeeStructureView />
                     break;
                 default:
-                    <EligibilityProgramView OnApplyForProgram="GoToAcademicsStep" />
+                    <InstructionsView OnStartApplication='() => SetView("submit-app")' />
                     break;
             }
         </div>
@@ -140,7 +155,7 @@
 @code {
     [Parameter] public string? ViewName { get; set; }
 
-    private string _activeView = "eligibility-prgm";
+    private string _activeView = "instructions";
     private bool _sidebarOpen = true;
     private ApplicationUser? _currentUser;
 
@@ -192,25 +207,50 @@
     {
         if (!string.IsNullOrWhiteSpace(ViewName))
         {
-            _activeView = ViewName.ToLowerInvariant();
+            _activeView = NormalizeView(ViewName);
             return;
         }
 
         var relative = Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].Trim('/');
         if (string.IsNullOrEmpty(relative) ||
-            relative.Equals("Student/UniversityAdmission", StringComparison.OrdinalIgnoreCase))
+            relative.Equals("Student/UniversityAdmission", StringComparison.OrdinalIgnoreCase) ||
+            relative.Equals("Student", StringComparison.OrdinalIgnoreCase))
         {
-            _activeView = "eligibility-prgm";
+            _activeView = "instructions";
+            return;
         }
-        else
+
+        const string prefixAdmission = "Student/UniversityAdmission/";
+        if (relative.StartsWith(prefixAdmission, StringComparison.OrdinalIgnoreCase))
         {
-            const string routePrefix = "Student/UniversityAdmission/";
-            if (relative.StartsWith(routePrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                relative = relative[routePrefix.Length..].Trim('/');
-            }
-            _activeView = string.IsNullOrEmpty(relative) ? "eligibility-prgm" : relative.ToLowerInvariant();
+            relative = relative[prefixAdmission.Length..].Trim('/');
         }
+        else if (relative.StartsWith("Student/", StringComparison.OrdinalIgnoreCase))
+        {
+            relative = relative["Student/".Length..].Trim('/');
+        }
+
+        _activeView = string.IsNullOrEmpty(relative) ? "instructions" : NormalizeView(relative);
+    }
+
+    private static string NormalizeView(string view)
+    {
+        var v = view.Trim().ToLowerInvariant();
+        return v switch
+        {
+            "instructions" => "instructions",
+            "submit-app" => "submit-app",
+            "eligibility-prgm" => "eligibility-prgm",
+            "candidate-status" => "candidate-status",
+            "checklist" => "checklist",
+            "admission-schedule" => "admission-schedule",
+            "sample-papers" => "sample-papers",
+            "prospectus" => "prospectus",
+            "eligibility-general" => "eligibility-general",
+            "admission-procedure" => "admission-procedure",
+            "fee-structure" => "fee-structure",
+            _ => "instructions"
+        };
     }
 
     private void ToggleSidebar() => _sidebarOpen = !_sidebarOpen;
@@ -218,9 +258,10 @@
     private void SetView(string viewId)
     {
         _activeView = viewId;
+        var targetUrl = $"Student/UniversityAdmission/{viewId}";
         if (!Nav.Uri.EndsWith("/" + viewId, StringComparison.OrdinalIgnoreCase))
         {
-            Nav.NavigateTo($"Student/UniversityAdmission/{viewId}");
+            Nav.NavigateTo(targetUrl);
         }
     }
 
@@ -251,4 +292,3 @@
         new("fee-structure",       "Fee Structure",              """<svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>"""),
     ];
 }
-

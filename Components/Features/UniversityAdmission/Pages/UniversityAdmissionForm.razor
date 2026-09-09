@@ -1,10 +1,12 @@
 @page "/Student/UniversityAdmission/Form"
+@layout SaluExamPortal.Components.Shared.Layout.UniversityAdmissionLayout
 @attribute [Authorize(Policy = "Student")]
 @rendermode InteractiveServer
 @inject AdmissionFormService FormService
 @inject SetupDataService SetupData
 @inject UniversityAdmissionApplicationStore ApplicationStore
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Nav
 
 <PageTitle>SALU – Admission &amp; Enrollment Form</PageTitle>
 
@@ -1059,6 +1061,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var relative = Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].Trim('/');
+        if (relative.Equals("Student/UniversityAdmission/Form", StringComparison.OrdinalIgnoreCase))
+        {
+            Nav.NavigateTo("Student/UniversityAdmission/submit-app", replace: true);
+            return;
+        }
+
         _nationalities = await SetupData.GetNationalitiesAsync();
         _provinces = await SetupData.GetProvincesAsync();
         

@@ -1,5 +1,104 @@
-﻿@page "/not-found"
-@layout MainLayout
+@page "/not-found"
+@using Microsoft.AspNetCore.Identity
+@using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Infrastructure.Persistence
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Nav
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>Page Not Found – SALU Portal</PageTitle>
+
+<div class="salu-notfound-container">
+    <div class="salu-notfound-card">
+        <div class="salu-notfound-icon">
+            <i class="bi bi-compass"></i>
+        </div>
+        <h2>Page Not Found</h2>
+        <p>The page or view you are trying to access does not exist or has been moved.</p>
+        <div class="salu-notfound-actions">
+            @if (_isUniversityRegular)
+            {
+                <a href="Student/UniversityAdmission" class="btn btn-warning" style="background:#e07b1f; border-color:#e07b1f; color:#fff;">
+                    <i class="bi bi-mortarboard-fill"></i> Return to PG Admission Portal
+                </a>
+            }
+            else
+            {
+                <a href="Student" class="btn btn-primary" style="background:#1b2a6b; border-color:#1b2a6b; color:#fff;">
+                    <i class="bi bi-house-door-fill"></i> Return to Student Dashboard
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .salu-notfound-container {
+        min-height: 65vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+    .salu-notfound-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+        max-width: 480px;
+        width: 100%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+    }
+    .salu-notfound-icon {
+        font-size: 3.2rem;
+        color: #f59e0b;
+        margin-bottom: 1rem;
+    }
+    .salu-notfound-card h2 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+    .salu-notfound-card p {
+        color: #64748b;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    .salu-notfound-actions a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.65rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        text-decoration: none;
+        transition: transform 0.15s;
+    }
+    .salu-notfound-actions a:hover {
+        transform: translateY(-1px);
+    }
+</style>
+
+@code {
+    private bool _isUniversityRegular = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated == true)
+        {
+            var user = await UserManager.GetUserAsync(auth.User);
+            if (user?.AdmissionType == AdmissionType.UniversityRegular)
+            {
+                _isUniversityRegular = true;
+                // Auto self-heal to university admission instructions view
+                Nav.NavigateTo("Student/UniversityAdmission", replace: true);
+            }
+        }
+    }
+}
