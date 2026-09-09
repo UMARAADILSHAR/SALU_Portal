@@ -41,8 +41,16 @@ builder.Services.AddHsts(options =>
 
 builder.Services.AddHttpsRedirection(options =>
 {
-    options.HttpsPort = 7043;
-    options.RedirectStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status307TemporaryRedirect;
+    if (builder.Environment.IsDevelopment())
+    {
+        options.HttpsPort = 7043;
+        options.RedirectStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status307TemporaryRedirect;
+    }
+    else
+    {
+        options.HttpsPort = 443;
+        options.RedirectStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status308PermanentRedirect;
+    }
 });
 
 // Configure QuestPDF Community license
@@ -236,6 +244,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+// 1. Process forwarded headers first so request scheme (HTTPS) and proxy headers are resolved
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -245,6 +256,8 @@ else
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+
+app.UseHttpsRedirection();
 
 // Enterprise Security Headers
 app.Use(async (context, next) =>
@@ -256,9 +269,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseForwardedHeaders();
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
 app.UseRateLimiter();
 
 // Keep uploaded documents outside the public static-file pipeline. They are served
