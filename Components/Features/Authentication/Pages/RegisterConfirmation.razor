@@ -128,17 +128,18 @@
 
                 <div class="salu-resend-box mt-3">
                     <span class="text-muted small">Didn't receive the code?</span>
-                    <button type="button" class="btn btn-link salu-resend-link" @onclick="ResendOtpAsync" disabled="@isResending">
-                        @if (isResending)
-                        {
-                            <span>Sending new code...</span>
-                        }
-                        else
-                        {
+                    <EditForm Model="ResendInput" FormName="resend-otp" OnSubmit="ResendOtpAsync" method="post" class="d-inline">
+                        <AntiforgeryToken />
+                        <button type="submit" class="btn btn-link salu-resend-link p-0 ms-1" style="vertical-align: baseline;">
                             <i class="bi bi-arrow-repeat me-1"></i>
                             <span>Resend 6-Digit Code</span>
-                        }
-                    </button>
+                        </button>
+                    </EditForm>
+                    <div class="mt-2">
+                        <a href="@GetResendLinkUrl()" class="text-info small text-decoration-none" title="Refresh and resend code">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Click here to refresh &amp; resend code
+                        </a>
+                    </div>
                 </div>
 
                 <div class="salu-tip-box mt-2">
@@ -478,7 +479,6 @@
 
 @code {
     private bool isVerifying = false;
-    private bool isResending = false;
     private bool isVerified = false;
     private string? errorMessage;
     private string? infoMessage;
@@ -490,16 +490,24 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
-    [SupplyParameterFromForm]
+    [SupplyParameterFromQuery]
+    private string? Resend { get; set; }
+
+    [SupplyParameterFromForm(FormName = "verify-otp")]
     private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "resend-otp")]
+    private ResendModel ResendInput { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
+        ResendInput ??= new();
 
         if (!string.IsNullOrWhiteSpace(Email))
         {
-            var user = await UserManager.FindByEmailAsync(Email);
+            var cleanEmail = Email.Trim();
+            var user = await UserManager.FindByEmailAsync(cleanEmail);
             if (user is not null)
             {
                 if (user.AdmissionType == AdmissionType.UniversityRegular)
@@ -514,7 +522,37 @@
                 if (await UserManager.IsEmailConfirmedAsync(user))
                 {
                     isVerified = true;
+                    return;
                 }
+
+                // Check if candidate clicked the direct GET refresh link (?resend=true or ?resend=1)
+                bool isResendQuery = string.Equals(Resend, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(Resend, "1");
+                if (isResendQuery)
+                {
+                    await ExecuteResendAsync(cleanEmail);
+                    return;
+                }
+
+                // Auto-generate code if candidate has no active (non-expired) code
+                var hasActive = await EmailOtpService.HasActiveOtpAsync(user);
+                if (!hasActive)
+                {
+                    var (succeeded, _, error) = await EmailOtpService.GenerateAndSendOtpAsync(user, cleanEmail);
+                    if (succeeded)
+                    {
+                        infoMessage = "A 6-digit verification code has been sent to your email (valid for 30 minutes).";
+                    }
+                    else
+                    {
+                        errorMessage = !string.IsNullOrWhiteSpace(error)
+                            ? error
+                            : "Could not send verification email. Please click 'Resend Code'.";
+                    }
+                }
+            }
+            else
+            {
+                errorMessage = $"No candidate account found for {cleanEmail}.";
             }
         }
     }
@@ -568,11 +606,15 @@
             return;
         }
 
-        isResending = true;
+        await ExecuteResendAsync(Email.Trim());
+    }
+
+    private async Task ExecuteResendAsync(string cleanEmail)
+    {
         errorMessage = null;
         infoMessage = null;
 
-        var result = await EmailOtpService.ResendOtpAsync(Email);
+        var result = await EmailOtpService.ResendOtpAsync(cleanEmail);
         if (result.Succeeded)
         {
             infoMessage = result.Message;
@@ -581,8 +623,12 @@
         {
             errorMessage = result.Message;
         }
+    }
 
-        isResending = false;
+    private string GetResendLinkUrl()
+    {
+        var clean = Email ?? "";
+        return $"/Account/RegisterConfirmation?email={Uri.EscapeDataString(clean)}&resend=true";
     }
 
     private sealed class InputModel
@@ -590,5 +636,9 @@
         [Required(ErrorMessage = "Please enter the 6-digit verification code.")]
         [RegularExpression(@"^\d{6}$", ErrorMessage = "OTP must be exactly 6 digits.")]
         public string OtpCode { get; set; } = "";
+    }
+
+    private sealed class ResendModel
+    {
     }
 }

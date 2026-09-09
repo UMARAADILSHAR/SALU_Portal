@@ -8,9 +8,10 @@ namespace SaluExamPortal.Application.Services;
 
 public interface IEmailOtpService
 {
-    Task<string> GenerateAndSendOtpAsync(ApplicationUser user, string email);
+    Task<(bool Succeeded, string Code, string? ErrorMessage)> GenerateAndSendOtpAsync(ApplicationUser user, string email);
     Task<(bool Succeeded, string ErrorMessage)> ValidateOtpAsync(ApplicationUser user, string inputCode);
     Task<(bool Succeeded, string Message)> ResendOtpAsync(string email);
+    Task<bool> HasActiveOtpAsync(ApplicationUser user);
 }
 
 public class EmailOtpService : IEmailOtpService
@@ -39,7 +40,7 @@ public class EmailOtpService : IEmailOtpService
         _logger = logger;
     }
 
-    public async Task<string> GenerateAndSendOtpAsync(ApplicationUser user, string email)
+    public async Task<(bool Succeeded, string Code, string? ErrorMessage)> GenerateAndSendOtpAsync(ApplicationUser user, string email)
     {
         // Generate 6-digit cryptographically random OTP
         var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
@@ -55,10 +56,33 @@ public class EmailOtpService : IEmailOtpService
         _cache.Set(cacheKey, (Code: code, Expiry: expiry, Attempts: 0), expiry);
 
         // Send institutional OTP email via Brevo
-        await _emailSender.SendEmailOtpAsync(user, email, code, OtpValidityMinutes);
-        _logger.LogInformation("Generated and sent 6-digit OTP to {Email} with expiry at {Expiry} (30 mins)", email, expiry);
+        var (succeeded, error) = await _emailSender.SendEmailOtpAsync(user, email, code, OtpValidityMinutes);
+        if (!succeeded)
+        {
+            _logger.LogError("Failed to dispatch OTP email to {Email}: {Error}", email, error);
+            return (false, code, error);
+        }
 
-        return code;
+        _logger.LogInformation("Generated and sent 6-digit OTP to {Email} with expiry at {Expiry} (30 mins)", email, expiry);
+        return (true, code, null);
+    }
+
+    public async Task<bool> HasActiveOtpAsync(ApplicationUser user)
+    {
+        var storedCode = await _userManager.GetAuthenticationTokenAsync(user, TokenProvider, CodePurpose);
+        var expiryStr = await _userManager.GetAuthenticationTokenAsync(user, TokenProvider, ExpiryPurpose);
+
+        if (string.IsNullOrWhiteSpace(storedCode) || string.IsNullOrWhiteSpace(expiryStr))
+        {
+            return false;
+        }
+
+        if (!DateTime.TryParse(expiryStr, out var expiry) || DateTime.UtcNow > expiry)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public async Task<(bool Succeeded, string ErrorMessage)> ValidateOtpAsync(ApplicationUser user, string inputCode)
@@ -131,7 +155,7 @@ public class EmailOtpService : IEmailOtpService
         if (user is null)
         {
             // Do not reveal user existence
-            return (true, "If an account is associated with this email, a new 6-digit code has been sent.");
+            return (true, "If an account is associated with this email, a fresh 6-digit code has been sent.");
         }
 
         if (await _userManager.IsEmailConfirmedAsync(user))
@@ -139,8 +163,13 @@ public class EmailOtpService : IEmailOtpService
             return (false, "Your email is already verified. You can sign in directly.");
         }
 
-        await GenerateAndSendOtpAsync(user, cleanEmail);
-        return (true, "A new 6-digit verification code has been sent to your email.");
+        var (succeeded, _, error) = await GenerateAndSendOtpAsync(user, cleanEmail);
+        if (!succeeded)
+        {
+            return (false, !string.IsNullOrWhiteSpace(error) ? error : "Could not send verification email. Please try again.");
+        }
+
+        return (true, "A fresh 6-digit verification code has been sent to your email (valid for 30 minutes).");
     }
 
     private async Task ClearOtpAsync(ApplicationUser user)
