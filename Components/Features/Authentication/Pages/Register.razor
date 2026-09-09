@@ -1,4 +1,5 @@
 @page "/Account/Register"
+@page "/Account/Register/Annual"
 
 @using System.ComponentModel.DataAnnotations
 @using System.Text
@@ -27,6 +28,17 @@
                 <div class="salu-logo-wrapper">
                     <img src="images/salu-logo.png" alt="Shah Abdul Latif University Crest" class="salu-crest-img" />
                 </div>
+            </div>
+
+            <div class="salu-admission-options">
+                <a href="/Account/Register" class="salu-admission-btn active">
+                    <i class="bi bi-mortarboard-fill"></i>
+                    <span>Affiliated Colleges</span>
+                </a>
+                <a href="/Account/UniversityRegister" class="salu-admission-btn">
+                    <i class="bi bi-building-fill"></i>
+                    <span>University Regular</span>
+                </a>
             </div>
 
             <div class="salu-security-badge">
@@ -226,7 +238,7 @@
                 <div class="salu-copy-label">
                     <i class="bi bi-c-circle"></i> @DateTime.Now.Year SALU. All rights reserved.
                 </div>
-                <a href="/Account/Login" class="salu-reg-link">
+                <a href="/Account/Login/Annual" class="salu-reg-link">
                     <i class="bi bi-box-arrow-in-left"></i>
                     Already registered? Login here
                 </a>
@@ -305,6 +317,58 @@
 
     .salu-security-badge i {
         font-size: 0.78rem;
+    }
+
+    .salu-admission-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0 0 14px;
+    }
+
+    .salu-admission-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 8px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(147, 197, 253, 0.08));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 8px 18px rgba(2, 8, 30, 0.16);
+        color: #e0f2fe;
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        text-decoration: none;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .salu-admission-btn i {
+        color: #bfdbfe;
+        font-size: 0.88rem;
+    }
+
+    .salu-admission-btn:hover,
+    .salu-admission-btn:focus-visible {
+        transform: translateY(-2px);
+        border-color: rgba(191, 219, 254, 0.85);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.32), rgba(255, 255, 255, 0.14));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 10px 24px rgba(2, 8, 30, 0.28);
+        color: #ffffff;
+        outline: none;
+    }
+
+    .salu-admission-btn.active {
+        border-color: rgba(191, 219, 254, 0.95);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.4), rgba(255, 255, 255, 0.18));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 0 0 2px rgba(96, 165, 250, 0.22), 0 10px 24px rgba(2, 8, 30, 0.28);
+        color: #ffffff;
     }
 
     .salu-crest-holder { 

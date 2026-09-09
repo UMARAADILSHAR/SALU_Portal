@@ -1,4 +1,5 @@
 @page "/Account/UniversityRegister"
+@page "/Account/Register/Regular"
 
 @using System.ComponentModel.DataAnnotations
 @using System.Text
@@ -19,15 +20,29 @@
 
 <PageTitle>University Regular Admission – SALU</PageTitle>
 
-<div class="salu-university-register salu-auth-wrapper salu-auth-board">
+<div class="salu-auth-wrapper salu-auth-board">
     <div class="salu-card-container">
         <div class="salu-login-card salu-auth-card salu-auth-card-register">
+            <!-- EMBLEM -->
             <div class="salu-crest-holder">
                 <div class="salu-logo-wrapper">
                     <img src="images/salu-logo.png" alt="Shah Abdul Latif University Crest" class="salu-crest-img" />
                 </div>
             </div>
 
+            <!-- ADMISSION TYPE SELECTOR (DUAL TABS) -->
+            <div class="salu-admission-options">
+                <a href="/Account/Register" class="salu-admission-btn">
+                    <i class="bi bi-mortarboard-fill"></i>
+                    <span>Affiliated Colleges</span>
+                </a>
+                <a href="/Account/UniversityRegister" class="salu-admission-btn active">
+                    <i class="bi bi-building-fill"></i>
+                    <span>University Regular</span>
+                </a>
+            </div>
+
+            <!-- BADGE -->
             <div class="salu-security-badge">
                 <i class="bi bi-mortarboard-fill"></i>
                 <span>University Regular Admission</span>
@@ -37,12 +52,16 @@
             <p class="salu-heading-sub">Register for regular admission at Shah Abdul Latif University</p>
 
             <StatusMessage Message="@Message" />
+
             <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="university-register">
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger small mb-3 text-start" role="alert" />
 
+                <!-- FULL NAME -->
                 <div class="salu-form-group">
-                    <label for="Input.FullName" class="salu-form-label"><i class="bi bi-person-fill"></i> Full Name <span class="text-danger">*</span></label>
+                    <label for="Input.FullName" class="salu-form-label">
+                        <i class="bi bi-person-fill"></i> Full Name <span class="text-danger">*</span>
+                    </label>
                     <div class="salu-input-box">
                         <i class="bi bi-person-fill salu-field-icon"></i>
                         <InputText @bind-Value="Input.FullName" id="Input.FullName" class="salu-text-input" autocomplete="name" aria-required="true" placeholder="Candidate full name" />
@@ -50,27 +69,35 @@
                     <ValidationMessage For="() => Input.FullName" class="text-danger small mt-1 text-start" />
                 </div>
 
+                <!-- CNIC & MOBILE ROW -->
                 <div class="row g-2">
                     <div class="col-md-6 salu-form-group">
-                        <label for="Input.Cnic" class="salu-form-label"><i class="bi bi-person-vcard-fill"></i> CNIC / B-Form <span class="text-danger">*</span></label>
+                        <label for="Input.Cnic" class="salu-form-label">
+                            <i class="bi bi-person-vcard-fill"></i> CNIC / B-Form <span class="text-danger">*</span>
+                        </label>
                         <div class="salu-input-box">
                             <i class="bi bi-person-vcard-fill salu-field-icon"></i>
-                            <input value="@Input.Cnic" @oninput="FormatCnicInput" id="Input.Cnic" name="Input.Cnic" class="salu-text-input" inputmode="numeric" maxlength="15" autocomplete="off" aria-required="true" placeholder="00000-0000000-0" />
+                            <InputText @bind-Value="Input.Cnic" id="Input.Cnic" data-mask="cnic" class="salu-text-input" inputmode="numeric" maxlength="15" autocomplete="off" aria-required="true" placeholder="00000-0000000-0" />
                         </div>
                         <ValidationMessage For="() => Input.Cnic" class="text-danger small mt-1 text-start" />
                     </div>
                     <div class="col-md-6 salu-form-group">
-                        <label for="Input.Phone" class="salu-form-label"><i class="bi bi-phone-fill"></i> Mobile Number <span class="text-danger">*</span></label>
+                        <label for="Input.Phone" class="salu-form-label">
+                            <i class="bi bi-phone-fill"></i> Mobile Number <span class="text-danger">*</span>
+                        </label>
                         <div class="salu-input-box">
                             <i class="bi bi-phone-fill salu-field-icon"></i>
-                            <input value="@Input.Phone" @oninput="FormatPhoneInput" id="Input.Phone" name="Input.Phone" class="salu-text-input" inputmode="tel" maxlength="12" autocomplete="tel" aria-required="true" placeholder="0300-0000000" />
+                            <InputText @bind-Value="Input.Phone" id="Input.Phone" data-mask="mobile" class="salu-text-input" inputmode="tel" maxlength="12" autocomplete="tel" aria-required="true" placeholder="0300-0000000" />
                         </div>
                         <ValidationMessage For="() => Input.Phone" class="text-danger small mt-1 text-start" />
                     </div>
                 </div>
 
+                <!-- EMAIL -->
                 <div class="salu-form-group">
-                    <label for="Input.Email" class="salu-form-label"><i class="bi bi-envelope-fill"></i> Email Address <span class="text-danger">*</span></label>
+                    <label for="Input.Email" class="salu-form-label">
+                        <i class="bi bi-envelope-fill"></i> Email Address <span class="text-danger">*</span>
+                    </label>
                     <div class="salu-input-box">
                         <i class="bi bi-envelope-fill salu-field-icon"></i>
                         <InputText @bind-Value="Input.Email" id="Input.Email" class="salu-text-input" autocomplete="username" aria-required="true" placeholder="student@example.com" />
@@ -78,104 +105,564 @@
                     <ValidationMessage For="() => Input.Email" class="text-danger small mt-1 text-start" />
                 </div>
 
+                <!-- PASSWORD ROW -->
                 <div class="row g-2">
                     <div class="col-md-6 salu-form-group">
-                        <label for="Input.Password" class="salu-form-label"><i class="bi bi-lock-fill"></i> Password <span class="text-danger">*</span></label>
+                        <label for="Input.Password" class="salu-form-label">
+                            <i class="bi bi-lock-fill"></i> Password <span class="text-danger">*</span>
+                        </label>
                         <div class="salu-input-box">
                             <i class="bi bi-lock-fill salu-field-icon"></i>
-                            <InputText type="@(showPassword ? "text" : "password")" @bind-Value="Input.Password" @oninput="UpdatePassword" id="Input.Password" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Min 8 characters" />
-                            <button type="button" class="salu-eye-btn" @onclick="() => showPassword = !showPassword" title="@(showPassword ? "Hide password" : "Show password")"><i class="bi @(showPassword ? "bi-eye-slash-fill" : "bi-eye-fill")"></i></button>
+                            <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Min 8 characters" />
+                            <button type="button" class="salu-eye-btn" tabindex="-1" title="Show password" aria-label="Toggle password visibility">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
                         </div>
                         <ValidationMessage For="() => Input.Password" class="text-danger small mt-1 text-start" />
                     </div>
                     <div class="col-md-6 salu-form-group">
-                        <label for="Input.ConfirmPassword" class="salu-form-label"><i class="bi bi-lock-fill"></i> Confirm Password <span class="text-danger">*</span></label>
+                        <label for="Input.ConfirmPassword" class="salu-form-label">
+                            <i class="bi bi-lock-fill"></i> Confirm Password <span class="text-danger">*</span>
+                        </label>
                         <div class="salu-input-box">
                             <i class="bi bi-lock-fill salu-field-icon"></i>
-                            <InputText type="@(showConfirmPassword ? "text" : "password")" @bind-Value="Input.ConfirmPassword" @oninput="UpdateConfirmPassword" id="Input.ConfirmPassword" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Repeat password" />
-                            <button type="button" class="salu-eye-btn" @onclick="() => showConfirmPassword = !showConfirmPassword" title="@(showConfirmPassword ? "Hide password" : "Show password")"><i class="bi @(showConfirmPassword ? "bi-eye-slash-fill" : "bi-eye-fill")"></i></button>
+                            <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="salu-text-input salu-password-input" autocomplete="new-password" aria-required="true" placeholder="Repeat password" />
+                            <button type="button" class="salu-eye-btn" tabindex="-1" title="Show password" aria-label="Toggle password visibility">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
                         </div>
                         <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger small mt-1 text-start" />
-                        @if (!string.IsNullOrEmpty(Input.ConfirmPassword))
-                        {
-                            <div class="@(Input.Password == Input.ConfirmPassword ? "text-success" : "text-danger") small mt-1"><i class="bi @(Input.Password == Input.ConfirmPassword ? "bi-check-circle-fill" : "bi-x-circle-fill")"></i> @(Input.Password == Input.ConfirmPassword ? "Passwords match" : "Passwords do not match")</div>
-                        }
                     </div>
                 </div>
 
-                <div class="university-password-help">
-                    <strong><i class="bi bi-info-circle"></i> Password requirements</strong>
-                    <span class="@(Input.Password.Length >= 8 ? "met" : "")"><i class="bi @(Input.Password.Length >= 8 ? "bi-check-circle-fill" : "bi-circle")"></i> 8+ characters</span>
-                    <span class="@(Input.Password.Any(char.IsUpper) ? "met" : "")"><i class="bi @(Input.Password.Any(char.IsUpper) ? "bi-check-circle-fill" : "bi-circle")"></i> Uppercase letter</span>
-                    <span class="@(Input.Password.Any(char.IsLower) ? "met" : "")"><i class="bi @(Input.Password.Any(char.IsLower) ? "bi-check-circle-fill" : "bi-circle")"></i> Lowercase letter</span>
-                    <span class="@(Input.Password.Any(char.IsDigit) ? "met" : "")"><i class="bi @(Input.Password.Any(char.IsDigit) ? "bi-check-circle-fill" : "bi-circle")"></i> Number</span>
+                <!-- PASSWORD REQUIREMENTS HELP -->
+                <div class="password-requirements mt-2 mb-3">
+                    <p class="requirements-title"><i class="bi bi-info-circle"></i> Password Requirements:</p>
+                    <ul class="requirements-list">
+                        <li><i class="bi bi-check-circle"></i> At least 8 characters</li>
+                        <li><i class="bi bi-check-circle"></i> At least one uppercase letter (A-Z)</li>
+                        <li><i class="bi bi-check-circle"></i> At least one lowercase letter (a-z)</li>
+                        <li><i class="bi bi-check-circle"></i> At least one number (0-9)</li>
+                    </ul>
                 </div>
 
+                <!-- SUBMIT BUTTON -->
                 <div class="salu-action-row mt-3 mb-2">
-                    <button type="submit" class="salu-login-btn" disabled="@isRegistering">
-                        @if (isRegistering) { <span class="btn-spinner"></span><span>Creating Account...</span> } else { <i class="bi bi-person-check-fill"></i><span>Create University Account</span> }
+                    <button type="submit" class="salu-login-btn @(isRegistering ? "btn-loading" : "")" disabled="@isRegistering">
+                        @if (isRegistering)
+                        {
+                            <span class="btn-spinner"></span>
+                            <span>Creating Account...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-person-check-fill"></i>
+                            <span>Create University Account</span>
+                        }
                     </button>
                 </div>
             </EditForm>
 
+            <!-- FOOTER -->
             <div class="salu-footer-box">
-                <div class="salu-copy-label"><i class="bi bi-c-circle"></i> @DateTime.Now.Year SALU. All rights reserved.</div>
-                <a href="/Account/Login" class="salu-reg-link"><i class="bi bi-box-arrow-in-left"></i> Already registered? Login here</a>
+                <div class="salu-copy-label">
+                    <i class="bi bi-c-circle"></i> @DateTime.Now.Year SALU. All rights reserved.
+                </div>
+                <a href="/Account/Login/Regular" class="salu-reg-link">
+                    <i class="bi bi-box-arrow-in-left"></i>
+                    Already registered? Sign in here
+                </a>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .salu-university-register { min-height: 100vh; width: 100%; position: relative; background: url('images/salu-login-bg.jpg') no-repeat center / cover; background-attachment: fixed; display: flex; align-items: center; justify-content: flex-start; padding: 24px 24px 24px clamp(2.5rem, 7vw, 7.5rem); overflow-x: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
-    .salu-university-register .salu-card-container { position: relative; z-index: 2; max-width: 520px; width: 100%; animation: universityRegisterFlip .65s cubic-bezier(.22,1,.36,1) both; }
-    @@keyframes universityRegisterFlip { from { opacity: 0; transform: perspective(1000px) rotateY(14deg) translateX(-24px); } to { opacity: 1; transform: perspective(1000px) rotateY(0) translateX(0); } }
-    .university-password-help { display: grid; gap: 4px; margin: 2px 0 8px; padding: 10px 12px; border: 1px solid rgba(148,163,184,.25); border-radius: 10px; color: #cbd5e1; font-size: .7rem; text-align: left; }
-    .university-password-help strong { color: #e2e8f0; margin-bottom: 2px; }
-    .university-password-help span.met { color: #86efac; }
-    @@media (max-width: 768px) { .salu-university-register { justify-content: center; padding: 16px; } .salu-university-register .salu-card-container { max-width: 100%; } }
+    /* =========================================================================
+       SALU UNIVERSITY REGULAR ADMISSION - PREMIUM COMPACT THEME
+       ========================================================================= */
+    * { box-sizing: border-box; }
+
+    .salu-auth-wrapper {
+        min-height: 100vh;
+        width: 100%;
+        position: relative;
+        background: url('images/salu-login-bg.jpg') no-repeat center center / cover;
+        background-attachment: fixed;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 24px 24px 24px clamp(2.5rem, 7vw, 7.5rem);
+        overflow-x: hidden;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    /* COMPACT & HORIZONTALLY STRETCHED LEFT-ALIGNED CARD CONTAINER */
+    .salu-card-container {
+        position: relative;
+        z-index: 2;
+        max-width: 480px;
+        width: 100%;
+        margin: 0;
+        padding: 8px 0;
+        animation: cardSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @@keyframes cardSlideLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-25px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* GLASS MORPHISM CARD - TRANSLUCENT OVER AJRAK PATTERN */
+    .salu-login-card {
+        background: rgba(10, 22, 54, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        padding: 24px 26px 20px;
+        box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.6),
+                    0 0 25px rgba(249, 115, 22, 0.08),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* TOP OFFICIAL EMBLEM */
+    .salu-crest-holder {
+        margin: 0 auto 8px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .salu-logo-wrapper {
+        position: relative;
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border-radius: 50%;
+        padding: 3px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(249, 115, 22, 0.6);
+        transition: transform 0.25s ease;
+    }
+
+    .salu-logo-wrapper:hover {
+        transform: scale(1.06);
+    }
+
+    .salu-crest-img {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+    }
+
+    /* ADMISSION TYPE SELECTOR (TWO TABS) */
+    .salu-admission-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0 0 14px;
+    }
+
+    .salu-admission-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 8px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(147, 197, 253, 0.08));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 8px 18px rgba(2, 8, 30, 0.16);
+        color: #e0f2fe;
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        text-decoration: none;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .salu-admission-btn i {
+        color: #bfdbfe;
+        font-size: 0.88rem;
+    }
+
+    .salu-admission-btn:hover,
+    .salu-admission-btn:focus-visible {
+        transform: translateY(-2px);
+        border-color: rgba(191, 219, 254, 0.85);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.32), rgba(255, 255, 255, 0.14));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 10px 24px rgba(2, 8, 30, 0.28);
+        color: #ffffff;
+        outline: none;
+    }
+
+    .salu-admission-btn.active {
+        border-color: rgba(191, 219, 254, 0.95);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.4), rgba(255, 255, 255, 0.18));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 0 0 2px rgba(96, 165, 250, 0.22), 0 10px 24px rgba(2, 8, 30, 0.28);
+        color: #ffffff;
+    }
+
+    /* SECURITY BADGE */
+    .salu-security-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(74, 222, 128, 0.12);
+        border: 1px solid rgba(74, 222, 128, 0.4);
+        color: #86efac;
+        padding: 2px 10px;
+        border-radius: 9999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        margin-bottom: 8px;
+    }
+
+    .salu-security-badge i { font-size: 0.78rem; }
+
+    /* HEADINGS */
+    .salu-heading-main {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0 0 3px;
+        letter-spacing: -0.01em;
+        background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .salu-heading-sub {
+        font-size: 0.76rem;
+        color: #94a3b8;
+        margin: 0 0 14px;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    /* FORM GROUPS */
+    .salu-form-group {
+        text-align: left;
+        margin-bottom: 11px;
+    }
+
+    .salu-form-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 4px;
+        letter-spacing: 0.2px;
+    }
+
+    .salu-form-label i {
+        font-size: 0.82rem;
+        opacity: 0.85;
+    }
+
+    .salu-input-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .salu-field-icon {
+        position: absolute;
+        left: 11px;
+        color: #64748b;
+        font-size: 14px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .salu-text-input {
+        width: 100%;
+        background: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        padding: 7px 12px 7px 34px !important;
+        color: #0f172a !important;
+        font-size: 0.86rem !important;
+        font-weight: 600 !important;
+        height: 38px !important;
+        outline: none !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+
+    .salu-text-input::placeholder {
+        color: #94a3b8 !important;
+        font-weight: 500;
+        font-size: 0.82rem;
+    }
+
+    .salu-text-input:focus {
+        border-color: #f97316 !important;
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2) !important;
+    }
+
+    .salu-password-input {
+        padding-right: 36px !important;
+    }
+
+    .salu-eye-btn {
+        position: absolute;
+        right: 8px;
+        background: transparent;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 4px 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        transition: color 0.15s;
+        z-index: 2;
+    }
+
+    .salu-eye-btn:hover { color: #0f172a; }
+
+    /* PASSWORD REQUIREMENTS BOX */
+    .password-requirements {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 9px;
+        padding: 10px 14px;
+        font-size: 0.72rem;
+        text-align: left;
+    }
+
+    .requirements-title {
+        color: #cbd5e1;
+        font-weight: 700;
+        margin: 0 0 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.72rem;
+    }
+
+    .requirements-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 10px;
+    }
+
+    .requirements-list li {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #94a3b8;
+        font-size: 0.7rem;
+    }
+
+    .requirements-list li i {
+        font-size: 0.75rem;
+        color: #38bdf8;
+    }
+
+    /* SUBMIT BUTTON */
+    .salu-action-row {
+        margin-bottom: 12px;
+    }
+
+    .salu-login-btn {
+        width: 100% !important;
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 0.88rem !important;
+        height: 40px !important;
+        padding: 0 16px !important;
+        border-radius: 9px !important;
+        border: none !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 7px !important;
+        letter-spacing: 0.2px;
+    }
+
+    .salu-login-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(234, 88, 12, 0.5) !important;
+    }
+
+    .salu-login-btn:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    .salu-login-btn:disabled {
+        opacity: 0.75;
+        cursor: not-allowed;
+    }
+
+    .btn-spinner {
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FOOTER */
+    .salu-footer-box {
+        text-align: center;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 12px;
+        margin-top: 12px;
+    }
+
+    .salu-copy-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-bottom: 6px;
+    }
+
+    .salu-reg-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #f8fafc;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: color 0.15s, transform 0.15s;
+    }
+
+    .salu-reg-link:hover {
+        color: #fdba74;
+        text-decoration: underline;
+        transform: translateX(1px);
+    }
+
+    /* RESPONSIVE MOBILE ADJUSTMENTS */
+    @@media (max-width: 992px) {
+        .salu-auth-wrapper {
+            background: linear-gradient(180deg, rgba(13, 27, 76, 0.96) 0%, rgba(10, 16, 51, 0.98) 100%),
+                        url('images/salu-login-bg.jpg') no-repeat center / cover;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .salu-card-container {
+            margin: 0 auto;
+            max-width: 480px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .salu-login-card {
+            border-radius: 16px;
+            padding: 20px 16px 16px;
+        }
+        .salu-card-container {
+            max-width: 100%;
+        }
+        .row.g-2 {
+            display: flex;
+            flex-direction: column;
+            gap: 0 !important;
+        }
+        .row.g-2 .col-md-6 {
+            width: 100%;
+        }
+        .requirements-list {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 @code {
-    private InputModel Input { get; set; } = new();
-    private bool showPassword;
-    private bool showConfirmPassword;
-    private bool isRegistering;
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private bool isRegistering = false;
     private IEnumerable<IdentityError>? identityErrors;
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
-    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+    }
 
-    private async Task RegisterUser()
+    public async Task RegisterUser(EditContext editContext)
     {
         isRegistering = true;
         identityErrors = null;
+
         var normalizedCnic = FormatCnic(Input.Cnic);
         var normalizedPhone = FormatPhone(Input.Phone);
-        var email = Input.Email.Trim();
+        var emailClean = (Input.Email ?? "").Trim();
 
-        if (await UserManager.Users.AnyAsync(u => u.Cnic == normalizedCnic))
+        // Check if CNIC already exists in database
+        var cnicExists = await UserManager.Users.AnyAsync(u => u.Cnic == normalizedCnic);
+        if (cnicExists)
         {
-            identityErrors = new[] { new IdentityError { Description = $"An account with CNIC '{normalizedCnic}' already exists." } };
+            identityErrors = new[] { new IdentityError { Description = $"An account with CNIC '{normalizedCnic}' already exists. Please sign in instead." } };
             isRegistering = false;
             return;
         }
 
-        if (await UserManager.FindByEmailAsync(email) is not null)
+        // Check if Email already exists in database
+        var existingEmailUser = await UserManager.FindByEmailAsync(emailClean);
+        if (existingEmailUser != null)
         {
-            identityErrors = new[] { new IdentityError { Description = $"An account with email '{email}' already exists." } };
+            identityErrors = new[] { new IdentityError { Description = $"An account with email '{emailClean}' already exists. Please sign in instead." } };
             isRegistering = false;
             return;
         }
 
         var user = Activator.CreateInstance<ApplicationUser>();
-        user.FullName = Input.FullName.Trim();
+        user.FullName = (Input.FullName ?? "").Trim();
         user.Cnic = normalizedCnic;
         user.PhoneNumber = normalizedPhone;
         user.IsVerified = true;
         user.AdmissionType = AdmissionType.UniversityRegular;
-        await UserStore.SetUserNameAsync(user, email, CancellationToken.None);
-        await ((IUserEmailStore<ApplicationUser>)UserStore).SetEmailAsync(user, email, CancellationToken.None);
+
+        await UserStore.SetUserNameAsync(user, emailClean, CancellationToken.None);
+        var emailStore = (IUserEmailStore<ApplicationUser>)UserStore;
+        await emailStore.SetEmailAsync(user, emailClean, CancellationToken.None);
 
         var result = await UserManager.CreateAsync(user, Input.Password);
         if (!result.Succeeded)
@@ -185,16 +672,23 @@
             return;
         }
 
+        Logger.LogInformation("University regular student account created for {Email}.", emailClean);
         await UserManager.AddToRoleAsync(user, "Student");
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await UserManager.GenerateEmailConfirmationTokenAsync(user)));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri, new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
-        await EmailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(callbackUrl));
 
-        Logger.LogInformation("University regular student account created for {Email}.", email);
+        var userId = await UserManager.GetUserIdAsync(user);
+        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+
+        await EmailSender.SendConfirmationLinkAsync(user, emailClean, HtmlEncoder.Default.Encode(callbackUrl));
+
         if (UserManager.Options.SignIn.RequireConfirmedAccount)
         {
-            RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = email, ["returnUrl"] = ReturnUrl });
+            RedirectManager.RedirectTo(
+                "Account/RegisterConfirmation",
+                new() { ["email"] = emailClean, ["returnUrl"] = ReturnUrl });
             return;
         }
 
@@ -202,20 +696,22 @@
         RedirectManager.RedirectTo("Student/UniversityAdmission");
     }
 
-    private void FormatCnicInput(ChangeEventArgs args) => Input.Cnic = FormatCnic(args.Value?.ToString() ?? "");
-    private void FormatPhoneInput(ChangeEventArgs args) => Input.Phone = FormatPhone(args.Value?.ToString() ?? "");
-    private void UpdatePassword(ChangeEventArgs args) => Input.Password = args.Value?.ToString() ?? "";
-    private void UpdateConfirmPassword(ChangeEventArgs args) => Input.ConfirmPassword = args.Value?.ToString() ?? "";
-
     private static string FormatCnic(string value)
     {
-        var digits = new string((value ?? "").Where(char.IsDigit).Take(13).ToArray());
-        return digits.Length switch { <= 5 => digits, <= 12 => $"{digits[..5]}-{digits[5..]}", _ => $"{digits[..5]}-{digits.Substring(5, 7)}-{digits[12]}" };
+        if (string.IsNullOrWhiteSpace(value)) return "";
+        var digits = new string(value.Where(char.IsDigit).Take(13).ToArray());
+        return digits.Length switch
+        {
+            <= 5 => digits,
+            <= 12 => $"{digits[..5]}-{digits[5..]}",
+            _ => $"{digits[..5]}-{digits.Substring(5, 7)}-{digits[12]}"
+        };
     }
 
     private static string FormatPhone(string value)
     {
-        var digits = new string((value ?? "").Where(char.IsDigit).ToArray());
+        if (string.IsNullOrWhiteSpace(value)) return "";
+        var digits = new string(value.Where(char.IsDigit).ToArray());
         if (digits.StartsWith("923") && digits.Length >= 12) digits = "0" + digits[2..];
         if (digits.Length > 11) digits = digits[..11];
         return digits.Length <= 4 ? digits : $"{digits[..4]}-{digits[4..]}";
@@ -223,18 +719,54 @@
 
     private sealed class InputModel : IValidatableObject
     {
-        [Required, StringLength(255, MinimumLength = 2)] public string FullName { get; set; } = "";
-        [Required, RegularExpression(@"^(\d{5}-\d{7}-\d|\d{13})$", ErrorMessage = "CNIC must be 13 digits (format: 00000-0000000-0).")] public string Cnic { get; set; } = "";
-        [Required, RegularExpression(@"^(03\d{2}-\d{7}|03\d{9}|(\+92|92)3\d{9})$", ErrorMessage = "Mobile number must be 11 digits (format: 0300-0000000).") ] public string Phone { get; set; } = "";
-        [Required, EmailAddress] public string Email { get; set; } = "";
-        [Required, StringLength(100, MinimumLength = 8), DataType(DataType.Password)] public string Password { get; set; } = "";
-        [Required, Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match."), DataType(DataType.Password)] public string ConfirmPassword { get; set; } = "";
+        [Required(ErrorMessage = "Full Name is required."), StringLength(255, MinimumLength = 2, ErrorMessage = "Full Name must be at least 2 characters.")]
+        public string FullName { get; set; } = "";
+
+        [Required(ErrorMessage = "CNIC / B-Form is required.")]
+        [RegularExpression(@"^(\d{5}-\d{7}-\d|\d{13})$", ErrorMessage = "CNIC must be 13 digits (format: 00000-0000000-0).")]
+        public string Cnic { get; set; } = "";
+
+        [Required(ErrorMessage = "Mobile number is required.")]
+        [RegularExpression(@"^(03\d{2}-\d{7}|03\d{9}|(\+92|92)3\d{9})$", ErrorMessage = "Mobile number must be 11 digits (format: 0300-0000000).")]
+        public string Phone { get; set; } = "";
+
+        [Required(ErrorMessage = "Email address is required.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Password is required.")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters long.")]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Required(ErrorMessage = "Please confirm your password.")]
+        [DataType(DataType.Password)]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; } = "";
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (!Password.Any(char.IsUpper)) yield return new ValidationResult("Password must contain at least one uppercase letter.", new[] { nameof(Password) });
-            if (!Password.Any(char.IsLower)) yield return new ValidationResult("Password must contain at least one lowercase letter.", new[] { nameof(Password) });
-            if (!Password.Any(char.IsDigit)) yield return new ValidationResult("Password must contain at least one number.", new[] { nameof(Password) });
+            if (string.IsNullOrEmpty(Password))
+            {
+                yield break;
+            }
+
+            if (Password.Length < 8)
+            {
+                yield return new ValidationResult("Password must be at least 8 characters.", new[] { nameof(Password) });
+            }
+            if (!Password.Any(char.IsUpper))
+            {
+                yield return new ValidationResult("Password must contain at least one uppercase letter (A-Z).", new[] { nameof(Password) });
+            }
+            if (!Password.Any(char.IsLower))
+            {
+                yield return new ValidationResult("Password must contain at least one lowercase letter (a-z).", new[] { nameof(Password) });
+            }
+            if (!Password.Any(char.IsDigit))
+            {
+                yield return new ValidationResult("Password must contain at least one number (0-9).", new[] { nameof(Password) });
+            }
         }
     }
 }
