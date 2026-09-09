@@ -7,9 +7,10 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using SaluExamPortal.Infrastructure.Persistence
 @using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Application.Services
 
 @inject UserManager<ApplicationUser> UserManager
-@inject IEmailSender<ApplicationUser> EmailSender
+@inject IEmailOtpService EmailOtpService
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
@@ -26,8 +27,8 @@
                 </div>
             </div>
 
-            <h2 class="salu-heading-main">Resend Verification</h2>
-            <p class="salu-heading-sub">Enter your registered email address to receive a fresh verification link.</p>
+            <h2 class="salu-heading-main">Resend Verification Code</h2>
+            <p class="salu-heading-sub">Enter your registered email address to receive a fresh 6-digit OTP (valid for 30 minutes).</p>
 
             @if (isSent)
             {
@@ -384,19 +385,20 @@
 
         try
         {
-            var userId = await UserManager.GetUserIdAsync(user);
-            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-
-            await EmailSender.SendConfirmationLinkAsync(user, cleanEmail, HtmlEncoder.Default.Encode(callbackUrl));
-            isSent = true;
+            var result = await EmailOtpService.ResendOtpAsync(cleanEmail);
+            if (result.Succeeded)
+            {
+                RedirectManager.RedirectTo($"Account/RegisterConfirmation", new() { ["email"] = cleanEmail });
+                return;
+            }
+            else
+            {
+                errorMessage = result.Message;
+            }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to send verification email: {ex.Message}";
+            errorMessage = $"Failed to send verification code: {ex.Message}";
         }
         finally
         {

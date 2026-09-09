@@ -9,11 +9,13 @@
 @using Microsoft.EntityFrameworkCore
 @using SaluExamPortal.Domain.Enums
 @using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Application.Services
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IEmailSender<ApplicationUser> EmailSender
+@inject IEmailOtpService EmailOtpService
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
@@ -910,25 +912,12 @@
         // Automatically assign Student role
         await UserManager.AddToRoleAsync(user, "Student");
 
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+        // Generate and email 6-digit verification code (valid for 30 minutes)
+        await EmailOtpService.GenerateAndSendOtpAsync(user, emailClean);
 
-        await EmailSender.SendConfirmationLinkAsync(user, emailClean, HtmlEncoder.Default.Encode(callbackUrl));
-
-        if (UserManager.Options.SignIn.RequireConfirmedAccount)
-        {
-            RedirectManager.RedirectTo(
-                "Account/RegisterConfirmation",
-                new() { ["email"] = emailClean, ["returnUrl"] = ReturnUrl });
-            return;
-        }
-
-        await SignInManager.SignInAsync(user, isPersistent: false);
-        RedirectManager.RedirectTo("Student");
+        RedirectManager.RedirectTo(
+            "Account/RegisterConfirmation",
+            new() { ["email"] = emailClean, ["returnUrl"] = ReturnUrl });
     }
 
     private ApplicationUser CreateUser()

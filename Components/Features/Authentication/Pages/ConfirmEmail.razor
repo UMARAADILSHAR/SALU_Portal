@@ -269,10 +269,19 @@
     private string? Code { get; set; }
 
     [SupplyParameterFromQuery]
+    private string? Email { get; set; }
+
+    [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        if (!string.IsNullOrWhiteSpace(Email) && (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Code)))
+        {
+            RedirectManager.RedirectTo($"Account/RegisterConfirmation", new() { ["email"] = Email });
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Code))
         {
             statusMessage = "Missing user ID or confirmation code.";

@@ -38,6 +38,67 @@ public class BrevoEmailSender : IEmailSender<ApplicationUser>, IEmailSender
         await SendBrevoEmailAsync(email, null, subject, htmlMessage);
     }
 
+    public async Task SendEmailOtpAsync(ApplicationUser user, string email, string otpCode, int expirationMinutes = 30)
+    {
+        var studentName = !string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : "Candidate";
+        var subject = $"{otpCode} is your SALU Admission Verification Code";
+
+        var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>{subject}</title>
+    <style>
+        body {{ margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
+        .container {{ max-width: 580px; margin: 30px auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }}
+        .header {{ background: linear-gradient(135deg, #1b2a6b 0%, #0d1b4c 100%); padding: 32px 24px; text-align: center; color: #ffffff; }}
+        .logo-title {{ font-size: 20px; font-weight: 800; letter-spacing: 0.5px; margin: 0; color: #ffffff; }}
+        .logo-sub {{ font-size: 13px; color: #fbbf24; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }}
+        .content {{ padding: 36px 32px; color: #334155; line-height: 1.6; font-size: 15px; }}
+        .greeting {{ font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }}
+        .otp-container {{ text-align: center; margin: 28px 0; }}
+        .otp-box {{ display: inline-block; background: #eff6ff; border: 2px dashed #2563eb; border-radius: 12px; padding: 18px 36px; box-shadow: 0 4px 12px rgba(37,99,235,0.1); }}
+        .otp-code {{ font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 800; letter-spacing: 12px; color: #1e3a8a; margin-left: 12px; }}
+        .expiry-note {{ font-size: 13px; color: #b91c1c; font-weight: 700; margin-top: 10px; }}
+        .security-box {{ font-size: 13px; color: #64748b; background-color: #f8fafc; padding: 14px 18px; border-left: 4px solid #3b82f6; border-radius: 6px; margin-top: 24px; line-height: 1.5; }}
+        .footer {{ background-color: #f8fafc; padding: 20px 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <div class='logo-title'>SHAH ABDUL LATIF UNIVERSITY, KHAIRPUR</div>
+            <div class='logo-sub'>Directorate of Admissions &bull; Email Verification</div>
+        </div>
+        <div class='content'>
+            <div class='greeting'>Dear {studentName},</div>
+            <p>Thank you for registering at Shah Abdul Latif University Admission Portal. Please use the following <strong>6-digit verification code (OTP)</strong> to activate your candidate account:</p>
+            
+            <div class='otp-container'>
+                <div class='otp-box'>
+                    <div class='otp-code'>{otpCode}</div>
+                </div>
+                <div class='expiry-note'>&#x23F1; This code expires in {expirationMinutes} minutes (half an hour).</div>
+            </div>
+
+            <div class='security-box'>
+                <strong>Important Security Note:</strong><br />
+                Do not share this OTP with anyone, including university staff. If you did not initiate this registration, please disregard this email.
+            </div>
+        </div>
+        <div class='footer'>
+            &copy; {DateTime.UtcNow.Year} Shah Abdul Latif University, Khairpur, Sindh, Pakistan.<br />
+            This is an automated institutional message.
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendBrevoEmailAsync(email, studentName, subject, body);
+    }
+
     public async Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
     {
         var studentName = !string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : "Candidate";

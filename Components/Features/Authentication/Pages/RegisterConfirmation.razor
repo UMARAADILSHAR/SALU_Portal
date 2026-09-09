@@ -1,16 +1,20 @@
 @page "/Account/RegisterConfirmation"
 
+@using System.ComponentModel.DataAnnotations
 @using System.Text
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using SaluExamPortal.Infrastructure.Persistence
 @using SaluExamPortal.Domain.Enums
+@using SaluExamPortal.Application.Services
 
 @inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IEmailOtpService EmailOtpService
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Registration Confirmation – Shah Abdul Latif University Khairpur</PageTitle>
+<PageTitle>Verify Your Account – Shah Abdul Latif University Khairpur</PageTitle>
 
 <div class="salu-auth-wrapper salu-auth-board">
     <div class="salu-card-container">
@@ -23,50 +27,125 @@
                 </div>
             </div>
 
-            <!-- ENVELOPE ICON -->
-            <div class="salu-email-icon-wrapper">
-                <div class="salu-icon-circle">
-                    <i class="bi bi-envelope-check-fill"></i>
-                </div>
-            </div>
-
-            <h2 class="salu-heading-main">Verify Your Email</h2>
-            <p class="salu-heading-sub">We've sent an activation link to complete your registration.</p>
-
-            @if (!string.IsNullOrWhiteSpace(Email))
+            @if (isVerified)
             {
-                <div class="salu-email-badge">
-                    <i class="bi bi-envelope-at-fill me-2"></i>
-                    <span class="email-text">@Email</span>
+                <div class="salu-status-icon-wrapper success">
+                    <i class="bi bi-shield-fill-check"></i>
+                </div>
+
+                <h2 class="salu-heading-main">Account Verified!</h2>
+                <p class="salu-heading-sub">Your email has been successfully verified.</p>
+
+                <div class="salu-message-card success">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    <span>Your account is now active. You can proceed directly to sign in and complete your admission application.</span>
+                </div>
+
+                <div class="salu-action-row mt-4">
+                    <a href="@loginUrl" class="salu-login-btn">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Proceed to Sign In</span>
+                    </a>
                 </div>
             }
-
-            <div class="salu-instructions-card">
-                <div class="instruction-step">
-                    <span class="step-num">1</span>
-                    <span>Check your email inbox for a message from <strong>SALU Admissions</strong>.</span>
+            else
+            {
+                <!-- KEY / SHIELD ICON -->
+                <div class="salu-otp-icon-wrapper">
+                    <div class="salu-icon-circle">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
                 </div>
-                <div class="instruction-step">
-                    <span class="step-num">2</span>
-                    <span>Click the <strong>Verify Email Address</strong> button inside the email.</span>
-                </div>
-                <div class="instruction-step">
-                    <span class="step-num">3</span>
-                    <span>Return to the portal to sign in and submit your application.</span>
-                </div>
-            </div>
 
-            <div class="salu-tip-box">
-                <i class="bi bi-info-circle-fill me-1"></i>
-                <span>Cannot find the email? Please check your <strong>Spam or Junk</strong> folder.</span>
-            </div>
+                <h2 class="salu-heading-main">Enter Verification Code</h2>
+                <p class="salu-heading-sub">We've sent a 6-digit OTP code to verify your account.</p>
 
-            <div class="salu-action-row mt-3">
-                <a href="@($"/Account/ResendEmailConfirmation?email={Uri.EscapeDataString(Email ?? "")}")" class="salu-resend-btn">
-                    <i class="bi bi-arrow-repeat"></i>
-                    <span>Resend Confirmation Email</span>
-                </a>
-            </div>
+                @if (!string.IsNullOrWhiteSpace(Email))
+                {
+                    <div class="salu-email-badge">
+                        <i class="bi bi-envelope-check-fill me-2"></i>
+                        <span class="email-text">@Email</span>
+                    </div>
+                }
+
+                <div class="salu-expiry-badge mb-3">
+                    <i class="bi bi-clock-history me-1"></i>
+                    <span>Code is valid for <strong>30 minutes</strong></span>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="salu-message-card error mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <span>@errorMessage</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(infoMessage))
+                {
+                    <div class="salu-message-card success mb-3">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        <span>@infoMessage</span>
+                    </div>
+                }
+
+                <EditForm Model="Input" FormName="verify-otp" OnValidSubmit="VerifyOtpAsync" method="post">
+                    <DataAnnotationsValidator />
+
+                    <div class="salu-form-group">
+                        <label for="Input.OtpCode" class="salu-form-label justify-content-center">
+                            <i class="bi bi-key-fill"></i>
+                            6-Digit Verification OTP
+                        </label>
+                        <div class="salu-input-box">
+                            <InputText @bind-Value="Input.OtpCode"
+                                       id="Input.OtpCode"
+                                       class="salu-text-input salu-otp-input"
+                                       inputmode="numeric"
+                                       maxlength="6"
+                                       autocomplete="one-time-code"
+                                       placeholder="••••••"
+                                       aria-required="true" />
+                        </div>
+                        <ValidationMessage For="() => Input.OtpCode" class="text-danger small mt-1 text-center" />
+                    </div>
+
+                    <div class="salu-action-row mt-3 mb-2">
+                        <button type="submit" class="salu-login-btn @(isVerifying ? "btn-loading" : "")" disabled="@isVerifying">
+                            @if (isVerifying)
+                            {
+                                <span class="btn-spinner"></span>
+                                <span>Verifying Code...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Verify &amp; Activate Account</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+
+                <div class="salu-resend-box mt-3">
+                    <span class="text-muted small">Didn't receive the code?</span>
+                    <button type="button" class="btn btn-link salu-resend-link" @onclick="ResendOtpAsync" disabled="@isResending">
+                        @if (isResending)
+                        {
+                            <span>Sending new code...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            <span>Resend 6-Digit Code</span>
+                        }
+                    </button>
+                </div>
+
+                <div class="salu-tip-box mt-2">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    <span>Please check your <strong>Spam or Junk</strong> folder if not in inbox.</span>
+                </div>
+            }
 
             <div class="salu-footer-box mt-4">
                 <div class="salu-copy-label">
@@ -74,7 +153,7 @@
                 </div>
                 <a href="@loginUrl" class="salu-reg-link">
                     <i class="bi bi-box-arrow-in-left"></i>
-                    Already verified? Proceed to Sign In
+                    Back to Sign In
                 </a>
             </div>
 
@@ -101,7 +180,7 @@
     .salu-card-container {
         position: relative;
         z-index: 2;
-        max-width: 460px;
+        max-width: 440px;
         width: 100%;
         margin: 0;
         padding: 8px 0;
@@ -114,26 +193,26 @@
     }
 
     .salu-login-card {
-        background: rgba(13, 27, 62, 0.92);
+        background: rgba(13, 27, 62, 0.94);
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
-        border: 1px solid rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.16);
         border-radius: 20px;
-        padding: 28px 24px 22px;
+        padding: 26px 22px 20px;
         box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
         color: #ffffff;
         text-align: center;
     }
 
     .salu-crest-holder { 
-        margin: 0 auto 10px; 
+        margin: 0 auto 8px; 
         display: flex; 
         justify-content: center; 
     }
 
     .salu-logo-wrapper {
-        width: 58px;
-        height: 58px;
+        width: 56px;
+        height: 56px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -144,47 +223,52 @@
     }
 
     .salu-crest-img { 
-        width: 44px; 
-        height: 44px; 
+        width: 42px; 
+        height: 42px; 
         object-fit: contain; 
     }
 
-    .salu-email-icon-wrapper {
+    .salu-otp-icon-wrapper {
         display: flex;
         justify-content: center;
-        margin: 12px 0;
+        margin: 8px 0;
     }
 
     .salu-icon-circle {
-        width: 64px;
-        height: 64px;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3));
-        border: 1.5px solid rgba(147, 197, 253, 0.4);
+        width: 58px;
+        height: 58px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.35));
+        border: 1.5px solid rgba(147, 197, 253, 0.45);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         color: #60a5fa;
-        animation: pulseIcon 2s infinite ease-in-out;
+        box-shadow: 0 0 16px rgba(96, 165, 250, 0.3);
     }
 
-    @@keyframes pulseIcon {
-        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.4)); }
-        50% { transform: scale(1.06); filter: drop-shadow(0 0 16px rgba(96, 165, 250, 0.7)); }
+    .salu-status-icon-wrapper {
+        font-size: 3.2rem;
+        margin: 10px 0;
+    }
+
+    .salu-status-icon-wrapper.success {
+        color: #4ade80;
+        filter: drop-shadow(0 0 14px rgba(74, 222, 128, 0.5));
     }
 
     .salu-heading-main { 
-        font-size: 1.35rem; 
+        font-size: 1.3rem; 
         font-weight: 800; 
         color: #ffffff; 
         margin: 0 0 4px;
     }
 
     .salu-heading-sub { 
-        font-size: 0.8rem; 
+        font-size: 0.78rem; 
         color: #cbd5e1; 
-        margin: 0 0 14px; 
+        margin: 0 0 12px; 
         font-weight: 500; 
         line-height: 1.4; 
     }
@@ -192,13 +276,13 @@
     .salu-email-badge {
         display: inline-flex;
         align-items: center;
-        background: rgba(30, 58, 138, 0.5);
+        background: rgba(30, 58, 138, 0.55);
         border: 1px solid rgba(147, 197, 253, 0.4);
-        padding: 6px 14px;
+        padding: 5px 14px;
         border-radius: 9999px;
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         color: #93c5fd;
-        margin-bottom: 16px;
+        margin-bottom: 8px;
         word-break: break-all;
     }
 
@@ -207,56 +291,83 @@
         color: #ffffff;
     }
 
-    .salu-instructions-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 14px 16px;
-        text-align: left;
-        margin-bottom: 12px;
-    }
-
-    .instruction-step {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 8px;
-        font-size: 0.78rem;
-        color: #e2e8f0;
-        line-height: 1.45;
-    }
-
-    .instruction-step:last-child {
-        margin-bottom: 0;
-    }
-
-    .step-num {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #f97316;
-        color: #ffffff;
-        font-weight: 800;
-        font-size: 0.72rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        margin-top: 1px;
-    }
-
-    .salu-tip-box {
-        background: rgba(245, 158, 11, 0.12);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        border-radius: 8px;
-        padding: 8px 12px;
+    .salu-expiry-badge {
         font-size: 0.74rem;
         color: #fde68a;
-        margin-bottom: 14px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 6px;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .salu-form-group { 
+        margin: 12px 0; 
+    }
+
+    .salu-form-label { 
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 4px;
+        gap: 6px;
+        font-size: 0.78rem; 
+        font-weight: 700; 
+        color: #ffffff; 
+        margin-bottom: 8px;
+    }
+
+    .salu-input-box {
+        position: relative;
+    }
+
+    .salu-text-input {
+        width: 100%;
+        background: #ffffff !important;
+        border: 2px solid #93c5fd !important;
+        border-radius: 12px !important;
+        color: #0f172a !important;
+        font-weight: 800 !important;
+        outline: none !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .salu-text-input:focus {
+        border-color: #f97316 !important;
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.25) !important;
+    }
+
+    .salu-otp-input {
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 1.85rem !important;
+        letter-spacing: 12px !important;
+        text-align: center !important;
+        padding: 10px 10px 10px 22px !important;
+    }
+
+    .salu-otp-input::placeholder {
+        letter-spacing: 10px;
+        color: #cbd5e1 !important;
+        opacity: 0.6;
+    }
+
+    .salu-message-card {
+        padding: 10px 14px;
+        border-radius: 10px;
+        text-align: left;
+        font-size: 0.78rem;
+    }
+
+    .salu-message-card.success {
+        background: rgba(34, 197, 94, 0.15);
+        border: 1px solid rgba(34, 197, 94, 0.4);
+        color: #bbf7d0;
+    }
+
+    .salu-message-card.error {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #fecaca;
     }
 
     .salu-action-row {
@@ -264,30 +375,79 @@
         justify-content: center;
     }
 
-    .salu-resend-btn {
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.25);
+    .salu-login-btn {
+        width: 100% !important;
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
         color: #ffffff !important;
-        font-weight: 700;
-        font-size: 0.84rem;
-        padding: 10px 22px;
-        border-radius: 8px;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s ease;
+        font-weight: 800 !important;
+        font-size: 0.92rem !important;
+        padding: 12px 24px !important;
+        border-radius: 10px !important;
+        border: none !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 16px rgba(234, 88, 12, 0.4) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        text-decoration: none !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     }
 
-    .salu-resend-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.4);
-        transform: translateY(-1px);
+    .salu-login-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(234, 88, 12, 0.5) !important;
+    }
+
+    .salu-login-btn:disabled {
+        opacity: 0.75;
+        cursor: not-allowed;
+    }
+
+    .btn-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .salu-resend-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .salu-resend-link {
+        color: #fdba74 !important;
+        font-weight: 700 !important;
+        font-size: 0.78rem !important;
+        text-decoration: underline !important;
+        padding: 0 !important;
+        cursor: pointer;
+    }
+
+    .salu-resend-link:hover:not(:disabled) {
+        color: #ffffff !important;
+    }
+
+    .salu-tip-box {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
     }
 
     .salu-footer-box { 
         border-top: 1px solid rgba(255, 255, 255, 0.12); 
-        padding-top: 14px; 
+        padding-top: 12px; 
     }
 
     .salu-copy-label { 
@@ -295,9 +455,9 @@
         align-items: center;
         justify-content: center;
         gap: 4px;
-        font-size: 0.74rem; 
+        font-size: 0.72rem; 
         color: #94a3b8; 
-        margin-bottom: 8px; 
+        margin-bottom: 6px; 
     }
 
     .salu-reg-link { 
@@ -305,7 +465,7 @@
         align-items: center;
         gap: 6px;
         color: #cbd5e1; 
-        font-size: 0.82rem; 
+        font-size: 0.8rem; 
         font-weight: 700; 
         text-decoration: none;
     }
@@ -317,27 +477,118 @@
 </style>
 
 @code {
+    private bool isVerifying = false;
+    private bool isResending = false;
+    private bool isVerified = false;
+    private string? errorMessage;
+    private string? infoMessage;
+    private string loginUrl = "/Account/Login";
+
     [SupplyParameterFromQuery]
     private string? Email { get; set; }
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
-    private string loginUrl = "/Account/Login";
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
+        Input ??= new();
+
         if (!string.IsNullOrWhiteSpace(Email))
         {
             var user = await UserManager.FindByEmailAsync(Email);
-            if (user is not null && user.AdmissionType == AdmissionType.UniversityRegular)
+            if (user is not null)
             {
-                loginUrl = "/Account/Login/Regular";
-            }
-            else
-            {
-                loginUrl = "/Account/Login/Annual";
+                if (user.AdmissionType == AdmissionType.UniversityRegular)
+                {
+                    loginUrl = "/Account/Login/Regular";
+                }
+                else
+                {
+                    loginUrl = "/Account/Login/Annual";
+                }
+
+                if (await UserManager.IsEmailConfirmedAsync(user))
+                {
+                    isVerified = true;
+                }
             }
         }
+    }
+
+    private async Task VerifyOtpAsync()
+    {
+        isVerifying = true;
+        errorMessage = null;
+        infoMessage = null;
+
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            errorMessage = "Missing email address. Please register or navigate to sign in.";
+            isVerifying = false;
+            return;
+        }
+
+        var cleanEmail = Email.Trim();
+        var user = await UserManager.FindByEmailAsync(cleanEmail);
+        if (user is null)
+        {
+            errorMessage = $"No candidate account found for {cleanEmail}.";
+            isVerifying = false;
+            return;
+        }
+
+        var result = await EmailOtpService.ValidateOtpAsync(user, Input.OtpCode);
+        if (result.Succeeded)
+        {
+            isVerified = true;
+            infoMessage = "Account verified successfully!";
+            isVerifying = false;
+            StateHasChanged();
+
+            await Task.Delay(1500);
+            RedirectManager.RedirectTo(loginUrl);
+            return;
+        }
+        else
+        {
+            errorMessage = result.ErrorMessage;
+            isVerifying = false;
+        }
+    }
+
+    private async Task ResendOtpAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            errorMessage = "Cannot resend code: Missing email address.";
+            return;
+        }
+
+        isResending = true;
+        errorMessage = null;
+        infoMessage = null;
+
+        var result = await EmailOtpService.ResendOtpAsync(Email);
+        if (result.Succeeded)
+        {
+            infoMessage = result.Message;
+        }
+        else
+        {
+            errorMessage = result.Message;
+        }
+
+        isResending = false;
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Please enter the 6-digit verification code.")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "OTP must be exactly 6 digits.")]
+        public string OtpCode { get; set; } = "";
     }
 }

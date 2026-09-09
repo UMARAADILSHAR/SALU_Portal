@@ -238,6 +238,7 @@ builder.Services.Configure<BrevoOptions>(options =>
 builder.Services.AddHttpClient<BrevoEmailSender>();
 builder.Services.AddTransient<IEmailSender<ApplicationUser>, BrevoEmailSender>();
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, BrevoEmailSender>();
+builder.Services.AddScoped<IEmailOtpService, EmailOtpService>();
 
 var app = builder.Build();
 
