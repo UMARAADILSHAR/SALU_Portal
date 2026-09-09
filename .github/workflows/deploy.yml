@@ -28,8 +28,8 @@ jobs:
       shell: pwsh
       env:
         DB_CONN: ${{ secrets.DB_CONNECTION_STRING }}
-        SEED_PASS: ${{ secrets.SEED_ADMIN_PASSWORD }}
-        HMAC_SECRET: ${{ secrets.ADMIT_CARD_SECRET }}
+        SEED_PASS: ${{ secrets['SEED_ADMIN_PASSWORD'] }}
+        HMAC_SECRET: ${{ secrets['ADMIT_CARD_SECRET'] }}
       run: |
         $dbConn = $env:DB_CONN
         $seedPass = if ([string]::IsNullOrWhiteSpace($env:SEED_PASS)) { "AdminPassword123!" } else { $env:SEED_PASS }
@@ -38,6 +38,7 @@ jobs:
         $config = @{
           "ConnectionStrings" = @{
             "DefaultConnection" = $dbConn
+            "UniversityAdmissionConnection" = $dbConn
           }
           "Logging" = @{
             "LogLevel" = @{
@@ -62,7 +63,7 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force -Path ./publish/logs | Out-Null
 
-    - name: Verify FTP Credentials Presence
+    - name: Verify Credentials Presence
       shell: pwsh
       env:
         FTP_PASS: ${{ secrets.FTP_PASSWORD }}
@@ -73,6 +74,11 @@ jobs:
           exit 1
         }
         Write-Host "FTP_PASSWORD detected. Length is $($env:FTP_PASS.Length) characters."
+        if ([string]::IsNullOrWhiteSpace($env:DB_CONN)) {
+          Write-Error "CRITICAL: Secret 'DB_CONNECTION_STRING' is EMPTY! Make sure it was added under 'Repository secrets'."
+          exit 1
+        }
+        Write-Host "DB_CONNECTION_STRING detected."
 
     - name: Release IIS File Locks (App Offline)
       shell: pwsh
