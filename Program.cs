@@ -191,7 +191,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.SignIn.RequireConfirmedAccount = false;
         // Enforce strong passwords for institutional compliance
         options.Password.RequiredLength = 8;
-        options.Password.RequireNonAlphanumeric = true; // Require special characters
+        options.Password.RequireNonAlphanumeric = false; // Special characters optional
         options.Password.RequireUppercase = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireDigit = true;
