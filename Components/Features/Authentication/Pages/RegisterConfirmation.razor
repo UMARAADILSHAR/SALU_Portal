@@ -4,66 +4,340 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Domain.Enums
 
 @inject UserManager<ApplicationUser> UserManager
-@inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Register confirmation</PageTitle>
+<PageTitle>Registration Confirmation – Shah Abdul Latif University Khairpur</PageTitle>
 
-<h1>Register confirmation</h1>
+<div class="salu-auth-wrapper salu-auth-board">
+    <div class="salu-card-container">
+        <div class="salu-login-card salu-auth-card">
+            
+            <!-- CREST -->
+            <div class="salu-crest-holder">
+                <div class="salu-logo-wrapper">
+                    <img src="images/salu-logo.png" alt="Shah Abdul Latif University Crest" class="salu-crest-img" />
+                </div>
+            </div>
 
-<StatusMessage Message="@statusMessage" />
+            <!-- ENVELOPE ICON -->
+            <div class="salu-email-icon-wrapper">
+                <div class="salu-icon-circle">
+                    <i class="bi bi-envelope-check-fill"></i>
+                </div>
+            </div>
 
-@if (emailConfirmationLink is not null)
-{
-    <p>
-        This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-        Normally this would be emailed: <a href="@emailConfirmationLink">Click here to confirm your account</a>
-    </p>
-}
-else
-{
-    <p role="alert">Please check your email to confirm your account.</p>
-}
+            <h2 class="salu-heading-main">Verify Your Email</h2>
+            <p class="salu-heading-sub">We've sent an activation link to complete your registration.</p>
+
+            @if (!string.IsNullOrWhiteSpace(Email))
+            {
+                <div class="salu-email-badge">
+                    <i class="bi bi-envelope-at-fill me-2"></i>
+                    <span class="email-text">@Email</span>
+                </div>
+            }
+
+            <div class="salu-instructions-card">
+                <div class="instruction-step">
+                    <span class="step-num">1</span>
+                    <span>Check your email inbox for a message from <strong>SALU Admissions</strong>.</span>
+                </div>
+                <div class="instruction-step">
+                    <span class="step-num">2</span>
+                    <span>Click the <strong>Verify Email Address</strong> button inside the email.</span>
+                </div>
+                <div class="instruction-step">
+                    <span class="step-num">3</span>
+                    <span>Return to the portal to sign in and submit your application.</span>
+                </div>
+            </div>
+
+            <div class="salu-tip-box">
+                <i class="bi bi-info-circle-fill me-1"></i>
+                <span>Cannot find the email? Please check your <strong>Spam or Junk</strong> folder.</span>
+            </div>
+
+            <div class="salu-action-row mt-3">
+                <a href="@($"/Account/ResendEmailConfirmation?email={Uri.EscapeDataString(Email ?? "")}")" class="salu-resend-btn">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <span>Resend Confirmation Email</span>
+                </a>
+            </div>
+
+            <div class="salu-footer-box mt-4">
+                <div class="salu-copy-label">
+                    <i class="bi bi-c-circle"></i> @DateTime.Now.Year SALU Directorate of Admissions
+                </div>
+                <a href="@loginUrl" class="salu-reg-link">
+                    <i class="bi bi-box-arrow-in-left"></i>
+                    Already verified? Proceed to Sign In
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    * { box-sizing: border-box; }
+    .salu-auth-wrapper {
+        min-height: 100vh;
+        width: 100%;
+        position: relative;
+        background: url('images/salu-login-bg.jpg') no-repeat center center / cover;
+        background-attachment: fixed;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 24px 24px 24px clamp(2.5rem, 7vw, 7.5rem);
+        overflow-x: hidden;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    .salu-card-container {
+        position: relative;
+        z-index: 2;
+        max-width: 460px;
+        width: 100%;
+        margin: 0;
+        padding: 8px 0;
+        animation: cardFadeIn 0.5s ease;
+    }
+
+    @@keyframes cardFadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .salu-login-card {
+        background: rgba(13, 27, 62, 0.92);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 20px;
+        padding: 28px 24px 22px;
+        box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        text-align: center;
+    }
+
+    .salu-crest-holder { 
+        margin: 0 auto 10px; 
+        display: flex; 
+        justify-content: center; 
+    }
+
+    .salu-logo-wrapper {
+        width: 58px;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border-radius: 50%;
+        padding: 4px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(249, 115, 22, 0.6);
+    }
+
+    .salu-crest-img { 
+        width: 44px; 
+        height: 44px; 
+        object-fit: contain; 
+    }
+
+    .salu-email-icon-wrapper {
+        display: flex;
+        justify-content: center;
+        margin: 12px 0;
+    }
+
+    .salu-icon-circle {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3));
+        border: 1.5px solid rgba(147, 197, 253, 0.4);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: #60a5fa;
+        animation: pulseIcon 2s infinite ease-in-out;
+    }
+
+    @@keyframes pulseIcon {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.4)); }
+        50% { transform: scale(1.06); filter: drop-shadow(0 0 16px rgba(96, 165, 250, 0.7)); }
+    }
+
+    .salu-heading-main { 
+        font-size: 1.35rem; 
+        font-weight: 800; 
+        color: #ffffff; 
+        margin: 0 0 4px;
+    }
+
+    .salu-heading-sub { 
+        font-size: 0.8rem; 
+        color: #cbd5e1; 
+        margin: 0 0 14px; 
+        font-weight: 500; 
+        line-height: 1.4; 
+    }
+
+    .salu-email-badge {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(30, 58, 138, 0.5);
+        border: 1px solid rgba(147, 197, 253, 0.4);
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.82rem;
+        color: #93c5fd;
+        margin-bottom: 16px;
+        word-break: break-all;
+    }
+
+    .email-text {
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .salu-instructions-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 14px 16px;
+        text-align: left;
+        margin-bottom: 12px;
+    }
+
+    .instruction-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 0.78rem;
+        color: #e2e8f0;
+        line-height: 1.45;
+    }
+
+    .instruction-step:last-child {
+        margin-bottom: 0;
+    }
+
+    .step-num {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #f97316;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 0.72rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .salu-tip-box {
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.74rem;
+        color: #fde68a;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .salu-action-row {
+        display: flex;
+        justify-content: center;
+    }
+
+    .salu-resend-btn {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 0.84rem;
+        padding: 10px 22px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .salu-resend-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .salu-footer-box { 
+        border-top: 1px solid rgba(255, 255, 255, 0.12); 
+        padding-top: 14px; 
+    }
+
+    .salu-copy-label { 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 0.74rem; 
+        color: #94a3b8; 
+        margin-bottom: 8px; 
+    }
+
+    .salu-reg-link { 
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #cbd5e1; 
+        font-size: 0.82rem; 
+        font-weight: 700; 
+        text-decoration: none;
+    }
+
+    .salu-reg-link:hover {
+        color: #fef08a;
+        text-decoration: underline;
+    }
+</style>
 
 @code {
-    private string? emailConfirmationLink;
-    private string? statusMessage;
-
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
-
     [SupplyParameterFromQuery]
     private string? Email { get; set; }
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
+    private string loginUrl = "/Account/Login";
+
     protected override async Task OnInitializedAsync()
     {
-        if (Email is null)
+        if (!string.IsNullOrWhiteSpace(Email))
         {
-            RedirectManager.RedirectTo("");
-            return;
-        }
-
-        var user = await UserManager.FindByEmailAsync(Email);
-        if (user is null)
-        {
-            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            statusMessage = "Error finding user for unspecified email";
-        }
-        else if (EmailSender is IdentityNoOpEmailSender)
-        {
-            // Once you add a real email sender, you should remove this code that lets you confirm the account
-            var userId = await UserManager.GetUserIdAsync(user);
-            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            emailConfirmationLink = NavigationManager.GetUriWithQueryParameters(
-                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+            var user = await UserManager.FindByEmailAsync(Email);
+            if (user is not null && user.AdmissionType == AdmissionType.UniversityRegular)
+            {
+                loginUrl = "/Account/Login/Regular";
+            }
+            else
+            {
+                loginUrl = "/Account/Login/Annual";
+            }
         }
     }
 }

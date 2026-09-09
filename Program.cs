@@ -207,7 +207,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = false;
+        options.SignIn.RequireConfirmedAccount = true;
         // Enforce strong passwords for institutional compliance
         options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = false; // Special characters optional
@@ -225,7 +225,19 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+// Configure Brevo Email Service
+builder.Services.Configure<BrevoOptions>(options =>
+{
+    builder.Configuration.GetSection(BrevoOptions.SectionName).Bind(options);
+    var envKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? Environment.GetEnvironmentVariable("Brevo__ApiKey");
+    if (!string.IsNullOrWhiteSpace(envKey))
+    {
+        options.ApiKey = envKey;
+    }
+});
+builder.Services.AddHttpClient<BrevoEmailSender>();
+builder.Services.AddTransient<IEmailSender<ApplicationUser>, BrevoEmailSender>();
+builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, BrevoEmailSender>();
 
 var app = builder.Build();
 

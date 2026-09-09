@@ -6,35 +6,346 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using SaluExamPortal.Infrastructure.Persistence
+@using SaluExamPortal.Domain.Enums
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Resend email confirmation</PageTitle>
+<PageTitle>Resend Email Confirmation – Shah Abdul Latif University Khairpur</PageTitle>
 
-<h1>Resend email confirmation</h1>
-<h2>Enter your email.</h2>
-<hr />
-<StatusMessage Message="@message" />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
+<div class="salu-auth-wrapper salu-auth-board">
+    <div class="salu-card-container">
+        <div class="salu-login-card salu-auth-card">
+            
+            <!-- CREST -->
+            <div class="salu-crest-holder">
+                <div class="salu-logo-wrapper">
+                    <img src="images/salu-logo.png" alt="Shah Abdul Latif University Crest" class="salu-crest-img" />
+                </div>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Resend</button>
-        </EditForm>
+
+            <h2 class="salu-heading-main">Resend Verification</h2>
+            <p class="salu-heading-sub">Enter your registered email address to receive a fresh verification link.</p>
+
+            @if (isSent)
+            {
+                <div class="salu-status-icon-wrapper success">
+                    <i class="bi bi-envelope-check-fill"></i>
+                </div>
+
+                <div class="salu-message-card success">
+                    <p class="mb-1"><strong>Verification Email Dispatched!</strong></p>
+                    <p class="mb-0 text-muted small">If an account is associated with <strong>@Input.Email</strong>, an activation link has been sent. Please check your inbox and spam folder.</p>
+                </div>
+
+                <div class="salu-action-row mt-3">
+                    <a href="/Account/Login" class="salu-login-btn">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Return to Sign In</span>
+                    </a>
+                </div>
+            }
+            else
+            {
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="salu-message-card error mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span>@errorMessage</span>
+                    </div>
+                }
+
+                <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger small mb-3 text-start" role="alert" />
+
+                    <div class="salu-form-group">
+                        <label for="Input.Email" class="salu-form-label">
+                            <i class="bi bi-envelope-fill"></i>
+                            Registered Email Address <span class="text-danger">*</span>
+                        </label>
+                        <div class="salu-input-box">
+                            <i class="bi bi-envelope-fill salu-field-icon"></i>
+                            <InputText @bind-Value="Input.Email" id="Input.Email" class="salu-text-input" autocomplete="email" aria-required="true" placeholder="student@example.com" />
+                        </div>
+                        <ValidationMessage For="() => Input.Email" class="text-danger small mt-1 text-start" />
+                    </div>
+
+                    <div class="salu-action-row mt-3 mb-2">
+                        <button type="submit" class="salu-login-btn @(isSubmitting ? "btn-loading" : "")" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="btn-spinner"></span>
+                                <span>Sending Email...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-send-fill"></i>
+                                <span>Send Verification Link</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+
+            <div class="salu-footer-box mt-4">
+                <div class="salu-copy-label">
+                    <i class="bi bi-c-circle"></i> @DateTime.Now.Year SALU Directorate of Admissions
+                </div>
+                <a href="/Account/Login" class="salu-reg-link">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Sign In
+                </a>
+            </div>
+
+        </div>
     </div>
 </div>
 
+<style>
+    * { box-sizing: border-box; }
+    .salu-auth-wrapper {
+        min-height: 100vh;
+        width: 100%;
+        position: relative;
+        background: url('images/salu-login-bg.jpg') no-repeat center center / cover;
+        background-attachment: fixed;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 24px 24px 24px clamp(2.5rem, 7vw, 7.5rem);
+        overflow-x: hidden;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    .salu-card-container {
+        position: relative;
+        z-index: 2;
+        max-width: 440px;
+        width: 100%;
+        margin: 0;
+        padding: 8px 0;
+        animation: cardFadeIn 0.5s ease;
+    }
+
+    @@keyframes cardFadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .salu-login-card {
+        background: rgba(13, 27, 62, 0.92);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 20px;
+        padding: 28px 24px 22px;
+        box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        text-align: center;
+    }
+
+    .salu-crest-holder { 
+        margin: 0 auto 10px; 
+        display: flex; 
+        justify-content: center; 
+    }
+
+    .salu-logo-wrapper {
+        width: 58px;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border-radius: 50%;
+        padding: 4px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(249, 115, 22, 0.6);
+    }
+
+    .salu-crest-img { 
+        width: 44px; 
+        height: 44px; 
+        object-fit: contain; 
+    }
+
+    .salu-status-icon-wrapper {
+        font-size: 3rem;
+        margin: 10px 0;
+    }
+
+    .salu-status-icon-wrapper.success {
+        color: #4ade80;
+        filter: drop-shadow(0 0 12px rgba(74, 222, 128, 0.4));
+    }
+
+    .salu-heading-main { 
+        font-size: 1.35rem; 
+        font-weight: 800; 
+        color: #ffffff; 
+        margin: 0 0 4px;
+    }
+
+    .salu-heading-sub { 
+        font-size: 0.8rem; 
+        color: #cbd5e1; 
+        margin: 0 0 16px; 
+        font-weight: 500; 
+        line-height: 1.4; 
+    }
+
+    .salu-form-group { 
+        text-align: left; 
+        margin-bottom: 14px; 
+    }
+
+    .salu-form-label { 
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.76rem; 
+        font-weight: 700; 
+        color: #ffffff; 
+        margin-bottom: 6px;
+    }
+
+    .salu-input-box { 
+        position: relative; 
+        display: flex; 
+        align-items: center;
+    }
+
+    .salu-field-icon { 
+        position: absolute; 
+        left: 12px; 
+        color: #94a3b8; 
+        font-size: 15px; 
+        pointer-events: none;
+    }
+
+    .salu-text-input {
+        width: 100%;
+        background: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 10px !important;
+        padding: 9px 12px 9px 36px !important;
+        color: #1e293b !important;
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+        outline: none !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .salu-text-input:focus {
+        border-color: #f97316 !important;
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2) !important;
+    }
+
+    .salu-message-card {
+        padding: 12px 16px;
+        border-radius: 10px;
+        text-align: left;
+        font-size: 0.82rem;
+        margin: 12px 0;
+    }
+
+    .salu-message-card.success {
+        background: rgba(34, 197, 94, 0.12);
+        border: 1px solid rgba(34, 197, 94, 0.35);
+        color: #bbf7d0;
+    }
+
+    .salu-message-card.error {
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        color: #fecaca;
+    }
+
+    .salu-action-row {
+        display: flex;
+        justify-content: center;
+    }
+
+    .salu-login-btn {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 0.92rem !important;
+        padding: 11px 32px !important;
+        border-radius: 10px !important;
+        border: none !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 16px rgba(234, 88, 12, 0.4) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        text-decoration: none !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    .salu-login-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(234, 88, 12, 0.5) !important;
+    }
+
+    .salu-login-btn:disabled {
+        opacity: 0.75;
+        cursor: not-allowed;
+    }
+
+    .btn-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .salu-footer-box { 
+        border-top: 1px solid rgba(255, 255, 255, 0.12); 
+        padding-top: 14px; 
+    }
+
+    .salu-copy-label { 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 0.74rem; 
+        color: #94a3b8; 
+        margin-bottom: 8px; 
+    }
+
+    .salu-reg-link { 
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #cbd5e1; 
+        font-size: 0.82rem; 
+        font-weight: 700; 
+        text-decoration: none;
+    }
+
+    .salu-reg-link:hover {
+        color: #fef08a;
+        text-decoration: underline;
+    }
+</style>
+
 @code {
-    private string? message;
+    private bool isSubmitting = false;
+    private bool isSent = false;
+    private string? errorMessage;
+
+    [SupplyParameterFromQuery]
+    private string? Email { get; set; }
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = default!;
@@ -42,32 +353,61 @@
     protected override void OnInitialized()
     {
         Input ??= new();
+        if (!string.IsNullOrWhiteSpace(Email) && string.IsNullOrWhiteSpace(Input.Email))
+        {
+            Input.Email = Email;
+        }
     }
 
     private async Task OnValidSubmitAsync()
     {
-        var user = await UserManager.FindByEmailAsync(Input.Email!);
+        isSubmitting = true;
+        errorMessage = null;
+
+        var cleanEmail = (Input.Email ?? "").Trim();
+        var user = await UserManager.FindByEmailAsync(cleanEmail);
+
         if (user is null)
         {
-            message = "Verification email sent. Please check your email.";
+            // Do not reveal user non-existence for security
+            isSent = true;
+            isSubmitting = false;
             return;
         }
 
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+        if (await UserManager.IsEmailConfirmedAsync(user))
+        {
+            errorMessage = "This email address is already verified. You can proceed directly to sign in.";
+            isSubmitting = false;
+            return;
+        }
 
-        message = "Verification email sent. Please check your email.";
+        try
+        {
+            var userId = await UserManager.GetUserIdAsync(user);
+            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
+
+            await EmailSender.SendConfirmationLinkAsync(user, cleanEmail, HtmlEncoder.Default.Encode(callbackUrl));
+            isSent = true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to send verification email: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Please enter your registered email.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = "";
     }
 }

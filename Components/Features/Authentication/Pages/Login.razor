@@ -42,6 +42,19 @@
             </div>
 
             <StatusMessage Message="@errorMessage" />
+            @if (!string.IsNullOrWhiteSpace(unconfirmedEmail))
+            {
+                <div class="salu-unconfirmed-alert mb-3">
+                    <i class="bi bi-envelope-exclamation-fill me-1"></i>
+                    <div><strong>Email Not Verified</strong></div>
+                    <div class="small mb-2">You must verify your email before logging in.</div>
+                    <div>
+                        <a href="@($"/Account/ResendEmailConfirmation?email={Uri.EscapeDataString(unconfirmedEmail)}")" class="salu-unconfirmed-link">
+                            <i class="bi bi-arrow-repeat"></i> Resend Verification Email
+                        </a>
+                    </div>
+                </div>
+            }
             <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
                 <input type="hidden" name="Input.AdmissionType" value="@selectedAdmissionType" />
                 <DataAnnotationsValidator />
@@ -300,12 +313,40 @@
         background-clip: text;
     }
 
-    .salu-heading-sub {
+    .salu-heading-sub { 
+        font-size: 0.76rem; 
+        color: #94a3b8; 
+        margin: 0 0 16px; 
+        font-weight: 500; 
+        line-height: 1.4; 
+    }
+
+    .salu-unconfirmed-alert {
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        color: #fde68a;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 0.78rem;
+        text-align: center;
+    }
+
+    .salu-unconfirmed-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f97316;
+        color: #ffffff !important;
+        font-weight: 700;
         font-size: 0.76rem;
-        color: #94a3b8;
-        margin: 0 0 16px;
-        font-weight: 500;
-        line-height: 1.4;
+        padding: 6px 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .salu-unconfirmed-link:hover {
+        background: #ea580c;
     }
 
     /* FORM GROUPS */
@@ -535,6 +576,7 @@
     private EditContext editContext = default!;
     private bool showPassword = false;
     private bool isLoggingIn = false;
+    private string? unconfirmedEmail;
     private AdmissionType selectedAdmissionType = AdmissionType.AffiliatedCollege;
 
     [CascadingParameter]
@@ -692,6 +734,13 @@
         {
             Logger.LogWarning("User account locked out.");
             RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else if (result.IsNotAllowed)
+        {
+            var targetEmail = user?.Email ?? (loginIdentifier.Contains('@') ? loginIdentifier : "");
+            unconfirmedEmail = targetEmail;
+            errorMessage = "Email not verified: Your email address must be confirmed before logging in.";
+            isLoggingIn = false;
         }
         else
         {

@@ -657,7 +657,8 @@
         user.FullName = (Input.FullName ?? "").Trim();
         user.Cnic = normalizedCnic;
         user.PhoneNumber = normalizedPhone;
-        user.IsVerified = true;
+        user.IsVerified = false;
+        user.EmailConfirmed = false;
         user.AdmissionType = AdmissionType.UniversityRegular;
 
         await UserStore.SetUserNameAsync(user, emailClean, CancellationToken.None);

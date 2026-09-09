@@ -104,3 +104,24 @@ public class ChecklistItem
     public int ParentId { get; set; }
 }
 
+public class DistrictTehsilItem
+{
+    [JsonPropertyName("districtDetailId")]
+    public int DistrictDetailId { get; set; }
+
+    [JsonPropertyName("district")]
+    public string District { get; set; } = "";
+
+    [JsonPropertyName("tehsils")]
+    public List<string> Tehsils { get; set; } = [];
+
+    public DistrictTehsilItem() { }
+
+    public DistrictTehsilItem(int id, string district, IEnumerable<string> tehsils)
+    {
+        DistrictDetailId = id;
+        District = district;
+        Tehsils = [.. tehsils];
+    }
+}
+

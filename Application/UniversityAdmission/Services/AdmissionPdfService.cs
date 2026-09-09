@@ -143,9 +143,10 @@ public class AdmissionPdfService : IAdmissionPdfService
                 DataRow(table, "CNIC / B-Form:", form.Personal.Cnic, "Date of Birth:", form.Personal.DateOfBirth?.ToString("dd-MMM-yyyy") ?? "-");
                 DataRow(table, "Gender:", form.Personal.Gender, "Religion:", form.Personal.Religion);
                 DataRow(table, "Nationality:", form.Personal.Nationality, "Domicile District:", $"{form.Personal.DomicileDistrict} ({form.Personal.DomicileProvince})");
-                DataRow(table, "Mobile No:", form.Personal.MobileNo, "Email Address:", form.Personal.Email);
+                DataRow(table, "Tehsil / Taluka:", form.Personal.Tehsil, "Mobile No:", form.Personal.MobileNo);
+                DataRow(table, "Email Address:", form.Personal.Email, "Hostel Required:", form.Personal.AvailHostel ? "YES" : "NO");
+                DataRow(table, "Transport Required:", form.Personal.AvailTransport ? "YES" : "NO", "Self Finance:", form.Personal.SelfFinance ? "YES" : "NO");
                 DataRow(table, "Current Address:", form.Personal.CurrentAddress, "Permanent Address:", form.Personal.PermanentAddress);
-                DataRow(table, "Hostel Required:", form.Personal.AvailHostel ? "YES" : "NO", "Transport Required:", form.Personal.AvailTransport ? "YES" : "NO");
             });
 
             // Section 2: Applied Program & Quotas

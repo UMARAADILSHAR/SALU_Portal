@@ -47,6 +47,8 @@ public class PersonalInfoModel
     [Required(ErrorMessage = "Domicile district is required.")]
     public string DomicileDistrict { get; set; } = "Khairpur";
 
+    public int? DistrictDetailId { get; set; } = 5596;
+
     public string Tehsil { get; set; } = "";
     public string ResidenceNumber { get; set; } = "";
 

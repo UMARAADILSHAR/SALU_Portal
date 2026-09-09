@@ -9,7 +9,7 @@ namespace SaluExamPortal.Infrastructure.Persistence
         public string FullName { get; set; } = string.Empty;
         public string? FatherName { get; set; }
         public string? Cnic { get; set; }
-        public bool IsVerified { get; set; } = true;
+        public bool IsVerified { get; set; } = false;
         public AdmissionType AdmissionType { get; set; } = AdmissionType.AffiliatedCollege;
         public bool MustChangePassword { get; set; }
         public DateTime? PasswordChangedAt { get; set; }

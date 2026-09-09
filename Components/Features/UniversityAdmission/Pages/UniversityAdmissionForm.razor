@@ -231,27 +231,52 @@
 
                                 <MudItem xs="12" sm="6" md="4">
                                     <label class="form-label-small">Domicile Province <span class="text-danger">*</span></label>
-                                    <InputSelect @bind-Value="FormService.State.Personal.DomicileProvince" class="form-select form-select-sm">
+                                    <select class="form-select form-select-sm" @bind="FormService.State.Personal.DomicileProvince" @bind:after="OnProvinceChanged">
                                         @foreach (var prov in _provinces)
                                         {
                                             <option value="@prov">@prov</option>
                                         }
-                                    </InputSelect>
+                                    </select>
                                 </MudItem>
 
                                 <MudItem xs="12" sm="6" md="4">
                                     <label class="form-label-small">Domicile District <span class="text-danger">*</span></label>
-                                    <InputSelect @bind-Value="FormService.State.Personal.DomicileDistrict" class="form-select form-select-sm">
-                                        @foreach (var dist in _districts)
+                                    <select class="form-select form-select-sm" @bind="FormService.State.Personal.DomicileDistrict" @bind:after="OnDistrictChanged" disabled="@(!IsSindhSelected)">
+                                        @if (!IsSindhSelected)
                                         {
-                                            <option value="@dist">@dist</option>
+                                            <option value="">-- Available for Sindh Only --</option>
                                         }
-                                    </InputSelect>
+                                        else
+                                        {
+                                            <option value="">-- Select District --</option>
+                                            @foreach (var d in SetupDataService.SindhDistricts)
+                                            {
+                                                <option value="@d.District">@d.District</option>
+                                            }
+                                        }
+                                    </select>
                                 </MudItem>
 
                                 <MudItem xs="12" sm="6" md="4">
-                                    <label class="form-label-small">Tehsil / Taluka</label>
-                                    <InputText @bind-Value="FormService.State.Personal.Tehsil" class="form-control form-control-sm" placeholder="e.g. Kot Diji, Kingri" />
+                                    <label class="form-label-small">Tehsil / Taluka <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-sm" @bind="FormService.State.Personal.Tehsil" disabled="@(!_availableTehsils.Any() || !IsSindhSelected)">
+                                        @if (!IsSindhSelected)
+                                        {
+                                            <option value="">-- Available for Sindh Only --</option>
+                                        }
+                                        else if (!_availableTehsils.Any())
+                                        {
+                                            <option value="">-- Select District First --</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="">-- Select Tehsil --</option>
+                                            @foreach (var tehsil in _availableTehsils)
+                                            {
+                                                <option value="@tehsil">@tehsil</option>
+                                            }
+                                        }
+                                    </select>
                                 </MudItem>
 
                                 <MudItem xs="12" sm="6" md="4">
@@ -1306,8 +1331,10 @@
     // Step 1 Data
     private List<string> _nationalities = [];
     private List<string> _provinces = [];
-    private readonly List<string> _districts = ["Khairpur", "Sukkur", "Larkana", "Ghotki", "Shikarpur", "Kashmore", "Badin", "Hyderabad", "Karachi", "Nawabshah (SBA)", "Naushahro Feroze", "Dadu", "Jacobabad", "Mirpurkhas"];
+    private List<string> _availableTehsils = [];
     private string _photoError = "";
+    private bool IsSindhSelected =>
+        string.Equals(FormService.State.Personal.DomicileProvince, "Sindh", StringComparison.OrdinalIgnoreCase);
 
     // Step 2 Academic State
     private string _faculty = "", _dept = "", _program = "";
@@ -1364,6 +1391,25 @@
 
         _nationalities = await SetupData.GetNationalitiesAsync();
         _provinces = await SetupData.GetProvincesAsync();
+
+        if (string.IsNullOrWhiteSpace(FormService.State.Personal.Nationality))
+        {
+            FormService.State.Personal.Nationality = "Pakistani";
+        }
+
+        if (string.IsNullOrWhiteSpace(FormService.State.Personal.DomicileProvince))
+        {
+            FormService.State.Personal.DomicileProvince = "Sindh";
+        }
+
+        if (IsSindhSelected)
+        {
+            if (string.IsNullOrWhiteSpace(FormService.State.Personal.DomicileDistrict))
+            {
+                FormService.State.Personal.DomicileDistrict = "Khairpur";
+            }
+            OnDistrictChanged();
+        }
 
         _examinations = await SetupData.GetExaminationsAsync();
         _boards = await SetupData.GetBoardsAsync();
@@ -1446,6 +1492,46 @@
     {
         FormService.SavePersonal();
         NextStep();
+    }
+
+    private void OnProvinceChanged()
+    {
+        if (IsSindhSelected)
+        {
+            if (string.IsNullOrWhiteSpace(FormService.State.Personal.DomicileDistrict))
+            {
+                FormService.State.Personal.DomicileDistrict = "Khairpur";
+            }
+            OnDistrictChanged();
+        }
+        else
+        {
+            FormService.State.Personal.DomicileDistrict = "";
+            FormService.State.Personal.DistrictDetailId = null;
+            FormService.State.Personal.Tehsil = "";
+            _availableTehsils = [];
+        }
+    }
+
+    private void OnDistrictChanged()
+    {
+        var districtName = FormService.State.Personal.DomicileDistrict;
+        var match = SetupDataService.SindhDistricts.FirstOrDefault(d => string.Equals(d.District, districtName, StringComparison.OrdinalIgnoreCase));
+        if (match != null)
+        {
+            FormService.State.Personal.DistrictDetailId = match.DistrictDetailId;
+            _availableTehsils = [.. match.Tehsils];
+            if (!_availableTehsils.Contains(FormService.State.Personal.Tehsil))
+            {
+                FormService.State.Personal.Tehsil = _availableTehsils.FirstOrDefault() ?? "";
+            }
+        }
+        else
+        {
+            FormService.State.Personal.DistrictDetailId = null;
+            _availableTehsils = [];
+            FormService.State.Personal.Tehsil = "";
+        }
     }
 
     // ─── Step 2 Methods: Academic ────────────────────────────────────

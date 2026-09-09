@@ -48,11 +48,45 @@ public class SetupDataService
     public async Task<List<IdNameItem>> GetFeeParticularsAsync()
         => (await LoadAsync()).AdmissionSetup?.FeeParticulars ?? [];
 
+    public static readonly List<string> DefaultNationalities = ["Pakistani", "Overseas Pakistani", "Foreign National"];
+    public static readonly List<string> DefaultProvinces = ["Sindh", "Punjab", "KPK", "Balochistan", "Islamabad", "Gilgit Baltistan", "Azad Jammu & Kashmir"];
+
+    public static readonly List<DistrictTehsilItem> SindhDistricts =
+    [
+        new(5584, "Badin", ["Badin", "Matli", "Shaheed Fazil Rahu", "Talhar", "Tando Bago"]),
+        new(5585, "Dadu", ["Dadu", "Johi", "Khairpur Nathan Shah", "Mehar"]),
+        new(5586, "Ghotki", ["Daharki", "Ghotki", "Khan Garh (Khanpur)", "Mirpur Mathelo", "Ubauro"]),
+        new(5587, "Hyderabad", ["Hyderabad City", "Hyderabad", "Latifabad", "Qasimabad"]),
+        new(5588, "Jacobabad", ["Garhi Khairo", "Jacobabad", "Thul"]),
+        new(5589, "Jamshoro", ["Kotri", "Manjhand", "Sehwan", "Thana Bulla Khan"]),
+        new(5590, "Karachi Central", ["Gulberg", "Liaquatabad", "North Nazimabad"]),
+        new(5591, "Karachi East", ["Gulshan Town", "Jamshed Town"]),
+        new(5593, "Karachi West", ["Baldia Town", "Keamari Town", "Orangi Town"]),
+        new(5594, "Kashmore", ["Bakrani", "Kandhkot", "Kashmore", "Tangwani"]),
+        new(5596, "Khairpur", ["Faiz Ganj", "Gambat", "Khairpur", "Kingri", "Kot Diji", "Mirwah", "Nara", "Sobho Dero"]),
+        new(5598, "Larkana", ["Dokri", "Larkana", "Ratodero"]),
+        new(5601, "Matiari", ["Hala", "Matiari", "Saeedabad"]),
+        new(5602, "Mirpur Khas", ["Digri", "Hussain Bux Mari", "Jhuddo", "Kot Ghulam Muhammad", "Mirpur Khas", "Shujabad", "Sindhri"]),
+        new(5603, "Naushahro Feroze", ["Bhiria", "Kandiaro", "Mehrabpur", "Moro", "Naushahro Feroze"]),
+        new(5604, "Qambar Shahdadkot", ["Kambar", "Miro Khan", "Nasirabad", "Qambar", "Qubo Saeed Khan", "Shahdadkot", "Sijawal Junejo", "Warah"]),
+        new(5605, "Sanghar", ["Jam Nawaz Ali", "Khipro", "Sanghar", "Shahdadpur", "Sinjhoro", "Tando Adam Khan"]),
+        new(5606, "Shaheed Benazirabad", ["Daur", "Kazi Ahmed", "Nawabshah", "Sakrand"]),
+        new(5607, "Shikarpur", ["Garhi Yasin", "Khanpur", "Lakhi", "Shikarpur"]),
+        new(5608, "Sujawal", ["Jati", "Kharo Chan", "Mirpur Bathoro", "Shah Bunder"]),
+        new(5609, "Sukkur", ["New Sukkur", "Pano Akil", "Rohri", "Salehpat", "Sukkur"])
+    ];
+
     public async Task<List<string>> GetNationalitiesAsync()
-        => (await LoadAsync()).AdmissionSetup?.Nationalities ?? [];
+    {
+        var list = (await LoadAsync()).AdmissionSetup?.Nationalities;
+        return list != null && list.Count > 0 ? list : DefaultNationalities;
+    }
 
     public async Task<List<string>> GetProvincesAsync()
-        => (await LoadAsync()).AdmissionSetup?.Provinces ?? [];
+    {
+        var list = (await LoadAsync()).AdmissionSetup?.Provinces;
+        return list != null && list.Count > 0 ? list : DefaultProvinces;
+    }
 
     public async Task<List<IdNameItem>> GetExaminationsAsync()
         => (await LoadAsync()).AdmissionSetup?.Examinations ?? [];
