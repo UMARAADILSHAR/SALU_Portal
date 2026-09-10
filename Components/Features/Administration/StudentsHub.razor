@@ -126,7 +126,7 @@
                         <div class="small text-muted">@(context.College?.Name ?? "Main Campus")</div>
                     </MudTd>
                     <MudTd>
-                        @if (context.Fees.Any(f => f.Status == FeeStatus.Paid))
+                        @if (context.Fees.Any(f => f.Status is FeeStatus.Paid or FeeStatus.Verified))
                         {
                             <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" Class="fw-bold">✓ PAID</MudChip>
                         }
@@ -358,10 +358,10 @@
         if (!string.IsNullOrWhiteSpace(collegeFilter) && (e.College?.Name ?? "Main Campus") != collegeFilter)
             return false;
 
-        if (feeFilter == "Paid" && !e.Fees.Any(f => f.Status == FeeStatus.Paid))
+        if (feeFilter == "Paid" && !e.Fees.Any(f => f.Status is FeeStatus.Paid or FeeStatus.Verified))
             return false;
 
-        if (feeFilter == "Unpaid" && e.Fees.Any(f => f.Status == FeeStatus.Paid))
+        if (feeFilter == "Unpaid" && e.Fees.Any(f => f.Status is FeeStatus.Paid or FeeStatus.Verified))
             return false;
 
         return true;

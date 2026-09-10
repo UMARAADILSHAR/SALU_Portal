@@ -338,7 +338,7 @@
                         <div class="small text-muted">@(context.College?.Name ?? "Main Campus")</div>
                     </MudTd>
                     <MudTd>
-                        @if (context.Fees.Any(f => f.Status == FeeStatus.Paid))
+                        @if (context.Fees.Any(f => f.Status is FeeStatus.Paid or FeeStatus.Verified))
                         {
                             <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" Class="fw-bold">✓ PAID</MudChip>
                         }

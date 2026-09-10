@@ -36,6 +36,7 @@ public sealed class FeePaymentService(
     ISystemConfigurationService configService,
     IFileStorageService fileStorage,
     ITotpService totpService,
+    IExamAdmitCardEngineService admitCardEngine,
     UserManager<ApplicationUser> userManager,
     IHttpContextAccessor httpContextAccessor,
     ILogger<FeePaymentService> logger) : IFeePaymentService
@@ -163,7 +164,9 @@ public sealed class FeePaymentService(
 
     public async Task UploadStudentReceiptAsync(Guid feeId, Stream fileStream, string fileName, string actorUserId, CancellationToken cancellationToken = default)
     {
-        var fee = await db.Fees.FirstOrDefaultAsync(f => f.Id == feeId, cancellationToken)
+        var fee = await db.Fees
+            .Include(f => f.Enrollment)
+            .FirstOrDefaultAsync(f => f.Id == feeId, cancellationToken)
             ?? throw new InvalidOperationException("Challan not found.");
 
         if (!FeeStatusRules.CanUploadReceipt(fee.Status))
@@ -244,7 +247,9 @@ public sealed class FeePaymentService(
 
     public async Task VerifyPaidAsync(Guid feeId, string checkerUserId, string? totpCode, CancellationToken cancellationToken = default)
     {
-        var fee = await db.Fees.FirstOrDefaultAsync(f => f.Id == feeId, cancellationToken)
+        var fee = await db.Fees
+            .Include(f => f.Enrollment)
+            .FirstOrDefaultAsync(f => f.Id == feeId, cancellationToken)
             ?? throw new InvalidOperationException("Challan not found.");
 
         if (!FeeStatusRules.CanVerify(fee.Status))
@@ -258,6 +263,22 @@ public sealed class FeePaymentService(
         fee.Status = FeeStatus.Verified;
         fee.VerifiedBy = checkerUserId;
         fee.VerifiedAt = DateTime.UtcNow;
+
+        // A verified challan is the financial gate for the examination workflow.
+        // Promote a submitted enrollment before invoking the serializable seat allocator.
+        if (fee.Enrollment.Status == EnrollmentStatus.Pending)
+        {
+            fee.Enrollment.Status = EnrollmentStatus.Approved;
+            fee.Enrollment.RejectionReason = null;
+            db.AuditLogs.Add(new AuditLog
+            {
+                UserId = checkerUserId,
+                Action = "APPROVE_ENROLLMENT_ON_FEE_VERIFICATION",
+                Entity = nameof(Enrollment),
+                EntityId = fee.Enrollment.Id.ToString(),
+                Details = $"Enrollment approved after verified challan {fee.ChallanNumber}."
+            });
+        }
 
         await AppendLedgerAsync(
             fee,
@@ -279,6 +300,10 @@ public sealed class FeePaymentService(
         });
 
         await db.SaveChangesAsync(cancellationToken);
+
+        // Allocation is idempotent and protected by a serializable transaction;
+        // running it here removes the fragile manual hand-off to Exam Hub.
+        await admitCardEngine.ProcessPaidStudentEnrollmentsAsync(fee.Enrollment.AcademicYearId, cancellationToken);
         logger.LogInformation("Checker {User} verified challan {Challan}", checkerUserId, fee.ChallanNumber);
     }
 

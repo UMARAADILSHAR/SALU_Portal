@@ -371,8 +371,8 @@
         rejectedCount = enrollments.Count(e => e.Status == EnrollmentStatus.Rejected);
 
         var fees = await Db.Fees.AsNoTracking().ToListAsync();
-        totalRevenueCollected = fees.Where(f => f.Status == FeeStatus.Paid).Sum(f => f.Amount);
-        paidFeesCount = fees.Count(f => f.Status == FeeStatus.Paid);
+        totalRevenueCollected = fees.Where(f => f.Status is FeeStatus.Paid or FeeStatus.Verified).Sum(f => f.Amount);
+        paidFeesCount = fees.Count(f => f.Status is FeeStatus.Paid or FeeStatus.Verified);
 
         issuedAdmitCards = await Db.AdmitCards.AsNoTracking().ToListAsync();
 

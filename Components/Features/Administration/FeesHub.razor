@@ -64,7 +64,7 @@
                     <MudTd Class="fw-bold font-monospace">Rs. @context.Amount.ToString("N2")</MudTd>
                     <MudTd>@context.DueDate.ToString("dd MMM yyyy")</MudTd>
                     <MudTd>
-                        <MudChip T="string" Color="@(context.Status == FeeStatus.Paid ? Color.Success : Color.Warning)" Size="Size.Small" Variant="Variant.Filled">
+                        <MudChip T="string" Color="@(context.Status is FeeStatus.Paid or FeeStatus.Verified ? Color.Success : Color.Warning)" Size="Size.Small" Variant="Variant.Filled">
                             @context.Status
                         </MudChip>
                     </MudTd>
@@ -77,7 +77,9 @@
                         }
                         else if (context.Status == FeeStatus.Paid)
                         {
-                            <span class="small text-warning fw-bold">Bank posted; checker verification required</span>
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" OnClick="() => BeginVerify(context)">
+                                Approve &amp; Allocate
+                            </MudButton>
                         }
                         else if (context.Status == FeeStatus.Verified)
                         {
@@ -98,11 +100,13 @@
         <MudCard Class="mt-4" Elevation="2">
             <MudCardHeader>
                 <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Post bank payment for @selectedFee.ChallanNumber</MudText>
-                    <MudText Typo="Typo.caption">The exact issued amount is PKR @selectedFee.Amount.ToString("N2"). This creates an auditable bank-posted event.</MudText>
+                    <MudText Typo="Typo.h6">@(verificationMode ? $"Approve challan {selectedFee.ChallanNumber}" : $"Post bank payment for {selectedFee.ChallanNumber}")</MudText>
+                    <MudText Typo="Typo.caption">The exact issued amount is PKR @selectedFee.Amount.ToString("N2").</MudText>
                 </CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
+                @if (!verificationMode)
+                {
                 <div class="row g-3">
                     <div class="col-md-5">
                         <MudTextField @bind-Value="bankTransactionId" Label="Bank transaction / scroll number" Required="true" Variant="Variant.Outlined" />
@@ -117,8 +121,15 @@
                 <MudCheckBox @bind-Value="paymentConfirmed" Color="Color.Warning" Class="mt-3">
                     I confirm that the bank record and amount match the stored challan.
                 </MudCheckBox>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">Approval verifies the bank-posted payment, approves a pending enrollment, and allocates the next available roll number and seat.</MudAlert>
+                    <MudTextField @bind-Value="verificationTotp" Label="Checker authenticator code (if enabled)" InputType="InputType.Number" Variant="Variant.Outlined" />
+                    <MudCheckBox @bind-Value="approvalConfirmed" Color="Color.Success" Class="mt-3">I confirm this bank payment has been independently checked.</MudCheckBox>
+                }
                 <div class="d-flex gap-2 mt-3">
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="PostBankPaymentAsync">Confirm and post payment</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(verificationMode ? VerifyPaymentAsync : PostBankPaymentAsync)">@(verificationMode ? "Approve and allocate" : "Confirm and post payment")</MudButton>
                     <MudButton Variant="Variant.Outlined" OnClick="CancelMarkPaid">Cancel</MudButton>
                 </div>
             </MudCardContent>
@@ -145,6 +156,9 @@
     private string bankChannel = "Manual";
     private DateTime? bankPaidDate = DateTime.Today;
     private bool paymentConfirmed;
+    private bool verificationMode;
+    private bool approvalConfirmed;
+    private string verificationTotp = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,7 +168,7 @@
     private async Task ReloadDataAsync()
     {
         allFeesList = await Db.Fees.Include(f => f.Enrollment).OrderByDescending(f => f.CreatedAt).ToListAsync();
-        totalRevenueCollected = allFeesList.Where(f => f.Status == FeeStatus.Paid).Sum(f => f.Amount);
+        totalRevenueCollected = allFeesList.Where(f => f.Status is FeeStatus.Paid or FeeStatus.Verified).Sum(f => f.Amount);
     }
 
     private void BeginMarkPaid(Fee fee)
@@ -164,12 +178,24 @@
         bankChannel = "Manual";
         bankPaidDate = DateTime.Today;
         paymentConfirmed = false;
+        verificationMode = false;
+        approvalConfirmed = false;
+    }
+
+    private void BeginVerify(Fee fee)
+    {
+        selectedFee = fee;
+        verificationMode = true;
+        approvalConfirmed = false;
+        verificationTotp = string.Empty;
     }
 
     private void CancelMarkPaid()
     {
         selectedFee = null;
         paymentConfirmed = false;
+        verificationMode = false;
+        approvalConfirmed = false;
     }
 
     private async Task PostBankPaymentAsync()
@@ -201,6 +227,35 @@
                 totpCode: null);
 
             Snackbar.Add($"Challan #{selectedFee.ChallanNumber} posted with bank reference {bankTransactionId.Trim()}.", Severity.Success);
+            CancelMarkPaid();
+            await ReloadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task VerifyPaymentAsync()
+    {
+        if (selectedFee is null || !approvalConfirmed)
+        {
+            Snackbar.Add("Confirm the independent bank check before approving this challan.", Severity.Warning);
+            return;
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var checkerUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(checkerUserId))
+        {
+            Snackbar.Add("The authenticated officer identity could not be determined.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            await FeePaymentService.VerifyPaidAsync(selectedFee.Id, checkerUserId, verificationTotp, CancellationToken.None);
+            Snackbar.Add($"Challan #{selectedFee.ChallanNumber} approved. Roll number and seat allocation completed where eligible.", Severity.Success);
             CancelMarkPaid();
             await ReloadDataAsync();
         }

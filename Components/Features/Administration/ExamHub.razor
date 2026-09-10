@@ -249,7 +249,7 @@
         var approvedPaidCandidates = await Db.Enrollments
             .Include(e => e.Fees)
             .Include(e => e.AdmitCard)
-            .Where(e => e.Status == EnrollmentStatus.Approved && e.Fees.Any(f => f.Status == FeeStatus.Paid))
+            .Where(e => e.Status == EnrollmentStatus.Approved && e.Fees.Any(f => f.Status == FeeStatus.Verified))
             .ToListAsync();
 
         eligibleCandidatesCount = approvedPaidCandidates.Count;
@@ -261,7 +261,7 @@
         var candidatesAwaiting = await Db.Enrollments
             .Include(e => e.Fees)
             .Include(e => e.AdmitCard)
-            .Where(e => e.Status == EnrollmentStatus.Approved && e.Fees.Any(f => f.Status == FeeStatus.Paid) && e.AdmitCard == null)
+            .Where(e => e.Status == EnrollmentStatus.Approved && e.Fees.Any(f => f.Status == FeeStatus.Verified) && e.AdmitCard == null)
             .ToListAsync();
 
         if (candidatesAwaiting.Count == 0)
@@ -302,7 +302,7 @@
     {
         var unpaidWithAdmitCards = await Db.AdmitCards
             .Include(a => a.Enrollment).ThenInclude(e => e.Fees)
-            .Where(a => !a.Enrollment.Fees.Any(f => f.Status == FeeStatus.Paid))
+            .Where(a => !a.Enrollment.Fees.Any(f => f.Status == FeeStatus.Paid || f.Status == FeeStatus.Verified))
             .ToListAsync();
 
         if (unpaidWithAdmitCards.Count == 0)
