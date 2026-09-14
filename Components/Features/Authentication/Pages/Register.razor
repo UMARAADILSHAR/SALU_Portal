@@ -15,7 +15,6 @@
 @inject IUserStore<ApplicationUser> UserStore
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IEmailSender<ApplicationUser> EmailSender
-@inject IEmailOtpService EmailOtpService
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
@@ -891,8 +890,8 @@
         user.FullName = Input.FullName.Trim();
         user.Cnic = normalizedCnic;
         user.PhoneNumber = normalizedPhone;
-        user.IsVerified = false;
-        user.EmailConfirmed = false;
+        user.IsVerified = true;
+        user.EmailConfirmed = true;
         user.AdmissionType = AdmissionType.AffiliatedCollege;
 
         await UserStore.SetUserNameAsync(user, emailClean, CancellationToken.None);
@@ -912,12 +911,7 @@
         // Automatically assign Student role
         await UserManager.AddToRoleAsync(user, "Student");
 
-        // Generate and email 6-digit verification code (valid for 30 minutes)
-        await EmailOtpService.GenerateAndSendOtpAsync(user, emailClean);
-
-        RedirectManager.RedirectTo(
-            "Account/RegisterConfirmation",
-            new() { ["email"] = emailClean, ["returnUrl"] = ReturnUrl });
+        RedirectManager.RedirectTo("Student");
     }
 
     private ApplicationUser CreateUser()

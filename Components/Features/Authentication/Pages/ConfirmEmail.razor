@@ -276,6 +276,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        RedirectManager.RedirectTo("/Account/Login");
+        return;
+
         if (!string.IsNullOrWhiteSpace(Email) && (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Code)))
         {
             RedirectManager.RedirectTo($"Account/RegisterConfirmation", new() { ["email"] = Email });

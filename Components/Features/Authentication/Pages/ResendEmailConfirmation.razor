@@ -362,48 +362,8 @@
 
     private async Task OnValidSubmitAsync()
     {
-        isSubmitting = true;
-        errorMessage = null;
-
-        var cleanEmail = (Input.Email ?? "").Trim();
-        var user = await UserManager.FindByEmailAsync(cleanEmail);
-
-        if (user is null)
-        {
-            // Do not reveal user non-existence for security
-            isSent = true;
-            isSubmitting = false;
-            return;
-        }
-
-        if (await UserManager.IsEmailConfirmedAsync(user))
-        {
-            errorMessage = "This email address is already verified. You can proceed directly to sign in.";
-            isSubmitting = false;
-            return;
-        }
-
-        try
-        {
-            var result = await EmailOtpService.ResendOtpAsync(cleanEmail);
-            if (result.Succeeded)
-            {
-                RedirectManager.RedirectTo($"Account/RegisterConfirmation", new() { ["email"] = cleanEmail });
-                return;
-            }
-            else
-            {
-                errorMessage = result.Message;
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Failed to send verification code: {ex.Message}";
-        }
-        finally
-        {
-            isSubmitting = false;
-        }
+        await Task.CompletedTask;
+        RedirectManager.RedirectTo("Account/Login");
     }
 
     private sealed class InputModel

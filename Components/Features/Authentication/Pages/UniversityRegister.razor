@@ -659,8 +659,8 @@
         user.FullName = (Input.FullName ?? "").Trim();
         user.Cnic = normalizedCnic;
         user.PhoneNumber = normalizedPhone;
-        user.IsVerified = false;
-        user.EmailConfirmed = false;
+        user.IsVerified = true;
+        user.EmailConfirmed = true;
         user.AdmissionType = AdmissionType.UniversityRegular;
 
         await UserStore.SetUserNameAsync(user, emailClean, CancellationToken.None);
@@ -678,12 +678,7 @@
         Logger.LogInformation("University regular student account created for {Email}.", emailClean);
         await UserManager.AddToRoleAsync(user, "Student");
 
-        // Generate and email 6-digit verification code (valid for 30 minutes)
-        await EmailOtpService.GenerateAndSendOtpAsync(user, emailClean);
-
-        RedirectManager.RedirectTo(
-            "Account/RegisterConfirmation",
-            new() { ["email"] = emailClean, ["returnUrl"] = ReturnUrl });
+        RedirectManager.RedirectTo("Student/UniversityAdmission");
     }
 
     private static string FormatCnic(string value)

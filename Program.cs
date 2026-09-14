@@ -207,7 +207,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = true;
+        options.SignIn.RequireConfirmedAccount = false;
         // Enforce strong passwords for institutional compliance
         options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = false; // Special characters optional

@@ -42,19 +42,6 @@
             </div>
 
             <StatusMessage Message="@errorMessage" />
-            @if (!string.IsNullOrWhiteSpace(unconfirmedEmail))
-            {
-                <div class="salu-unconfirmed-alert mb-3">
-                    <i class="bi bi-envelope-exclamation-fill me-1"></i>
-                    <div><strong>Email Not Verified</strong></div>
-                    <div class="small mb-2">You must verify your email before logging in.</div>
-                    <div>
-                        <a href="@($"/Account/ResendEmailConfirmation?email={Uri.EscapeDataString(unconfirmedEmail)}")" class="salu-unconfirmed-link">
-                            <i class="bi bi-arrow-repeat"></i> Resend Verification Email
-                        </a>
-                    </div>
-                </div>
-            }
             <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
                 <input type="hidden" name="Input.AdmissionType" value="@selectedAdmissionType" />
                 <DataAnnotationsValidator />
@@ -576,7 +563,6 @@
     private EditContext editContext = default!;
     private bool showPassword = false;
     private bool isLoggingIn = false;
-    private string? unconfirmedEmail;
     private AdmissionType selectedAdmissionType = AdmissionType.AffiliatedCollege;
 
     [CascadingParameter]
@@ -737,9 +723,7 @@
         }
         else if (result.IsNotAllowed)
         {
-            var targetEmail = user?.Email ?? (loginIdentifier.Contains('@') ? loginIdentifier : "");
-            unconfirmedEmail = targetEmail;
-            errorMessage = "Email not verified: Your email address must be confirmed before logging in.";
+            errorMessage = "Sign in is not allowed for this account. Please contact support.";
             isLoggingIn = false;
         }
         else

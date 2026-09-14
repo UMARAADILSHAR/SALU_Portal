@@ -501,6 +501,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        RedirectManager.RedirectTo("/Account/Login");
+        return;
+
         Input ??= new();
         ResendInput ??= new();
 

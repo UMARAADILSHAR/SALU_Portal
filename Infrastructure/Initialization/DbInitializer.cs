@@ -36,6 +36,10 @@ public static class DbInitializer
             BEGIN
                 ALTER TABLE AspNetUsers ADD AdmissionType int NOT NULL CONSTRAINT DF_AspNetUsers_AdmissionType DEFAULT 0;
             END;
+            IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'DateOfBirth')
+            BEGIN
+                ALTER TABLE AspNetUsers ADD DateOfBirth datetime2 NULL;
+            END;
         ");
 
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
